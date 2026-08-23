@@ -82,12 +82,19 @@ function Builder() {
     beneficiary: { name: "", relationship: "self", type: "individual" },
     cover_image: COVERS[0], location: { city: "", country: "NG" },
     media: [] as Media[],
+    hero_video: null as string | null,
     deadlineDays: "30",
   });
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
   const setMedia = (m: Media[]) => setForm((f: any) => {
     const firstImage = m.find((x) => x.kind === "image");
-    return { ...f, media: m, cover_image: firstImage ? firstImage.url : f.cover_image };
+    const firstVideo = m.find((x) => x.kind === "video");
+    return {
+      ...f,
+      media: m,
+      cover_image: firstImage ? firstImage.url : f.cover_image,
+      hero_video: firstVideo ? firstVideo.url : null,
+    };
   });
 
   const runAI = async () => {
@@ -128,6 +135,7 @@ function Builder() {
         goal_kobo: Math.round(parseFloat(form.goal) * 100),
         cover_image: form.cover_image,
         gallery: [form.cover_image, ...(form.media || []).map((m: any) => m.url)].filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i),
+        hero_video: form.hero_video || null,
         budget: form.budget.filter((b: any) => b.item).map((b: any) => ({ item: b.item, amount_kobo: Math.round(parseFloat(b.amount || "0") * 100) })),
         beneficiary: form.beneficiary,
         deadline: new Date(Date.now() + parseInt(form.deadlineDays || "30") * 86400000).toISOString(),

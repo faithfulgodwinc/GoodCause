@@ -214,6 +214,7 @@ async def serialize_campaign(doc: dict, viewer: Optional[dict] = None, detail: b
         out.update({
             "story": doc.get("story"),
             "gallery": doc.get("gallery", []),
+            "hero_video": doc.get("hero_video"),
             "budget": doc.get("budget", []),
             "beneficiary": doc.get("beneficiary"),
             "verification": doc.get("verification"),

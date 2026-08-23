@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import QRCode from "react-native-qrcode-svg";
 import * as Clipboard from "expo-clipboard";
@@ -35,6 +36,12 @@ export default function CampaignDetail() {
 
   const c = campaign.data;
   const shareUrl = `https://goodcause.ng/c/${id}`;
+  const heroVideo = campaign.data?.hero_video || null;
+  const player = useVideoPlayer(null, (p) => { p.loop = true; p.muted = true; });
+  React.useEffect(() => {
+    if (!heroVideo) return;
+    try { player.replace(heroVideo); player.loop = true; player.muted = true; player.play(); } catch {}
+  }, [heroVideo]);
 
   const followMut = useMutation({
     mutationFn: () => api(`/campaigns/${id}/follow`, { method: c?.is_following ? "DELETE" : "POST" }),
@@ -68,8 +75,12 @@ export default function CampaignDetail() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
         {/* Hero */}
         <View style={styles.hero}>
-          <Image source={{ uri: c.cover_image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
-          <LinearGradient colors={["rgba(35,33,31,0.4)", "transparent", "rgba(35,33,31,0.2)"]} style={StyleSheet.absoluteFill} />
+          {c.hero_video ? (
+            <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" nativeControls={false} allowsFullscreen={false} />
+          ) : (
+            <Image source={{ uri: c.cover_image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+          )}
+          <LinearGradient colors={["rgba(17,24,39,0.35)", "transparent", "rgba(17,24,39,0.15)"]} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroTop, { paddingTop: insets.top + spacing.sm }]}>
             <IconBtn icon="arrow-left" onPress={() => router.back()} testID="detail-back" />
             <View style={{ flexDirection: "row", gap: spacing.sm }}>

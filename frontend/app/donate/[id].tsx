@@ -28,6 +28,8 @@ export default function Donate() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<null | { prev: number; next: number; test: boolean }>(null);
+  const [stage, setStage] = useState<"amount" | "payment">("amount");
+  const [method, setMethod] = useState("card");
 
   const campaign = useQuery({ queryKey: ["campaign", id], queryFn: () => api<any>(`/campaigns/${id}`) });
   const c = campaign.data;
@@ -81,10 +83,10 @@ export default function Donate() {
       <View style={[styles.full, { paddingTop: insets.top }]}>
         <ScrollView contentContainerStyle={{ padding: spacing.lg, alignItems: "center", paddingTop: spacing.xxxl }}>
           <View style={styles.successIcon}>
-            <Feather name="heart" size={40} color={colors.onBrandPrimary} />
+            <Feather name="check" size={44} color={colors.onBrandPrimary} />
           </View>
           <AppText variant="display" style={{ textAlign: "center", marginTop: spacing.xl }}>
-            ❤️ You just helped move this cause forward.
+            You just moved this cause forward.
           </AppText>
           <AppText variant="body" style={{ textAlign: "center", marginTop: spacing.sm }}>
             You gave {formatNaira(finalAmount)} to “{c.title}”.
@@ -105,6 +107,8 @@ export default function Donate() {
             </AppText>
           </View>
 
+          <AppText variant="h2" style={{ textAlign: "center", marginTop: spacing.xl }}>Thank you for showing up.</AppText>
+
           {success.test ? (
             <View style={styles.testBadge}>
               <Feather name="info" size={12} color={colors.warning} />
@@ -114,15 +118,76 @@ export default function Donate() {
             </View>
           ) : null}
 
-          <Button
-            title="Share your impact"
-            icon="share-2"
+          <Button title="Share your impact" icon="share-2"
             onPress={() => RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {})}
-            style={{ marginTop: spacing.xl, alignSelf: "stretch" }}
-            testID="donation-share-button"
-          />
-          <Button title="Done" variant="secondary" onPress={() => router.back()} style={{ marginTop: spacing.sm, alignSelf: "stretch" }} testID="donation-done-button" />
+            style={{ marginTop: spacing.xl, alignSelf: "stretch" }} testID="donation-share-button" />
+          <Button title="View campaign" variant="outline" onPress={() => router.replace(`/campaign/${id}`)} style={{ marginTop: spacing.sm, alignSelf: "stretch" }} testID="donation-view-button" />
+          <Button title="Done" variant="ghost" onPress={() => router.back()} style={{ marginTop: spacing.xs, alignSelf: "stretch" }} testID="donation-done-button" />
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (stage === "payment") {
+    const METHODS = [
+      { id: "card", icon: "credit-card", label: "Card / Debit Card", desc: "Visa, Mastercard, Verve" },
+      { id: "bank", icon: "home", label: "Bank Transfer", desc: "Pay from your bank app" },
+      { id: "mobile", icon: "smartphone", label: "Mobile Money", desc: "USSD & mobile wallets" },
+    ];
+    return (
+      <View style={styles.full}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => setStage("amount")} testID="payment-back"><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">Complete your donation</AppText>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
+          <AppText variant="caption">Amount</AppText>
+          <AppText variant="display" color={colors.brandPrimary} style={{ marginTop: 2 }}>{formatNaira(finalAmount)}</AppText>
+          <View style={[styles.campRow, { marginTop: spacing.lg }]}>
+            <Image source={{ uri: c.cover_image }} style={styles.thumb} contentFit="cover" />
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <AppText variant="caption">You are supporting</AppText>
+              <AppText variant="label" numberOfLines={2} style={{ marginTop: 2 }}>{c.title}</AppText>
+            </View>
+          </View>
+
+          <AppText variant="h2" style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>Payment method</AppText>
+          <View style={{ gap: spacing.sm }}>
+            {METHODS.map((m) => {
+              const active = method === m.id;
+              return (
+                <Pressable key={m.id} testID={`method-${m.id}`} onPress={() => setMethod(m.id)} style={[styles.method, active && styles.methodActive]}>
+                  <View style={[styles.methodIcon, active && { backgroundColor: colors.brandTertiary }]}>
+                    <Feather name={m.icon as any} size={18} color={active ? colors.brandPrimary : colors.onSurfaceTertiary} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: spacing.md }}>
+                    <AppText variant="label">{m.label}</AppText>
+                    <AppText variant="caption">{m.desc}</AppText>
+                  </View>
+                  <View style={[styles.radio, active && { borderColor: colors.brandPrimary, backgroundColor: colors.brandPrimary }]}>
+                    {active ? <Feather name="check" size={12} color="#fff" /> : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.secureRow}>
+            <Feather name="lock" size={13} color={colors.onSurfaceTertiary} />
+            <AppText variant="caption" style={{ marginLeft: 6, flex: 1 }}>Payments are processed securely. We never store your card details.</AppText>
+          </View>
+
+          {error ? (
+            <View style={styles.errorBox}>
+              <Feather name="alert-circle" size={14} color={colors.error} />
+              <AppText variant="caption" color={colors.error} style={{ marginLeft: 6, flex: 1 }}>{error}</AppText>
+            </View>
+          ) : null}
+        </ScrollView>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          <Button title={`Support with ${formatNaira(finalAmount || 0)}`} onPress={donate} loading={processing} testID="confirm-donate-button" />
+        </View>
       </View>
     );
   }
@@ -203,10 +268,13 @@ export default function Donate() {
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Button
-          title={`Donate ${formatNaira(finalAmount || 0)}`}
-          onPress={donate}
-          loading={processing}
-          testID="confirm-donate-button"
+          title={`Support with ${formatNaira(finalAmount || 0)}`}
+          onPress={() => {
+            setError("");
+            if (!finalAmount || finalAmount < 10000) { setError("Please enter at least ₦100."); return; }
+            setStage("payment");
+          }}
+          testID="to-payment-button"
         />
       </View>
     </View>
@@ -228,6 +296,11 @@ const styles = StyleSheet.create({
   messageBox: { minHeight: 80, backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md, marginTop: spacing.lg, fontFamily: font.regular, fontSize: 14, color: colors.onSurface, textAlignVertical: "top" },
   errorBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#FBEBEB", padding: spacing.md, borderRadius: radius.md, marginTop: spacing.md },
   footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, backgroundColor: colors.surfaceSecondary, borderTopWidth: 1, borderTopColor: colors.border },
+  method: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.md, borderWidth: 1.5, borderColor: colors.border },
+  methodActive: { borderColor: colors.brandPrimary, backgroundColor: "#F4FBF6" },
+  methodIcon: { width: 40, height: 40, borderRadius: radius.sm, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center" },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.borderStrong, alignItems: "center", justifyContent: "center" },
+  secureRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.lg, backgroundColor: colors.surfaceTertiary, padding: spacing.md, borderRadius: radius.md },
   successIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center", ...shadow.raised },
   impactCard: { alignSelf: "stretch", backgroundColor: colors.surfaceInverse, borderRadius: radius.lg, padding: spacing.xl, marginTop: spacing.xxl },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.md },

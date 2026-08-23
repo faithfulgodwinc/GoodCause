@@ -43,8 +43,8 @@ export function TrustCard({
           <Feather name="shield" size={18} color={colors.onBrandPrimary} />
         </View>
         <View style={{ flex: 1, marginLeft: spacing.md }}>
-          <AppText variant="title">{verified ? "GoodCause Verified" : "Verification in progress"}</AppText>
-          <AppText variant="caption" style={{ marginTop: 2 }}>Verification checks completed — not a guarantee</AppText>
+          <AppText variant="title">{verified ? "GoodCause Checks" : "Verification in progress"}</AppText>
+          <AppText variant="caption" style={{ marginTop: 2 }}>Independent checks completed — not a guarantee of outcome</AppText>
         </View>
       </View>
 
@@ -81,6 +81,11 @@ export function TrustCard({
         <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginLeft: 6, flex: 1 }}>
           GoodCause reviews information provided but does not guarantee any campaign. Give with care.
         </AppText>
+      </View>
+
+      <View style={styles.howRow}>
+        <Feather name="help-circle" size={13} color={colors.brandPrimary} />
+        <AppText variant="label" color={colors.brandPrimary} style={{ marginLeft: 6 }}>How verification works →</AppText>
       </View>
 
       {onReport ? (
@@ -123,4 +128,5 @@ const styles = StyleSheet.create({
     padding: spacing.md, borderRadius: radius.md,
   },
   reportRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, justifyContent: "center" },
+  howRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, justifyContent: "center" },
 });

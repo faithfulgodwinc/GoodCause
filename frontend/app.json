@@ -22,7 +22,9 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.emergent.goodcausetrust.dsfw4f",
-      "permissions": ["READ_MEDIA_IMAGES"]
+      "permissions": [
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -45,7 +47,8 @@
         {
           "photosPermission": "Add photos to tell your campaign story"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

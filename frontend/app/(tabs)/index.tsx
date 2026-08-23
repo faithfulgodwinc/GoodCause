@@ -11,6 +11,13 @@ import { AppText, LoadingView, ErrorView } from "@/src/components/ui";
 import { FeaturedCard, CampaignCard, Campaign } from "@/src/components/CampaignCard";
 import { colors, spacing, radius, CATEGORY_COLORS } from "@/src/theme";
 
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 type HomeData = {
   featured: Campaign[];
   urgent: Campaign[];
@@ -41,10 +48,12 @@ export default function Home() {
       >
         <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
           <View style={styles.headerRow}>
-            <View>
-              <AppText variant="caption">Welcome back</AppText>
+            <View style={{ flex: 1, paddingRight: spacing.md }}>
               <AppText variant="h1" style={{ marginTop: 2 }}>
-                {user?.name?.split(" ")[0] || "Friend"} 👋
+                {greeting()}, {user?.name?.split(" ")[0] || "Friend"}
+              </AppText>
+              <AppText variant="body" style={{ marginTop: 4 }}>
+                Where would you like to make a difference today?
               </AppText>
             </View>
             <Pressable testID="home-circles-btn" onPress={() => router.push("/circles")} style={styles.iconBtn}>

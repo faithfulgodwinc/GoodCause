@@ -32,6 +32,7 @@ class CampaignIn(BaseModel):
     goal_kobo: int = Field(gt=0)
     cover_image: Optional[str] = None
     gallery: List[str] = []
+    hero_video: Optional[str] = None
     budget: List[BudgetItem] = []
     beneficiary: Optional[Beneficiary] = None
     deadline: Optional[str] = None
@@ -46,6 +47,7 @@ class CampaignPatch(BaseModel):
     goal_kobo: Optional[int] = None
     cover_image: Optional[str] = None
     gallery: Optional[List[str]] = None
+    hero_video: Optional[str] = None
     budget: Optional[List[BudgetItem]] = None
     beneficiary: Optional[Beneficiary] = None
     deadline: Optional[str] = None
@@ -184,6 +186,7 @@ async def create_campaign(body: CampaignIn, user: dict = Depends(get_current_use
         "currency": "NGN",
         "cover_image": body.cover_image,
         "gallery": body.gallery,
+        "hero_video": body.hero_video,
         "budget": [b.dict() for b in body.budget],
         "beneficiary": body.beneficiary.dict() if body.beneficiary else None,
         "deadline": body.deadline,
