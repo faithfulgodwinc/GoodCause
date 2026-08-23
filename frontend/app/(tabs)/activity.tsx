@@ -54,42 +54,39 @@ export default function Activity() {
       </View>
 
       {tab === "alerts" ? (
-        notifs.isLoading ? <LoadingView /> : (
-          <FlatList
-            data={notifs.data?.items || []}
-            keyExtractor={(n) => n.id}
-            contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: 120, flexGrow: 1 }}
-            refreshControl={<RefreshControl refreshing={notifs.isRefetching} onRefresh={notifs.refetch} />}
-            ListEmptyComponent={<EmptyState testID="notifications-empty" icon="bell" title="No notifications yet" message="Follow a cause and you'll hear about milestones and updates here." />}
-            renderItem={({ item }) => (
-              <Pressable
-                testID={`notification-${item.id}`}
-                onPress={() => item.campaign_id && router.push(`/campaign/${item.campaign_id}`)}
-                style={[styles.notif, !item.read && { borderColor: colors.brandTertiary, backgroundColor: "#FFFDFB" }]}
-              >
-                <View style={[styles.notifIcon, !item.read && { backgroundColor: colors.brandTertiary }]}>
-                  <Feather name={ICON[item.type] || "bell"} size={16} color={colors.brandPrimary} />
+        <FlatList
+          data={notifs.data?.items || []}
+          keyExtractor={(n) => n.id}
+          contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: 120, flexGrow: 1 }}
+          refreshControl={<RefreshControl refreshing={notifs.isRefetching} onRefresh={notifs.refetch} />}
+          ListEmptyComponent={notifs.isLoading ? null : <EmptyState testID="notifications-empty" icon="bell" title="No notifications yet" message="Follow a cause and you'll hear about milestones and updates here." />}
+          renderItem={({ item }) => (
+            <Pressable
+              testID={`notification-${item.id}`}
+              onPress={() => item.campaign_id && router.push(`/campaign/${item.campaign_id}`)}
+              style={[styles.notif, !item.read && { borderColor: colors.brandTertiary, backgroundColor: "#FFFDFB" }]}
+            >
+              <View style={[styles.notifIcon, !item.read && { backgroundColor: colors.brandTertiary }]}>
+                <Feather name={ICON[item.type] || "bell"} size={16} color={colors.brandPrimary} />
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <View style={styles.rowBetween}>
+                  <AppText variant="label" style={{ flex: 1 }} numberOfLines={1}>{item.title}</AppText>
+                  <AppText variant="caption">{timeAgo(item.created_at)}</AppText>
                 </View>
-                <View style={{ flex: 1, marginLeft: spacing.md }}>
-                  <View style={styles.rowBetween}>
-                    <AppText variant="label" style={{ flex: 1 }} numberOfLines={1}>{item.title}</AppText>
-                    <AppText variant="caption">{timeAgo(item.created_at)}</AppText>
-                  </View>
-                  <AppText variant="body" numberOfLines={2} style={{ marginTop: 2 }}>{item.body}</AppText>
-                </View>
-              </Pressable>
-            )}
-          />
-        )
+                <AppText variant="body" numberOfLines={2} style={{ marginTop: 2 }}>{item.body}</AppText>
+              </View>
+            </Pressable>
+          )}
+        />
       ) : (
-        donations.isLoading ? <LoadingView /> : (
-          <FlatList
-            data={donations.data || []}
-            keyExtractor={(d) => d.id}
-            contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 120, flexGrow: 1 }}
-            refreshControl={<RefreshControl refreshing={donations.isRefetching} onRefresh={donations.refetch} />}
-            ListEmptyComponent={<EmptyState testID="donations-empty" icon="heart" title="No donations yet" message="When you support a cause, it will appear here with your impact." actionLabel="Explore causes" onAction={() => router.push("/explore")} />}
-            renderItem={({ item }) => (
+        <FlatList
+          data={donations.data || []}
+          keyExtractor={(d) => d.id}
+          contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 120, flexGrow: 1 }}
+          refreshControl={<RefreshControl refreshing={donations.isRefetching} onRefresh={donations.refetch} />}
+          ListEmptyComponent={donations.isLoading ? null : <EmptyState testID="donations-empty" icon="heart" title="No donations yet" message="When you support a cause, it will appear here with your impact." actionLabel="Explore causes" onAction={() => router.push("/explore")} />}
+          renderItem={({ item }) => (
               <Pressable
                 testID={`donation-${item.id}`}
                 onPress={() => item.campaign && router.push(`/campaign/${item.campaign.id}`)}

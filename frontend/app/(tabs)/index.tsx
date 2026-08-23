@@ -48,26 +48,10 @@ export default function HomeScreen() {
   const [showNavSearch, setShowNavSearch] = useState(false);
   const searchOpacity = useRef(new Animated.Value(0)).current;
 
-  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+  const { data, isError, refetch, isRefetching } = useQuery({
     queryKey: ["home"],
     queryFn: () => api<HomeData>("/home"),
   });
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LoadingView label="Loading causes..." />
-      </View>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ErrorView message="Couldn't load causes." onRetry={refetch} />
-      </View>
-    );
-  }
 
   const {
     featured = [],
@@ -77,7 +61,7 @@ export default function HomeScreen() {
     recommended = [],
     categories = [],
     greeting_name,
-  } = data;
+  } = data || {};
 
   const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : null);
 

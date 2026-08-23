@@ -132,8 +132,11 @@ async def list_campaigns(
         query["status"] = "LIVE"
     if status:
         query["status"] = status
-    if category:
-        query["category_id"] = category
+    if category and category != "__all" and category != "all":
+        cat_doc = await db.categories.find_one({"id": category})
+        if not cat_doc:
+            cat_doc = await db.categories.find_one({"slug": category})
+        query["category_id"] = cat_doc["id"] if cat_doc else category
     if search:
         query["$or"] = [
             {"title": {"$regex": search, "$options": "i"}},

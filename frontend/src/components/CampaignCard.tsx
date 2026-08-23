@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { colors, radius, spacing, shadow, CATEGORY_COLORS } from "@/src/theme";
-import { AppText, ProgressBar, VerifiedBadge } from "@/src/components/ui";
+import { AppText, ProgressBar, VerifiedBadge, CommunityBackedBadge } from "@/src/components/ui";
 import { formatNaira, daysLeft } from "@/src/format";
 
 export type Campaign = {
@@ -17,6 +17,9 @@ export type Campaign = {
   raised_kobo: number;
   percent: number;
   supporters_count: number;
+  community_backed?: boolean;
+  momentum_target?: number;
+  momentum_count?: number;
   verification_status?: string;
   urgent?: boolean;
   deadline?: string | null;
@@ -115,7 +118,11 @@ export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void 
                 {c.category_name?.toUpperCase()}
               </AppText>
             </View>
-            <VerifiedBadge status={c.verification_status} />
+            {c.community_backed ? (
+              <CommunityBackedBadge />
+            ) : (
+              <VerifiedBadge status={c.verification_status} />
+            )}
           </View>
           <AppText variant="title" numberOfLines={2} style={styles.cardTitle}>
             {c.title}

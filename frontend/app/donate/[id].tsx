@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -107,21 +107,37 @@ export default function Donate() {
             </AppText>
           </View>
 
-          <AppText variant="h2" style={{ textAlign: "center", marginTop: spacing.xl }}>Thank you for showing up.</AppText>
+          <View style={styles.shareImpactBox}>
+            <Feather name="heart" size={24} color={colors.brandPrimary} />
+            <AppText variant="h2" style={{ textAlign: "center", marginTop: spacing.sm }}>
+              Double your impact
+            </AppText>
+            <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: 4 }}>
+              Donating is powerful, but sharing brings 2x more support. Tell friends on WhatsApp!
+            </AppText>
 
-          {success.test ? (
-            <View style={styles.testBadge}>
-              <Feather name="info" size={12} color={colors.warning} />
-              <AppText variant="caption" color={colors.warning} style={{ marginLeft: 4 }}>
-                Test mode — no real money moved. Add Paystack keys to accept live donations.
-              </AppText>
-            </View>
-          ) : null}
+            <Button
+              title="Share to WhatsApp"
+              icon="share-2"
+              onPress={() => {
+                const msg = encodeURIComponent(`I just donated to support “${c.title}” on GoodCause. Join me in making a difference: https://goodcause.ng/c/${id}`);
+                Linking.openURL(`whatsapp://send?text=${msg}`).catch(() => {
+                  RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {});
+                });
+              }}
+              style={{ marginTop: spacing.md, alignSelf: "stretch", backgroundColor: colors.brandPrimary }}
+              testID="donation-whatsapp-button"
+            />
+            <Button
+              title="More share options"
+              variant="outline"
+              onPress={() => RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {})}
+              style={{ marginTop: spacing.xs, alignSelf: "stretch" }}
+              testID="donation-share-button"
+            />
+          </View>
 
-          <Button title="Share your impact" icon="share-2"
-            onPress={() => RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {})}
-            style={{ marginTop: spacing.xl, alignSelf: "stretch" }} testID="donation-share-button" />
-          <Button title="View campaign" variant="outline" onPress={() => router.replace(`/campaign/${id}`)} style={{ marginTop: spacing.sm, alignSelf: "stretch" }} testID="donation-view-button" />
+          <Button title="View campaign" variant="outline" onPress={() => router.replace(`/campaign/${id}`)} style={{ marginTop: spacing.lg, alignSelf: "stretch" }} testID="donation-view-button" />
           <Button title="Done" variant="ghost" onPress={() => router.back()} style={{ marginTop: spacing.xs, alignSelf: "stretch" }} testID="donation-done-button" />
         </ScrollView>
       </View>
@@ -305,4 +321,14 @@ const styles = StyleSheet.create({
   impactCard: { alignSelf: "stretch", backgroundColor: colors.surfaceInverse, borderRadius: radius.lg, padding: spacing.xl, marginTop: spacing.xxl },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.md },
   testBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#FBF1E0", padding: spacing.md, borderRadius: radius.md, marginTop: spacing.lg },
+  shareImpactBox: {
+    alignSelf: "stretch",
+    backgroundColor: "#F0FDF4",
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+  },
 });

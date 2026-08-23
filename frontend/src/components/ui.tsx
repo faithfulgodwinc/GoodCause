@@ -146,13 +146,25 @@ export function VerifiedBadge({ status, compact = true }: { status?: string; com
   const inReview = status === "IN_REVIEW" || status === "PENDING";
   if (!verified && !inReview) return null;
   const bg = verified ? "#F0FDF4" : "#FFFBEB";
-  const fg = verified ? colors.brandAccent : colors.warning;
+  const fg = verified ? colors.brandPrimary : colors.warning;
   const label = verified ? "Verified" : "Pending";
   const icon = verified ? "shield" : "clock";
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
       <Feather name={icon as any} size={10} color={fg} />
       <AppText variant="caption" color={fg} style={{ marginLeft: 3, fontSize: 11, fontWeight: "600" }}>{label}</AppText>
+    </View>
+  );
+}
+
+/* ---------------- CommunityBackedBadge ---------------- */
+export function CommunityBackedBadge({ supportersCount }: { supportersCount?: number }) {
+  return (
+    <View style={styles.communityBadge}>
+      <Feather name="users" size={10} color={colors.brandPrimary} />
+      <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: 3, fontSize: 10.5, fontWeight: "700" }}>
+        Community Backed
+      </AppText>
     </View>
   );
 }
@@ -334,6 +346,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.pill,
+  },
+  communityBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(2, 169, 92, 0.08)",
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: "rgba(2, 169, 92, 0.2)",
   },
   chip: {
     height: 32,

@@ -27,6 +27,12 @@ export default function Explore() {
     return () => clearTimeout(t);
   }, [search]);
 
+  React.useEffect(() => {
+    if (params.category !== undefined) {
+      setCategory(params.category || null);
+    }
+  }, [params.category]);
+
   const { data: cats } = useQuery({ queryKey: ["categories"], queryFn: () => api<Cat[]>("/categories") });
 
   const query = useMemo(() => {
@@ -70,22 +76,25 @@ export default function Explore() {
           showsHorizontalScrollIndicator={false}
           style={{ marginTop: spacing.md }}
           contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }}
-          renderItem={({ item }) => (
-            <Chip
-              testID={`explore-chip-${item.slug}`}
-              label={item.name}
-              active={item.id === "__all" ? !category : category === item.id}
-              onPress={() => setCategory(item.id === "__all" ? null : item.id)}
-            />
-          )}
+          renderItem={({ item }) => {
+            const isSelected = item.id === "__all" ? !category : (category === item.id || category === item.slug);
+            return (
+              <Chip
+                testID={`explore-chip-${item.slug}`}
+                label={item.name}
+                active={isSelected}
+                onPress={() => {
+                  const nextCat = item.id === "__all" ? null : item.id;
+                  setCategory(nextCat);
+                  router.setParams({ category: nextCat || "" });
+                }}
+              />
+            );
+          }}
         />
       </View>
 
-      {isLoading ? (
-        <LoadingView />
-      ) : isError ? (
-        <ErrorView onRetry={refetch} />
-      ) : items.length === 0 ? (
+      {items.length === 0 && !isLoading ? (
         <EmptyState
           testID="explore-empty"
           icon="search"

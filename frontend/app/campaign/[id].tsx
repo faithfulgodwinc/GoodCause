@@ -12,7 +12,7 @@ import * as Clipboard from "expo-clipboard";
 
 import { api, track } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
-import { AppText, Button, ProgressBar, VerifiedBadge, Avatar, LoadingView, ErrorView } from "@/src/components/ui";
+import { AppText, Button, ProgressBar, VerifiedBadge, CommunityBackedBadge, Avatar, LoadingView, ErrorView } from "@/src/components/ui";
 import { TrustCard } from "@/src/components/TrustCard";
 import { MediaUploader, Media } from "@/src/components/MediaUploader";
 import { useResponsive } from "@/src/lib/responsive";
@@ -36,6 +36,7 @@ export default function CampaignDetail() {
   const [thankMsg, setThankMsg] = useState("");
   const [thankMedia, setThankMedia] = useState<Media[]>([]);
   const [thankDone, setThankDone] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const campaign = useQuery({ queryKey: ["campaign", id], queryFn: () => api<any>(`/campaigns/${id}`) });
   const updates = useQuery({ queryKey: ["updates", id], queryFn: () => api<any[]>(`/campaigns/${id}/updates`), enabled: !!id });
@@ -116,7 +117,10 @@ export default function CampaignDetail() {
             <AppText variant="body" style={{ flex: 1, marginLeft: spacing.sm }}>
               by <AppText variant="label">{c.organizer?.name}</AppText>
             </AppText>
-            <VerifiedBadge status={c.verification_status} />
+            <View style={{ flexDirection: "row", gap: spacing.xs, alignItems: "center" }}>
+              {c.community_backed ? <CommunityBackedBadge /> : null}
+              <VerifiedBadge status={c.verification_status} />
+            </View>
           </View>
 
           {/* Progress */}
@@ -126,7 +130,7 @@ export default function CampaignDetail() {
               <AppText variant="label" color={colors.onSurfaceTertiary}>{c.percent}%</AppText>
             </View>
             <AppText variant="caption" style={{ marginTop: 2 }}>raised of {formatNaira(c.goal_kobo)} goal</AppText>
-            <View style={{ margintop: spacing.md, marginTop: spacing.md }}>
+            <View style={{ marginTop: spacing.md }}>
               <ProgressBar percent={c.percent} height={10} />
             </View>
             <View style={[styles.rowBetween, { marginTop: spacing.md }]}>
@@ -135,6 +139,58 @@ export default function CampaignDetail() {
               {c.location?.city ? <Meta icon="map-pin" text={c.location.city} /> : null}
             </View>
           </View>
+
+          {/* GoFundMe Early Momentum Checklist for Organizer */}
+          {isOrganizer ? (
+            <View style={styles.momentumCard}>
+              <View style={styles.rowBetween}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Feather name={c.community_backed ? "check-circle" : "trending-up"} size={17} color={colors.brandPrimary} />
+                  <AppText variant="title" style={{ marginLeft: spacing.sm }}>
+                    {c.community_backed ? "Community Backed 🎉" : "Build Early Momentum"}
+                  </AppText>
+                </View>
+                <AppText variant="label" color={colors.brandPrimary}>
+                  {Math.min(c.supporters_count, 3)} / 3 supporters
+                </AppText>
+              </View>
+              <View style={{ marginTop: spacing.sm }}>
+                <ProgressBar
+                  percent={(Math.min(c.supporters_count, 3) / 3) * 100}
+                  color={colors.brandPrimary}
+                  height={6}
+                />
+              </View>
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.sm, lineHeight: 18 }}>
+                {c.community_backed
+                  ? "Your campaign is validated by your community and unlocked for discovery on Explore and Top Causes."
+                  : "Fundraisers backed by 3+ close friends or family are 3x more likely to reach their goal. Share directly on WhatsApp to get started!"}
+              </AppText>
+              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+                <Button
+                  title="Share on WhatsApp"
+                  icon="share-2"
+                  small
+                  onPress={() => {
+                    const msg = encodeURIComponent(`Hi! I just started a campaign for “${c.title}” on GoodCause. Every little bit helps: ${shareUrl}`);
+                    Linking.openURL(`whatsapp://send?text=${msg}`).catch(() => nativeShare());
+                  }}
+                  style={{ flex: 1.2, backgroundColor: colors.brandPrimary }}
+                />
+                <Button
+                  title={copied ? "Copied!" : "Copy link"}
+                  variant="outline"
+                  small
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(shareUrl);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  style={{ flex: 0.8 }}
+                />
+              </View>
+            </View>
+          ) : null}
 
           {/* Beneficiary */}
           {c.beneficiary ? (
@@ -417,6 +473,14 @@ const styles = StyleSheet.create({
   catPill: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   orgRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md },
   progressBox: { marginTop: spacing.lg, backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
+  momentumCard: {
+    marginTop: spacing.md,
+    backgroundColor: "#F0FDF4",
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+  },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   blockCard: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   budgetRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: spacing.md },
