@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   ScrollView,
@@ -6,6 +6,9 @@ import {
   Pressable,
   RefreshControl,
   FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -40,6 +43,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { maxContentWidth } = useResponsive();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showNavSearch, setShowNavSearch] = useState(false);
+  const searchOpacity = useRef(new Animated.Value(0)).current;
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["home"],
@@ -74,54 +80,106 @@ export default function HomeScreen() {
 
   const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : null);
 
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    // Border elevation triggers slightly on initial scroll
+    if (y > 20 && !isScrolled) setIsScrolled(true);
+    else if (y <= 20 && isScrolled) setIsScrolled(false);
+
+    // Nav search icon appears ONLY when the main in-feed search bar is scrolled out of view (~110px)
+    if (y > 110 && !showNavSearch) {
+      setShowNavSearch(true);
+      Animated.timing(searchOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else if (y <= 110 && showNavSearch) {
+      setShowNavSearch(false);
+      Animated.timing(searchOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* Pinned Top Bar: GoodCause logo on left, Profile icon on right */}
-      <View style={[styles.pinnedHeader, { paddingTop: insets.top + spacing.xs }]}>
-        <View style={styles.topRow}>
-          <View>
+      {/* GoFundMe Authentic Sticky Navigation Bar */}
+      <View
+        style={[
+          styles.stickyNav,
+          { paddingTop: insets.top + spacing.xs },
+          isScrolled && styles.stickyNavScrolled,
+        ]}
+      >
+        <View style={styles.navRow}>
+          {/* Brand Logo */}
+          <Pressable onPress={() => {}} hitSlop={8}>
             <AppText variant="h1" color={colors.brandPrimary} style={styles.brandLogo}>
               goodcause
             </AppText>
-            {displayName ? (
-              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 1 }}>
-                Welcome back, {displayName}
-              </AppText>
-            ) : (
-              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 1 }}>
-                Trust makes generosity go further
-              </AppText>
-            )}
-          </View>
-          <Pressable onPress={() => router.push("/profile")}>
-            <Avatar name={user?.name} uri={user?.picture} size={38} />
           </Pressable>
+
+          {/* Right Actions: Quick Search (appears only past in-feed search) & Profile Avatar */}
+          <View style={styles.navRight}>
+            {showNavSearch ? (
+              <Animated.View style={{ opacity: searchOpacity }}>
+                <Pressable
+                  testID="nav-search-btn"
+                  onPress={() => router.push("/explore")}
+                  style={styles.navIconBtn}
+                  hitSlop={8}
+                >
+                  <Feather name="search" size={19} color={colors.onSurface} />
+                </Pressable>
+              </Animated.View>
+            ) : null}
+            <Pressable
+              testID="nav-profile-btn"
+              onPress={() => router.push("/profile")}
+              style={{ marginLeft: spacing.sm }}
+            >
+              <Avatar name={user?.name} uri={user?.picture} size={32} />
+            </Pressable>
+          </View>
         </View>
       </View>
 
-      {/* Scrollable Area: Search bar down to the rest of the feed */}
+      {/* Main Scrollable Feed */}
       <ScrollView
         style={styles.container}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
       >
         <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
-          {/* GoFundMe Search Bar */}
-          <View style={{ paddingHorizontal: spacing.lg }}>
+          {/* Hero Greeting Section */}
+          <View style={styles.heroSection}>
+            <AppText variant="display" style={styles.heroTitle}>
+              {displayName ? `Welcome back, ${displayName}` : "Fundraising for causes you care about"}
+            </AppText>
+            <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.xs }}>
+              Trust makes generosity go further. Verified causes with itemized budgets.
+            </AppText>
+
+            {/* GoFundMe In-Feed Large Search Bar */}
             <Pressable
               testID="home-search-bar"
               onPress={() => router.push("/explore")}
               style={styles.searchBar}
             >
-              <Feather name="search" size={17} color={colors.onSurfaceSecondary} />
+              <Feather name="search" size={18} color={colors.onSurfaceSecondary} />
               <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginLeft: spacing.sm, flex: 1, fontSize: 14 }}>
                 Search by cause, name, or city
               </AppText>
             </Pressable>
           </View>
 
-          {/* Categories Bar */}
+          {/* Category Chips Bar */}
           <FlatList
             horizontal
             data={categories}
@@ -160,7 +218,7 @@ export default function HomeScreen() {
             </View>
           ) : null}
 
-          {/* GoFundMe Trust Banner */}
+          {/* GoFundMe Giving Guarantee Trust Banner */}
           <View style={styles.trustBanner}>
             <View style={styles.trustIconWrap}>
               <Feather name="shield" size={18} color={colors.brandPrimary} />
@@ -256,23 +314,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  pinnedHeader: {
+  stickyNav: {
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
+    zIndex: 100,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    zIndex: 10,
+    borderBottomColor: "transparent",
   },
-  topRow: {
+  stickyNavScrolled: {
+    borderBottomColor: colors.border,
+    ...shadow.card,
+  },
+  navRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    height: 40,
+  },
+  navRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  navIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceTertiary,
   },
   brandLogo: {
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: "800",
     letterSpacing: -0.6,
+  },
+  heroSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  heroTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    lineHeight: 32,
+    color: colors.onSurface,
   },
   searchBar: {
     flexDirection: "row",
@@ -280,8 +366,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceTertiary,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
-    height: 46,
-    marginTop: spacing.md,
+    height: 48,
+    marginTop: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
