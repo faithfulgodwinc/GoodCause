@@ -26,16 +26,25 @@ def N(naira):
     return naira * 100
 
 
+ADMIN_EMAILS = {"admin@goodcause.ng", "faithfulgodwinc@gmail.com"}
+
 async def seed():
     # Admin (always ensure exists / correct)
-    admin = await db.users.find_one({"email": "admin@goodcause.ng"})
-    if not admin:
-        await db.users.insert_one({
-            "id": uid("usr_"), "email": "admin@goodcause.ng", "name": "GoodCause Admin",
-            "password_hash": hash_password("Admin@12345"), "picture": None,
-            "role": "admin", "bio": "Platform moderator", "verified_organizer": True,
-            "auth_provider": "password", "created_at": now_iso(),
-        })
+    for email in ADMIN_EMAILS:
+        admin = await db.users.find_one({"email": email})
+        if not admin:
+            display_name = "Faithful Godwin" if email == "faithfulgodwinc@gmail.com" else "GoodCause Admin"
+            await db.users.insert_one({
+                "id": uid("usr_"), "email": email, "name": display_name,
+                "password_hash": hash_password("Admin@12345"), "picture": None,
+                "role": "admin", "bio": "Platform administrator", "verified_organizer": True,
+                "auth_provider": "password", "created_at": now_iso(),
+            })
+        else:
+            await db.users.update_one(
+                {"email": email},
+                {"$set": {"role": "admin", "verified_organizer": True}}
+            )
 
     if await db.categories.count_documents({}) == 0:
         for c in CATEGORIES:
