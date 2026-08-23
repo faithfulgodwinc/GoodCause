@@ -2,6 +2,7 @@
 GoodCause Payouts, Bank Accounts & Ledger System
 Handles NUBAN bank resolution, bank account linking, and organizer fund withdrawals.
 """
+import os
 import uuid
 import httpx
 from datetime import datetime, timezone
@@ -9,8 +10,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from core import db, get_current_user, gen_id
-from config import settings
+from core import db, get_current_user, uid
 
 router = APIRouter(prefix="/api", tags=["payouts"])
 
@@ -71,12 +71,13 @@ async def resolve_bank_account(body: BankResolveIn, user: dict = Depends(get_cur
         raise HTTPException(status_code=400, detail="Account number must be exactly 10 digits.")
 
     # If Paystack secret key is provided and not a placeholder
-    if settings.PAYSTACK_SECRET_KEY and not settings.PAYSTACK_SECRET_KEY.startswith("sk_test_xxx") and len(settings.PAYSTACK_SECRET_KEY) > 10:
+    sk = os.environ.get("PAYSTACK_SECRET_KEY", "")
+    if sk and not sk.startswith("sk_test_xxx") and len(sk) > 10:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.get(
                     f"https://api.paystack.co/bank/resolve?account_number={account_num}&bank_code={bank_code}",
-                    headers={"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"},
+                    headers={"Authorization": f"Bearer {sk}"},
                 )
                 data = res.json()
                 if res.status_code == 200 and data.get("status"):
@@ -111,7 +112,7 @@ async def save_campaign_bank_account(id: str, body: BankAccountIn, user: dict = 
     # Look up existing bank account for user or create one
     existing = await db.bank_accounts.find_one({"user_id": user["id"], "account_number": body.account_number.strip()})
     
-    bank_id = existing["id"] if existing else gen_id("bnk")
+    bank_id = existing["id"] if existing else uid("bnk_")
     if not existing:
         await db.bank_accounts.insert_one({
             "id": bank_id,
@@ -231,7 +232,7 @@ async def withdraw_campaign_funds(id: str, body: WithdrawIn, user: dict = Depend
     if not bank_info:
         raise HTTPException(status_code=400, detail="Please link a verified bank account before withdrawing.")
 
-    payout_id = gen_id("pout")
+    payout_id = uid("pout_")
     ref = f"WD-{uuid.uuid4().hex[:10].upper()}"
     now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -259,7 +260,7 @@ async def withdraw_campaign_funds(id: str, body: WithdrawIn, user: dict = Depend
 
     # Create organizer notification
     await db.notifications.insert_one({
-        "id": gen_id("notif"),
+        "id": uid("notif_"),
         "user_id": user["id"],
         "type": "payout",
         "title": "Withdrawal Successful",
