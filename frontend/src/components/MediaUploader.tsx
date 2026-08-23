@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, ActivityIndicator, Linking } from "react-n
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import { uploadMedia } from "@/src/lib/api";
 import { AppText } from "@/src/components/ui";
@@ -35,11 +36,27 @@ export function MediaUploader({ media, onChange }: { media: Media[]; onChange: (
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
     const isVideo = asset.type === "video";
-    const name = asset.fileName || `upload.${isVideo ? "mp4" : "jpg"}`;
-    const type = asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg");
     setBusy(true);
     try {
-      const uploaded = await uploadMedia(asset.uri, name, type);
+      let uri = asset.uri;
+      let name = asset.fileName || `upload.${isVideo ? "mp4" : "jpg"}`;
+      let type = asset.mimeType || (isVideo ? "video/mp4" : "image/jpeg");
+      // Auto-compress images so they upload fast on slow networks / load quickly on cheap devices.
+      if (!isVideo) {
+        try {
+          const manip = await ImageManipulator.manipulateAsync(
+            asset.uri,
+            [{ resize: { width: 1400 } }],
+            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
+          );
+          uri = manip.uri;
+          name = "photo.jpg";
+          type = "image/jpeg";
+        } catch {
+          // fall back to original if manipulation fails
+        }
+      }
+      const uploaded = await uploadMedia(uri, name, type);
       onChange([...media, { url: uploaded.url, kind: uploaded.kind as "image" | "video" }]);
     } catch (e: any) {
       setError(e?.message || "Upload failed. Please try again.");

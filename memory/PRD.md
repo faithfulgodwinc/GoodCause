@@ -35,6 +35,10 @@ CREATE → VERIFY → PUBLISH → SHARE → DONATE → UPDATE → IMPACT. Trust 
 ## Next Tasks
 Enable live payments (Paystack keys), add real image upload, then optional Supabase migration.
 
-## Iteration 2 (2026-08-23)
-- **Real media uploads:** Emergent Object Storage (backend `storage.py` + `routes_media.py`: POST /api/upload multipart, public GET /api/files/{path}). Client `MediaUploader` (expo-image-picker, images + video ≤60s, contextual permission handling per contract). Builder media step uploads real photos/video (cover auto-set to first image); campaign detail shows a Photos & video gallery. Verified: upload 200 + serve 200.
+## Iteration 2 (2026-08-23)- **Real media uploads:** Emergent Object Storage (backend `storage.py` + `routes_media.py`: POST /api/upload multipart, public GET /api/files/{path}). Client `MediaUploader` (expo-image-picker, images + video ≤60s, contextual permission handling per contract). Builder media step uploads real photos/video (cover auto-set to first image); campaign detail shows a Photos & video gallery. Verified: upload 200 + serve 200.
 - **Thank-You Moments:** on completed donation, donor receives a warm `donation_thankyou` notification (with new campaign %) in Activity, alongside the personal impact/share card on the success screen. Verified via API.
+
+## Iteration 3 (2026-08-23) — Design system + compress + Supabase prep
+- **Full visual redesign** to match user's attached spec: Deep green primary (#16A34A), success green (#22C55E), warm gold accent (#FBBF24), clean white/#F9FAFB surfaces, **Inter** typography, rounded soft UI + subtle shadows. Centralized in `src/theme.ts` so it propagates across all screens/components. Dark surfaces recolored to premium dark-green (#0F1F17). Donate screen now a 6-preset 3-col grid.
+- **Image auto-compress:** `MediaUploader` resizes to max width 1400 + JPEG compress 0.6 (expo-image-manipulator) before upload. Videos passed through.
+- **Supabase:** connection VERIFIED via IPv4 pooler `aws-0-eu-central-1.pooler.supabase.com:6543` (user `postgres.rbxoajdceezxcyqfbylj`, Postgres 17.6). Direct `db.<ref>:5432` is IPv6-only (unreachable). Saved as `SUPABASE_DB_URL` in backend/.env. NEXT: migrate data layer (motor → asyncpg/SQL) as a dedicated task.

@@ -13,7 +13,7 @@ import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira } from "@/src/format";
 
-const PRESETS = [100000, 250000, 500000, 1000000]; // kobo: ₦1,000 / 2,500 / 5,000 / 10,000
+const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
 export default function Donate() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -154,7 +154,7 @@ export default function Donate() {
               style={[styles.amount, !custom && amount === p && styles.amountActive]}
             >
               <AppText variant="title" color={!custom && amount === p ? colors.onBrandPrimary : colors.onSurface}>
-                {formatNaira(p)}
+                {formatNaira(p, { compact: true })}
               </AppText>
             </Pressable>
           ))}
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   campRow: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   thumb: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceTertiary },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
-  amount: { width: "47%", flexGrow: 1, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceSecondary, borderWidth: 1.5, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
+  amount: { width: "31%", flexGrow: 1, height: 60, borderRadius: radius.md, backgroundColor: colors.surfaceSecondary, borderWidth: 1.5, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
   amountActive: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
   customBox: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 56, marginTop: spacing.md },
   customInput: { flex: 1, marginLeft: spacing.sm, fontFamily: font.semibold, fontSize: 16, color: colors.onSurface },

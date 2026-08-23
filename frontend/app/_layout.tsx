@@ -32,12 +32,10 @@ const CDN = "https://cdn.jsdelivr.net/fontsource/fonts";
 export default function RootLayout() {
   const [iconsLoaded, iconsError] = useIconFonts();
   const [fontsLoaded, fontsError] = useFonts({
-    "Fraunces-SemiBold": `${CDN}/fraunces@latest/latin-600-normal.ttf`,
-    "Fraunces-Bold": `${CDN}/fraunces@latest/latin-700-normal.ttf`,
-    "Jakarta-Regular": `${CDN}/plus-jakarta-sans@latest/latin-400-normal.ttf`,
-    "Jakarta-Medium": `${CDN}/plus-jakarta-sans@latest/latin-500-normal.ttf`,
-    "Jakarta-SemiBold": `${CDN}/plus-jakarta-sans@latest/latin-600-normal.ttf`,
-    "Jakarta-Bold": `${CDN}/plus-jakarta-sans@latest/latin-700-normal.ttf`,
+    "Inter-Regular": `${CDN}/inter@latest/latin-400-normal.ttf`,
+    "Inter-Medium": `${CDN}/inter@latest/latin-500-normal.ttf`,
+    "Inter-SemiBold": `${CDN}/inter@latest/latin-600-normal.ttf`,
+    "Inter-Bold": `${CDN}/inter@latest/latin-700-normal.ttf`,
   });
 
   const ready = (iconsLoaded || iconsError) && (fontsLoaded || fontsError);

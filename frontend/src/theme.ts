@@ -1,69 +1,85 @@
-// GoodCause design tokens (from design_guidelines.json). Warm terracotta / sand. No blue/indigo/purple.
+// GoodCause design tokens — Deep green primary, warm gold accent, clean white. (Inter / SF Pro)
 export const colors = {
-  surface: "#FAF8F5",
-  onSurface: "#2C2926",
+  // surfaces
+  surface: "#F9FAFB",
+  onSurface: "#111827",
   surfaceSecondary: "#FFFFFF",
-  onSurfaceSecondary: "#3F3C38",
-  surfaceTertiary: "#F1EFEA",
-  onSurfaceTertiary: "#5C5954",
-  surfaceInverse: "#23211F",
-  onSurfaceInverse: "#F5F3EE",
-  brand: "#C05C3D",
-  brandPrimary: "#C05C3D",
+  onSurfaceSecondary: "#374151",
+  surfaceTertiary: "#F3F4F6",
+  onSurfaceTertiary: "#6B7280",
+  surfaceInverse: "#0F1F17",
+  onSurfaceInverse: "#F0FDF4",
+
+  // brand (deep green)
+  brand: "#16A34A",
+  brandPrimary: "#16A34A",
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#E18E70",
-  brandTertiary: "#F5DCD3",
-  onBrandTertiary: "#7A3520",
-  success: "#2D7A5D",
+  brandSecondary: "#22C55E",
+  brandTertiary: "#DCFCE7",
+  onBrandTertiary: "#15803D",
+  brandDark: "#166534",
+
+  // accent (warm gold)
+  accent: "#FBBF24",
+  accentStrong: "#D97706",
+  onAccent: "#78350F",
+  accentTint: "#FEF3C7",
+
+  // semantic
+  success: "#16A34A",
   onSuccess: "#FFFFFF",
-  warning: "#D99026",
+  warning: "#D97706",
   onWarning: "#FFFFFF",
-  error: "#B83A3A",
+  error: "#DC2626",
   onError: "#FFFFFF",
-  info: "#4A6E82",
+  info: "#2563EB",
   onInfo: "#FFFFFF",
-  border: "#E8E4DB",
-  borderStrong: "#CFC9BC",
-  divider: "#E8E4DB",
-  muted: "#8A857D",
+
+  // lines / neutrals
+  border: "#E5E7EB",
+  borderStrong: "#D1D5DB",
+  divider: "#EEF0F2",
+  muted: "#9CA3AF",
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 };
-export const radius = { sm: 6, md: 12, lg: 20, pill: 999 };
+export const radius = { sm: 8, md: 14, lg: 20, xl: 28, pill: 999 };
 
+// Inter across the app (per design spec).
 export const font = {
-  display: "Fraunces-Bold",
-  displaySemi: "Fraunces-SemiBold",
-  regular: "Jakarta-Regular",
-  medium: "Jakarta-Medium",
-  semibold: "Jakarta-SemiBold",
-  bold: "Jakarta-Bold",
+  display: "Inter-Bold",
+  displaySemi: "Inter-SemiBold",
+  regular: "Inter-Regular",
+  medium: "Inter-Medium",
+  semibold: "Inter-SemiBold",
+  bold: "Inter-Bold",
 };
 
 export const shadow = {
   card: {
-    shadowColor: "#2C2926",
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#0B1F13",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowRadius: 14,
     elevation: 2,
   },
   raised: {
-    shadowColor: "#2C2926",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowColor: "#0B1F13",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    elevation: 8,
   },
 };
 
+// Category accent colors — green-forward with tasteful variety on white.
 export const CATEGORY_COLORS: Record<string, string> = {
-  medical: "#B83A3A",
-  education: "#4A6E82",
-  emergency: "#D99026",
-  community: "#2D7A5D",
-  memorial: "#7A3520",
-  business: "#C05C3D",
-  environment: "#2D7A5D",
-  animals: "#5C5954",
+  medical: "#16A34A",
+  education: "#2563EB",
+  emergency: "#D97706",
+  community: "#0D9488",
+  memorial: "#7C3AED",
+  business: "#DB2777",
+  environment: "#059669",
+  animals: "#B45309",
 };
