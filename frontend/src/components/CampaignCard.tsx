@@ -27,64 +27,38 @@ export type Campaign = {
 const BLUR = "L6PZfSjE.AyE_3t7t7R**0o#DgR4";
 
 function catColor(name?: string) {
-  return CATEGORY_COLORS[(name || "").toLowerCase()] || colors.coral;
+  return CATEGORY_COLORS[(name || "").toLowerCase()] || colors.brandPrimary;
 }
 
 export function FeaturedCard({ c, onPress }: { c: Campaign; onPress: () => void }) {
   const { width } = useWindowDimensions();
   const w = Math.min(width - spacing.lg * 2, 520);
   const dl = daysLeft(c.deadline);
-
   return (
-    <Pressable
-      testID={`featured-card-${c.id}`}
-      onPress={onPress}
-      style={({ pressed }) => [{ width: w }, pressed && { opacity: 0.96 }]}
-    >
+    <Pressable testID={`featured-card-${c.id}`} onPress={onPress} style={({ pressed }) => [{ width: w }, pressed && { opacity: 0.95 }]}>
       <View style={styles.heroWrap}>
-        <Image
-          source={{ uri: c.cover_image }}
-          placeholder={BLUR}
-          style={styles.heroImg}
-          contentFit="cover"
-          transition={250}
-        />
-        <LinearGradient
-          colors={["rgba(15,23,42,0.15)", "rgba(15,23,42,0.45)", "rgba(15,23,42,0.92)"]}
-          style={StyleSheet.absoluteFill}
-        />
+        <Image source={{ uri: c.cover_image }} placeholder={BLUR} style={styles.heroImg} contentFit="cover" transition={250} />
+        <LinearGradient colors={["transparent", "rgba(35,33,31,0.35)", "rgba(35,33,31,0.92)"]} style={StyleSheet.absoluteFill} />
         <View style={styles.heroTopRow}>
-          <View style={[styles.catPill, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
-            <View style={[styles.catDot, { backgroundColor: catColor(c.category_name) }]} />
-            <AppText variant="caption" color={colors.onSurface} style={{ marginLeft: 6, fontFamily: "Inter-SemiBold" }}>
-              {c.category_name}
-            </AppText>
+          <View style={[styles.catPill, { backgroundColor: catColor(c.category_name) }]}>
+            <AppText variant="caption" color="#fff">{c.category_name}</AppText>
           </View>
           {c.urgent ? (
-            <View style={[styles.catPill, { backgroundColor: colors.coral }]}>
+            <View style={[styles.catPill, { backgroundColor: colors.warning }]}>
               <Feather name="clock" size={11} color="#fff" />
-              <AppText variant="caption" color="#fff" style={{ marginLeft: 4, fontFamily: "Inter-Bold" }}>
-                Urgent
-              </AppText>
+              <AppText variant="caption" color="#fff" style={{ marginLeft: 4 }}>Urgent</AppText>
             </View>
           ) : null}
         </View>
-
         <View style={styles.heroContent}>
-          <AppText variant="h1" color="#fff" numberOfLines={2} style={styles.heroTitle}>
-            {c.title}
-          </AppText>
+          <AppText variant="h1" color="#fff" numberOfLines={2}>{c.title}</AppText>
           <View style={{ marginTop: spacing.md }}>
-            <ProgressBar percent={c.percent} color="#FFFFFF" />
+            <ProgressBar percent={c.percent} color="#fff" />
             <View style={styles.heroStatsRow}>
-              <AppText variant="label" color="#fff" style={{ fontFamily: "Inter-SemiBold" }}>
-                {formatNaira(c.raised_kobo, { compact: true })} raised of {formatNaira(c.goal_kobo, { compact: true })}
+              <AppText variant="label" color="#fff">
+                {formatNaira(c.raised_kobo, { compact: true })} of {formatNaira(c.goal_kobo, { compact: true })}
               </AppText>
-              <View style={styles.percentBadge}>
-                <AppText variant="caption" color="#fff" style={{ fontFamily: "Inter-Bold" }}>
-                  {c.percent}%
-                </AppText>
-              </View>
+              <AppText variant="label" color="rgba(255,255,255,0.85)">{c.percent}%</AppText>
             </View>
             <View style={styles.heroMeta}>
               <AppText variant="caption" color="rgba(255,255,255,0.85)">
@@ -100,62 +74,27 @@ export function FeaturedCard({ c, onPress }: { c: Campaign; onPress: () => void 
 
 export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void }) {
   const dl = daysLeft(c.deadline);
-
   return (
-    <Pressable
-      testID={`campaign-card-${c.id}`}
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }]}
-    >
-      <View style={styles.thumbWrap}>
-        <Image
-          source={{ uri: c.cover_image }}
-          placeholder={BLUR}
-          style={styles.thumb}
-          contentFit="cover"
-          transition={200}
-        />
-        <View style={styles.thumbPercentPill}>
-          <AppText variant="caption" color="#fff" style={{ fontSize: 10, fontFamily: "Inter-Bold" }}>
-            {c.percent}%
+    <Pressable testID={`campaign-card-${c.id}`} onPress={onPress} style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}>
+      <Image source={{ uri: c.cover_image }} placeholder={BLUR} style={styles.thumb} contentFit="cover" transition={200} />
+      <View style={{ flex: 1, marginLeft: spacing.md }}>
+        <View style={styles.rowBetween}>
+          <View style={[styles.catDot, { backgroundColor: catColor(c.category_name) }]} />
+          <AppText variant="caption" color={catColor(c.category_name)} style={{ flex: 1, marginLeft: 6 }}>
+            {c.category_name}
           </AppText>
+          <VerifiedBadge status={c.verification_status} />
         </View>
-      </View>
-
-      <View style={{ flex: 1, marginLeft: spacing.md, justifyContent: "space-between" }}>
-        <View>
-          <View style={styles.rowBetween}>
-            <View style={styles.catLabelRow}>
-              <View style={[styles.catDot, { backgroundColor: catColor(c.category_name) }]} />
-              <AppText variant="caption" color={colors.onSurfaceTertiary} style={{ marginLeft: 5 }}>
-                {c.category_name}
-              </AppText>
-            </View>
-            <VerifiedBadge status={c.verification_status} />
-          </View>
-          <AppText variant="title" numberOfLines={2} style={styles.cardTitle}>
-            {c.title}
-          </AppText>
-        </View>
-
+        <AppText variant="title" numberOfLines={2} style={{ marginTop: 4 }}>{c.title}</AppText>
         <View style={{ marginTop: spacing.sm }}>
           <ProgressBar percent={c.percent} />
-          <View style={styles.cardFooterRow}>
-            <View>
-              <AppText variant="label" style={{ fontSize: 14, color: colors.onSurface }}>
-                {formatNaira(c.raised_kobo, { compact: true })}
-              </AppText>
-              <AppText variant="caption" color={colors.onSurfaceTertiary} style={{ fontSize: 11 }}>
-                goal: {formatNaira(c.goal_kobo, { compact: true })}
-              </AppText>
-            </View>
-
-            <View style={styles.giveMiniBtn}>
-              <AppText variant="caption" color="#fff" style={{ fontFamily: "Inter-Bold" }}>
-                Give
-              </AppText>
-              <Feather name="arrow-up-right" size={12} color="#fff" style={{ marginLeft: 2 }} />
-            </View>
+          <View style={styles.rowBetween}>
+            <AppText variant="label" style={{ marginTop: 6 }}>
+              {formatNaira(c.raised_kobo, { compact: true })} raised
+            </AppText>
+            <AppText variant="caption" style={{ marginTop: 6 }}>
+              {c.supporters_count} supporters{dl != null ? ` · ${dl}d left` : ""}
+            </AppText>
           </View>
         </View>
       </View>
@@ -165,122 +104,23 @@ export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void 
 
 const styles = StyleSheet.create({
   heroWrap: {
-    height: 270,
-    borderRadius: radius.xl,
-    overflow: "hidden",
-    backgroundColor: colors.surfaceTertiary,
+    height: 260, borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surfaceTertiary,
     ...shadow.card,
   },
-  heroImg: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-  },
+  heroImg: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
   heroTopRow: {
-    position: "absolute",
-    top: spacing.md,
-    left: spacing.md,
-    right: spacing.md,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    position: "absolute", top: spacing.md, left: spacing.md, right: spacing.md,
+    flexDirection: "row", justifyContent: "space-between",
   },
-  catPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    ...shadow.soft,
-  },
-  heroContent: {
-    position: "absolute",
-    left: spacing.lg,
-    right: spacing.lg,
-    bottom: spacing.lg,
-  },
-  heroTitle: {
-    fontSize: 22,
-    letterSpacing: -0.3,
-  },
-  heroStatsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  percentBadge: {
-    backgroundColor: colors.coral,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  heroMeta: {
-    marginTop: 4,
-  },
+  catPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  heroContent: { position: "absolute", left: spacing.lg, right: spacing.lg, bottom: spacing.lg },
+  heroStatsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm },
+  heroMeta: { marginTop: 4 },
   card: {
-    flexDirection: "row",
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: 120,
-    ...shadow.card,
+    flexDirection: "row", backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg,
+    padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.card,
   },
-  thumbWrap: {
-    position: "relative",
-    width: 100,
-    height: 100,
-  },
-  thumb: {
-    width: 100,
-    height: 100,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceTertiary,
-  },
-  thumbPercentPill: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    backgroundColor: "rgba(15, 23, 42, 0.82)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  catLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontFamily: "Inter-SemiBold",
-    marginTop: 4,
-    color: colors.onSurface,
-  },
-  cardFooterRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: 6,
-  },
-  giveMiniBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.coral,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    ...shadow.soft,
-  },
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  catDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
+  thumb: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  catDot: { width: 8, height: 8, borderRadius: 4 },
 });
-
