@@ -231,3 +231,36 @@ CREATE TABLE IF NOT EXISTS media (
 
 CREATE INDEX IF NOT EXISTS idx_media_owner ON media(owner_id);
 
+-- 15. BANK ACCOUNTS
+CREATE TABLE IF NOT EXISTS bank_accounts (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bank_name VARCHAR(120) NOT NULL,
+    bank_code VARCHAR(30) NOT NULL,
+    account_number VARCHAR(20) NOT NULL,
+    account_name VARCHAR(160) NOT NULL,
+    recipient_code VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_user ON bank_accounts(user_id);
+
+-- 16. PAYOUTS & DISBURSEMENTS
+CREATE TABLE IF NOT EXISTS payouts (
+    id VARCHAR(64) PRIMARY KEY,
+    campaign_id VARCHAR(64) NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount_kobo BIGINT NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'NGN',
+    bank_name VARCHAR(120) NOT NULL,
+    account_number VARCHAR(20) NOT NULL,
+    account_name VARCHAR(160) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'SUCCESS',
+    reference VARCHAR(120),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payouts_campaign ON payouts(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts(user_id);
+
+
