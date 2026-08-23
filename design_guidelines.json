@@ -1,0 +1,200 @@
+{
+  "app_name": "GoodCause",
+  "personality": "1 iOS-Native Clean structure with 3 Editorial Mobile typography and warmth",
+  "personality_one_liner": "A premium, warm, and trustworthy platform that uses elegant typography and earth-toned colors to tell human stories, backed by clear, authoritative verification structures.",
+  "color": {
+    "surface": "#FAF8F5",
+    "onSurface": "#2C2926",
+    "surfaceSecondary": "#FFFFFF",
+    "onSurfaceSecondary": "#3F3C38",
+    "surfaceTertiary": "#F1EFEA",
+    "onSurfaceTertiary": "#5C5954",
+    "surfaceInverse": "#23211F",
+    "onSurfaceInverse": "#F5F3EE",
+    "brand": "#C05C3D",
+    "brandPrimary": "#C05C3D",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#E18E70",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#F5DCD3",
+    "onBrandTertiary": "#7A3520",
+    "success": "#2D7A5D",
+    "onSuccess": "#FFFFFF",
+    "warning": "#D99026",
+    "onWarning": "#FFFFFF",
+    "error": "#B83A3A",
+    "onError": "#FFFFFF",
+    "info": "#4A6E82",
+    "onInfo": "#FFFFFF",
+    "border": "#E8E4DB",
+    "borderStrong": "#CFC9BC",
+    "divider": "#E8E4DB",
+    "surface_dark": "#161514",
+    "onSurface_dark": "#EAE8E3",
+    "surfaceSecondary_dark": "#22201E",
+    "onSurfaceSecondary_dark": "#D3D0CA",
+    "surfaceTertiary_dark": "#2E2B29",
+    "onSurfaceTertiary_dark": "#A5A199",
+    "surfaceInverse_dark": "#F5F3EE",
+    "onSurfaceInverse_dark": "#23211F",
+    "brandPrimary_dark": "#D66B4A",
+    "onBrandPrimary_dark": "#FFFFFF",
+    "brandSecondary_dark": "#E89B80",
+    "onBrandSecondary_dark": "#FFFFFF",
+    "brandTertiary_dark": "#452419",
+    "onBrandTertiary_dark": "#F2C7BA",
+    "success_dark": "#3C9674",
+    "onSuccess_dark": "#FFFFFF",
+    "warning_dark": "#E8AA42",
+    "onWarning_dark": "#FFFFFF",
+    "error_dark": "#D15252",
+    "onError_dark": "#FFFFFF",
+    "border_dark": "#35322F",
+    "borderStrong_dark": "#4A4743",
+    "divider_dark": "#35322F"
+  },
+  "typography": {
+    "displayFontFamily": "Fraunces",
+    "textFontFamily": "Plus Jakarta Sans",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous spacing. Use safe-area for root elements. Maintain at least 16px padding on screen edges.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Feather",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use on bottom tab bar when content scrolls behind it",
+      "Use on sticky CTAs fixed at the bottom of Campaign Details or Donation flow",
+      "Use on featured hero cards overlaying campaign images"
+    ],
+    "dont's": [
+      "Do not use on regular campaign cards in feed",
+      "Do not use on text-heavy form areas",
+      "Do not rely solely on glass without a proper translucent tinted base for readability"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Home",
+      "purpose": "Discover trustworthy causes effortlessly via engaging editorial cards.",
+      "states": {
+        "loading": "Skeleton cards with soft pulsing opacity",
+        "empty": "Branded illustration of community hands + 'No causes found' + 'Create one' CTA",
+        "error": "Human readable 'Something went wrong' + Retry button"
+      },
+      "layout": "Vertical ScrollView. 1. Greeting header (sans-serif). 2. 'Featured' section: Hero-sized cards with large image, bottom gradient scrim, title, and determinate progress bar (text: '₦1.5M of ₦2M'). 3. Horizontal scrolling category chips. 4. Vertical list of standard campaign cards. Single column filling width."
+    },
+    {
+      "name": "Campaign Details",
+      "purpose": "Tell the human story, establish absolute trust, and drive donations.",
+      "states": {
+        "loading": "Spinner centered",
+        "empty": "Illustration + 'Campaign not found'",
+        "error": "Error message + Retry button"
+      },
+      "layout": "Vertical ScrollView with fixed Safe-Area bottom container for 'Support this cause' CTA. 1. Full-bleed Hero Image at top. 2. Title (Fraunces). 3. Organizer row with Avatar + compact Verified badge. 4. Progress bar with exact numbers. 5. 'Trust Card': dedicated surfaceSecondary block showing specific verification checks (Identity: Verified, Funds: Secured). 6. Story & Budget. 7. Fixed glassmorphism CTA bottom bar."
+    },
+    {
+      "name": "Donation Flow",
+      "purpose": "Frictionless, step-by-step contribution to a campaign.",
+      "states": {
+        "loading": "Transparent overlay spinner",
+        "empty": "N/A",
+        "error": "Inline red text below failed step"
+      },
+      "layout": "Presented as a sheet or focused screen. Step 1: Preset amount grid (₦1,000 / ₦2,500 / ₦5,000 / ₦10,000 / Custom) wrapping beautifully. Step 2: Public/Anonymous toggle and message. Bottom anchored primary CTA inside a fixed container. Success state replaces view with a Shareable Impact Card."
+    },
+    {
+      "name": "Create Flow",
+      "purpose": "Guide the organizer through a trusted, clear 9-step campaign builder.",
+      "states": {
+        "loading": "Spinner on submit",
+        "empty": "N/A",
+        "error": "Inline validation"
+      },
+      "layout": "Thin determinate progress bar anchored to the top header ('Step 2 of 9'). Main content uses card-based layout (one idea per card/step). Forms are stacked vertically. Sticky 'Next' / 'Submit' CTA at the bottom in KeyboardAvoidingView."
+    },
+    {
+      "name": "Impact Dashboard",
+      "purpose": "Celebrate the user's giving journey through warm, human language.",
+      "states": {
+        "loading": "Spinner",
+        "empty": "Warm illustration + 'Start your giving journey today'",
+        "error": "Error + Retry"
+      },
+      "layout": "Editorial-style stats display. Large display numbers (Fraunces). 'You have contributed...' instead of sterile 'Total: X'. List of recently followed/supported campaigns below."
+    }
+  ],
+  "images": {
+    "hero_school": {
+      "url": "https://images.unsplash.com/photo-1584750153892-38414eb8e76a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwxfHxjb21tdW5pdHklMjBzY2hvb2wlMjBidWlsZGluZyUyMHByb2plY3R8ZW58MHx8fHwxNzg3NDgwMzMyfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Brown and black concrete community school building"
+    },
+    "hero_medical": {
+      "url": "https://images.unsplash.com/photo-1631815590058-860e4f83c1e8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxtZWRpY2FsJTIwc3RhZmYlMjBoZWxwaW5nJTIwcGF0aWVudHxlbnwwfHx8fDE3ODc0ODAzMzJ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Healthcare worker helping a patient"
+    },
+    "organizer_avatar": {
+      "url": "https://images.unsplash.com/photo-1614023342667-6f060e9d1e04?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBhZnJpY2FuJTIwc3RhcnR1cCUyMGZvdW5kZXJ8ZW58MHx8fHwxNzg3NDgwMzMyfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Modern African startup founder smiling"
+    },
+    "empty_state": {
+      "url": "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxjb21tdW5pdHklMjBoYW5kcyUyMHRvZ2V0aGVyfGVufDB8fHx8MTc4NzQ4MDMyMnww&ixlib=rb-4.1.0&q=85",
+      "alt": "Community hands gathered together in support"
+    }
+  },
+  "haptics": {
+    "tab_press": "light",
+    "primary_button_press": "medium",
+    "donation_amount_select": "light",
+    "donation_success": "success",
+    "step_complete": "medium"
+  },
+  "instructions_to_main_agent": [
+    "NO BLUE, INDIGO, OR PURPLE HUES anywhere in the app, including gradients. Stick to the Warm Rust/Terracotta palette provided.",
+    "Implement the Trust Card on the Campaign Details screen explicitly: do not rely on color alone; pair verification text with solid iconography (e.g., Feather's check-circle or shield). It must look authoritative.",
+    "For all images that contain text overlay (like the hero cards in the Home feed or Campaign Details cover), apply a vertical linear-gradient scrim (transparent at 0% to 70%+ surfaceInverse at 100%) to ensure WCAG AA contrast for the text.",
+    "Ensure the CTA on Campaign Details and the Donation flow is sticky at the bottom, using Safe Area and a glassmorphism (or solid surface) background to prevent scroll collision.",
+    "Progress bars must be determinate (never looping/indeterminate) and paired with clear text values (e.g., '₦1.5M of ₦2M'), not just a percentage.",
+    "Never use raw system fonts; integrate 'Fraunces' for display/headings and 'Plus Jakarta Sans' for text/UI.",
+    "Use custom SVGs or strictly @expo/vector-icons (Feather). Emojis are strictly banned from the UI.",
+    "For dark mode implementation, utilize the `_dark` suffix color tokens specified in the color block.",
+    "Research Insight: Break donation process into short step-by-step sequences. Monolithic donation forms cause abandonment. Post-donation, immediately provide pre-formatted, clean share cards.",
+    "Research Insight: Keep verification badges compact and un-animated. Avoid badge inflation; only show Verified when specific criteria are met."
+  ]
+}
