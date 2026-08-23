@@ -7,19 +7,13 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 from fastapi import Header, HTTPException
-from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
+from supabase_adapter import db
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-MONGO_URL = os.environ["MONGO_URL"]
-DB_NAME = os.environ["DB_NAME"]
-JWT_SECRET = os.environ["JWT_SECRET"]
-
-client = AsyncIOMotorClient(MONGO_URL)
-db = client[DB_NAME]
-
+JWT_SECRET = os.environ.get("JWT_SECRET", "goodcause_super_secret_jwt_key_2026_nigeria_trusted")
 SESSION_DAYS = 7
 
 
@@ -184,7 +178,9 @@ def campaign_percent(raised: int, goal: int) -> int:
 
 
 async def serialize_campaign(doc: dict, viewer: Optional[dict] = None, detail: bool = False) -> dict:
-    organizer = await db.users.find_one({"id": doc.get("organizer_id")}, {"_id": 0})
+    organizer = None
+    if detail and doc.get("organizer_id"):
+        organizer = await db.users.find_one({"id": doc.get("organizer_id")}, {"_id": 0})
     raised = doc.get("raised_kobo", 0)
     goal = doc.get("goal_kobo", 0)
     out = {
@@ -208,7 +204,7 @@ async def serialize_campaign(doc: dict, viewer: Optional[dict] = None, detail: b
         "location": doc.get("location"),
         "created_at": doc.get("created_at"),
         "published_at": doc.get("published_at"),
-        "organizer": public_user(organizer),
+        "organizer": public_user(organizer) if organizer else None,
     }
     if detail:
         out.update({

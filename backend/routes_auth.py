@@ -30,84 +30,84 @@ class SessionIn(BaseModel):
 
 
 ADMIN_EMAILS = {"admin@goodcause.ng", "faithfulgodwinc@gmail.com"}
- 
- 
- def _user_out(u: dict) -> dict:
-     return {
-         "id": u["id"], "email": u.get("email"), "name": u.get("name"),
-         "picture": u.get("picture"), "role": u.get("role", "donor"),
-         "bio": u.get("bio"), "verified_organizer": u.get("verified_organizer", False),
-         "created_at": u.get("created_at"),
-     }
- 
- 
- @router.post("/register")
- async def register(body: RegisterIn):
-     email = body.email.lower().strip()
-     if await db.users.find_one({"email": email}):
-         raise HTTPException(status_code=409, detail="An account with this email already exists.")
-     is_admin = email in ADMIN_EMAILS
-     user = {
-         "id": uid("usr_"), "email": email, "name": body.name.strip(),
-         "password_hash": hash_password(body.password), "picture": None,
-         "role": "admin" if is_admin else "donor", "bio": None,
-         "verified_organizer": is_admin,
-         "auth_provider": "password", "created_at": now_iso(),
-     }
-     await db.users.insert_one(user)
-     await track("signup", user["id"], {"provider": "password"})
-     return {"token": create_jwt(user["id"]), "user": _user_out(user)}
- 
- 
- @router.post("/login")
- async def login(body: LoginIn):
-     email = body.email.lower().strip()
-     user = await db.users.find_one({"email": email}, {"_id": 0})
-     if not user or not user.get("password_hash") or not verify_password(body.password, user["password_hash"]):
-         raise HTTPException(status_code=401, detail="Incorrect email or password.")
-     if email in ADMIN_EMAILS and user.get("role") != "admin":
-         await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
-         user["role"] = "admin"
-         user["verified_organizer"] = True
-     await track("login", user["id"], {"provider": "password"})
-     return {"token": create_jwt(user["id"]), "user": _user_out(user)}
- 
- 
- @router.post("/session")
- async def google_session(body: SessionIn):
-     async with httpx.AsyncClient(timeout=15) as http:
-         try:
-             resp = await http.get(EMERGENT_SESSION_URL, headers={"X-Session-ID": body.session_id})
-         except Exception:
-             raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
-     if resp.status_code != 200:
-         raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
-     data = resp.json()
-     email = (data.get("email") or "").lower().strip()
-     if not email:
-         raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
- 
-     is_admin = email in ADMIN_EMAILS
-     existing = await db.users.find_one({"email": email}, {"_id": 0})
-     if existing:
-         user = existing
-         update_fields = {"picture": data.get("picture") or user.get("picture")}
-         if is_admin and user.get("role") != "admin":
-             update_fields["role"] = "admin"
-             update_fields["verified_organizer"] = True
-             user["role"] = "admin"
-             user["verified_organizer"] = True
-         await db.users.update_one({"id": user["id"]}, {"$set": update_fields})
-     else:
-         user = {
-             "id": uid("usr_"), "email": email, "name": data.get("name") or email.split("@")[0],
-             "password_hash": None, "picture": data.get("picture"),
-             "role": "admin" if is_admin else "donor", "bio": None,
-             "verified_organizer": is_admin,
-             "auth_provider": "google", "created_at": now_iso(),
-         }
-         await db.users.insert_one(user)
-         await track("signup", user["id"], {"provider": "google"})
+
+
+def _user_out(u: dict) -> dict:
+    return {
+        "id": u["id"], "email": u.get("email"), "name": u.get("name"),
+        "picture": u.get("picture"), "role": u.get("role", "donor"),
+        "bio": u.get("bio"), "verified_organizer": u.get("verified_organizer", False),
+        "created_at": u.get("created_at"),
+    }
+
+
+@router.post("/register")
+async def register(body: RegisterIn):
+    email = body.email.lower().strip()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
+    is_admin = email in ADMIN_EMAILS
+    user = {
+        "id": uid("usr_"), "email": email, "name": body.name.strip(),
+        "password_hash": hash_password(body.password), "picture": None,
+        "role": "admin" if is_admin else "donor", "bio": None,
+        "verified_organizer": is_admin,
+        "auth_provider": "password", "created_at": now_iso(),
+    }
+    await db.users.insert_one(user)
+    await track("signup", user["id"], {"provider": "password"})
+    return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+
+
+@router.post("/login")
+async def login(body: LoginIn):
+    email = body.email.lower().strip()
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user or not user.get("password_hash") or not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Incorrect email or password.")
+    if email in ADMIN_EMAILS and user.get("role") != "admin":
+        await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+        user["role"] = "admin"
+        user["verified_organizer"] = True
+    await track("login", user["id"], {"provider": "password"})
+    return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+
+
+@router.post("/session")
+async def google_session(body: SessionIn):
+    async with httpx.AsyncClient(timeout=15) as http:
+        try:
+            resp = await http.get(EMERGENT_SESSION_URL, headers={"X-Session-ID": body.session_id})
+        except Exception:
+            raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
+    data = resp.json()
+    email = (data.get("email") or "").lower().strip()
+    if not email:
+        raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
+
+    is_admin = email in ADMIN_EMAILS
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing:
+        user = existing
+        update_fields = {"picture": data.get("picture") or user.get("picture")}
+        if is_admin and user.get("role") != "admin":
+            update_fields["role"] = "admin"
+            update_fields["verified_organizer"] = True
+            user["role"] = "admin"
+            user["verified_organizer"] = True
+        await db.users.update_one({"id": user["id"]}, {"$set": update_fields})
+    else:
+        user = {
+            "id": uid("usr_"), "email": email, "name": data.get("name") or email.split("@")[0],
+            "password_hash": None, "picture": data.get("picture"),
+            "role": "admin" if is_admin else "donor", "bio": None,
+            "verified_organizer": is_admin,
+            "auth_provider": "google", "created_at": now_iso(),
+        }
+        await db.users.insert_one(user)
+        await track("signup", user["id"], {"provider": "google"})
 
     session_token = data.get("session_token") or uid("st_")
     await db.user_sessions.insert_one({

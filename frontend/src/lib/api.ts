@@ -1,8 +1,24 @@
 // Central API client. Talks ONLY to the FastAPI backend at EXPO_PUBLIC_BACKEND_URL + /api.
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { storage } from "@/src/utils/storage";
 
-const BASE = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api`;
+export function getBaseUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+  if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
+    return `${envUrl}/api`;
+  }
+  // If on mobile native and host is localhost, resolve dynamically from expo hostUri
+  if (Platform.OS !== "web") {
+    const hostUri = Constants.expoConfig?.hostUri;
+    if (hostUri) {
+      const ip = hostUri.split(":")[0];
+      if (ip) return `http://${ip}:8000/api`;
+    }
+  }
+  return `${envUrl || "http://192.168.1.22:8000"}/api`;
+}
+
 export const TOKEN_KEY = "gc_auth_token";
 
 let memToken: string | null = null;
@@ -37,9 +53,10 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     const token = await loadToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
+  const base = getBaseUrl();
   let resp: Response;
   try {
-    resp = await fetch(`${BASE}${path}`, {
+    resp = await fetch(`${base}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -84,7 +101,8 @@ export async function uploadMedia(uri: string, name: string, type: string): Prom
   } else {
     form.append("file", { uri, name, type } as any);
   }
-  const resp = await fetch(`${BASE}/upload`, {
+  const base = getBaseUrl();
+  const resp = await fetch(`${base}/upload`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: form,
@@ -95,5 +113,5 @@ export async function uploadMedia(uri: string, name: string, type: string): Prom
   if (!resp.ok) {
     throw new ApiError(resp.status, (data && data.detail) || "We couldn't upload that file. Please try again.");
   }
-  return { url: `${process.env.EXPO_PUBLIC_BACKEND_URL}${data.url}`, kind: data.kind };
+  return { url: `${base.replace(/\/api$/, '')}${data.url}`, kind: data.kind };
 }

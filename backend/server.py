@@ -71,23 +71,12 @@ logger = logging.getLogger("goodcause")
 
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("id", unique=True)
-    await db.user_sessions.create_index("session_token", unique=True)
-    await db.campaigns.create_index("organizer_id")
-    await db.campaigns.create_index("status")
-    await db.campaigns.create_index("category_id")
-    await db.donations.create_index("reference", unique=True)
-    await db.donations.create_index("campaign_id")
-    await db.donations.create_index("donor_id")
-    await db.notifications.create_index("user_id")
-    await db.campaign_followers.create_index([("campaign_id", 1), ("user_id", 1)])
-    await db.saved_campaigns.create_index([("campaign_id", 1), ("user_id", 1)])
+    import supabase_db
     try:
-        await seed()
-        logger.info("Seed complete.")
+        await supabase_db.get_pool()
+        logger.info("Supabase PostgreSQL pool connected successfully.")
     except Exception as e:
-        logger.exception("Seed failed: %s", e)
+        logger.exception("Supabase pool connection failed: %s", e)
     try:
         init_storage()
         logger.info("Object storage ready.")
@@ -97,4 +86,5 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    db.client.close()
+    import supabase_db
+    await supabase_db.close_pool()
