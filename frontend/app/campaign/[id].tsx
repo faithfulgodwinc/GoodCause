@@ -326,7 +326,23 @@ export default function CampaignDetail() {
           <Feather name="heart" size={20} color={c.is_following ? colors.error : colors.onSurface} />
         </Pressable>
         {isOrganizer ? (
-          <Button title="Share campaign" icon="share-2" onPress={() => setShareOpen(true)} style={{ flex: 1 }} testID="detail-organizer-share" />
+          <View style={{ flex: 1, flexDirection: "row", gap: spacing.sm }}>
+            <Button
+              title="Withdraw"
+              icon="credit-card"
+              onPress={() => router.push(`/payouts/${id}`)}
+              style={{ flex: 1, backgroundColor: colors.brandPrimary }}
+              testID="detail-organizer-withdraw"
+            />
+            <Button
+              title="Share"
+              icon="share-2"
+              variant="outline"
+              onPress={() => setShareOpen(true)}
+              style={{ flex: 1 }}
+              testID="detail-organizer-share"
+            />
+          </View>
         ) : (
           <Button
             title={canDonate ? "Support this cause" : "Not accepting donations"}

@@ -40,12 +40,28 @@ function MyCampaigns() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
           {items.map((c) => (
-            <View key={c.id}>
+            <View key={c.id} style={{ gap: spacing.xs }}>
               <View style={styles.statusRow}>
                 <VerifiedBadge status={c.verification_status} />
                 <AppText variant="caption" style={{ marginLeft: spacing.sm }}>{c.status}</AppText>
               </View>
               <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: 4 }}>
+                <Button
+                  title="Withdraw funds"
+                  icon="credit-card"
+                  small
+                  variant="outline"
+                  onPress={() => router.push(`/payouts/${c.id}`)}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title="View page"
+                  small
+                  onPress={() => router.push(`/campaign/${c.id}`)}
+                  style={{ flex: 1, backgroundColor: colors.brandPrimary }}
+                />
+              </View>
             </View>
           ))}
         </ScrollView>

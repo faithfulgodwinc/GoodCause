@@ -161,6 +161,13 @@ async def get_campaign_payouts(id: str, user: dict = Depends(get_current_user)):
 
     # Fetch bank account
     bank_info = camp.get("payout_bank")
+    if isinstance(bank_info, str):
+        try:
+            import json
+            bank_info = json.loads(bank_info)
+        except Exception:
+            pass
+
     if not bank_info and camp.get("bank_account_id"):
         acc = await db.bank_accounts.find_one({"id": camp["bank_account_id"]})
         if acc:
