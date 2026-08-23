@@ -52,7 +52,7 @@ function MyCampaigns() {
                   icon="credit-card"
                   small
                   variant="outline"
-                  onPress={() => router.push(`/payouts/${c.id}`)}
+                  onPress={() => router.push({ pathname: "/payouts/[id]", params: { id: c.id } } as any)}
                   style={{ flex: 1 }}
                 />
                 <Button

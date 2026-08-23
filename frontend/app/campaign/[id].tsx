@@ -330,7 +330,7 @@ export default function CampaignDetail() {
             <Button
               title="Withdraw"
               icon="credit-card"
-              onPress={() => router.push(`/payouts/${id}`)}
+              onPress={() => router.push({ pathname: "/payouts/[id]", params: { id } } as any)}
               style={{ flex: 1, backgroundColor: colors.brandPrimary }}
               testID="detail-organizer-withdraw"
             />

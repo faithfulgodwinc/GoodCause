@@ -129,7 +129,7 @@ export function Card({ children, style, onPress, testID }: {
 }
 
 /* ---------------- ProgressBar ---------------- */
-export function ProgressBar({ percent, color = colors.brandAccent, height = 4 }: {
+export function ProgressBar({ percent, color = colors.brandPrimary, height = 4 }: {
   percent: number; color?: string; height?: number;
 }) {
   const pct = Math.max(0, Math.min(100, percent || 0));
