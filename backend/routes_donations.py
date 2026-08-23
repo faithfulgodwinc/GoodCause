@@ -65,6 +65,13 @@ async def _apply_paid(reference: str) -> Optional[dict]:
     amt = donation["amount_kobo"] // 100
     await notify(campaign["organizer_id"], "donation_received", "New donation received",
                  f"You received ₦{amt:,} for “{campaign['title']}”.", campaign["id"])
+    # thank-you moment for the donor (non-anonymous, signed-in)
+    if donation.get("donor_id"):
+        await notify(donation["donor_id"], "donation_thankyou",
+                     "Thank you for your generosity 💛",
+                     f"Your ₦{amt:,} gift is helping move “{campaign['title']}” forward. "
+                     f"It's now at {new_pct}% of its goal.",
+                     campaign["id"])
     # milestone notifications
     for m in newly:
         title = "Campaign complete! 🎉" if m == 100 else f"{m}% milestone reached"

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare, Linking, FlatList } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -130,6 +130,30 @@ export default function CampaignDetail() {
           <Block title="The story">
             <AppText variant="body" style={{ lineHeight: 22 }}>{c.story}</AppText>
           </Block>
+
+          {/* Gallery */}
+          {Array.isArray(c.gallery) && c.gallery.filter((u: string) => u !== c.cover_image).length > 0 ? (
+            <View style={{ marginTop: spacing.xl }}>
+              <AppText variant="h2" style={{ marginBottom: spacing.md }}>Photos & video</AppText>
+              <FlatList
+                horizontal
+                data={c.gallery.filter((u: string) => u !== c.cover_image)}
+                keyExtractor={(u: string, i: number) => `${u}-${i}`}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: spacing.sm }}
+                renderItem={({ item }) => {
+                  const isVideo = /\.(mp4|mov|webm)(\?|$)/i.test(item);
+                  return isVideo ? (
+                    <Pressable onPress={() => Linking.openURL(item)} style={styles.galVideo}>
+                      <Feather name="play-circle" size={30} color="#fff" />
+                    </Pressable>
+                  ) : (
+                    <Image source={{ uri: item }} style={styles.galImg} contentFit="cover" transition={150} />
+                  );
+                }}
+              />
+            </View>
+          ) : null}
 
           {/* Budget */}
           {c.budget && c.budget.length > 0 ? (
@@ -327,6 +351,8 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   blockCard: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   budgetRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: spacing.md },
+  galImg: { width: 130, height: 100, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary },
+  galVideo: { width: 130, height: 100, borderRadius: radius.md, backgroundColor: colors.surfaceInverse, alignItems: "center", justifyContent: "center" },
   update: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   supporter: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
   cta: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.md, backgroundColor: colors.surfaceSecondary, borderTopWidth: 1, borderTopColor: colors.border },

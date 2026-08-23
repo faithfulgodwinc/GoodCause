@@ -21,8 +21,7 @@ Build **GoodCause**, a trusted community DONATION-based fundraising mobile app l
 ## Core Requirements (static)
 CREATE → VERIFY → PUBLISH → SHARE → DONATE → UPDATE → IMPACT. Trust profile (completed checks, not a guarantee). Campaign states DRAFT/SUBMITTED/UNDER_REVIEW/VERIFIED/LIVE/PAUSED/COMPLETED/REJECTED/SUSPENDED. Verification states PENDING/IN_REVIEW/VERIFIED/REQUIRES_MORE_INFORMATION/REJECTED. Milestones 25/50/75/90/100. Human error messages. Thoughtful empty states. NGN/kobo money. Never store card data; secrets in env.
 
-## Implemented (2026-08-23)
-- P0: Auth (JWT + Google), Home feed (6 sections), Explore (search + category chip row), Campaign detail (hero, organizer, progress, beneficiary, story, budget, Trust card, updates, supporters, share modal w/ QR, report), Donation sandbox flow (presets/custom/anonymous/message → success w/ prev→new% + impact card), Campaign updates, Sharing, Notifications + milestones, Transaction ledger, RevenueCat Pro paywall (restore/handle-unavailable), Admin moderation (verify/publish/reject/suspend/reports/transactions/stats), server-side authorization.
+## Implemented (2026-08-23)- P0: Auth (JWT + Google), Home feed (6 sections), Explore (search + category chip row), Campaign detail (hero, organizer, progress, beneficiary, story, budget, Trust card, updates, supporters, share modal w/ QR, report), Donation sandbox flow (presets/custom/anonymous/message → success w/ prev→new% + impact card), Campaign updates, Sharing, Notifications + milestones, Transaction ledger, RevenueCat Pro paywall (restore/handle-unavailable), Admin moderation (verify/publish/reject/suspend/reports/transactions/stats), server-side authorization.
 - P1: GoodCause Circles (create/join/detail/community totals), Impact dashboard (Profile), AI Campaign Assistant (in builder), Milestone detection + notifications, QR share card.
 - Seed: 8 categories, admin + 3 organizers, 9 LIVE campaigns + 1 SUBMITTED (admin demo), real seeded donations (raised totals are true aggregates), sample updates.
 - Testing: 26/26 backend pytest passing; frontend core flows verified. No critical bugs.
@@ -35,3 +34,7 @@ CREATE → VERIFY → PUBLISH → SHARE → DONATE → UPDATE → IMPACT. Trust 
 
 ## Next Tasks
 Enable live payments (Paystack keys), add real image upload, then optional Supabase migration.
+
+## Iteration 2 (2026-08-23)
+- **Real media uploads:** Emergent Object Storage (backend `storage.py` + `routes_media.py`: POST /api/upload multipart, public GET /api/files/{path}). Client `MediaUploader` (expo-image-picker, images + video ≤60s, contextual permission handling per contract). Builder media step uploads real photos/video (cover auto-set to first image); campaign detail shows a Photos & video gallery. Verified: upload 200 + serve 200.
+- **Thank-You Moments:** on completed donation, donor receives a warm `donation_thankyou` notification (with new campaign %) in Activity, alongside the personal impact/share card on the success screen. Verified via API.

@@ -12,6 +12,7 @@ import { AppText, Button, ProgressBar, VerifiedBadge, LoadingView, EmptyState } 
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira } from "@/src/format";
 import { CampaignCard } from "@/src/components/CampaignCard";
+import { MediaUploader, Media } from "@/src/components/MediaUploader";
 
 const COVERS = [
   "https://images.unsplash.com/photo-1631815590058-860e4f83c1e8?w=800&q=80",
@@ -80,9 +81,14 @@ function Builder() {
     budget: [] as { item: string; amount: string }[],
     beneficiary: { name: "", relationship: "self", type: "individual" },
     cover_image: COVERS[0], location: { city: "", country: "NG" },
+    media: [] as Media[],
     deadlineDays: "30",
   });
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const setMedia = (m: Media[]) => setForm((f: any) => {
+    const firstImage = m.find((x) => x.kind === "image");
+    return { ...f, media: m, cover_image: firstImage ? firstImage.url : f.cover_image };
+  });
 
   const runAI = async () => {
     if (aiInput.trim().length < 10) { setError("Tell the assistant a bit more about the cause."); return; }
@@ -121,7 +127,7 @@ function Builder() {
         category_id: form.category_id,
         goal_kobo: Math.round(parseFloat(form.goal) * 100),
         cover_image: form.cover_image,
-        gallery: [form.cover_image],
+        gallery: [form.cover_image, ...(form.media || []).map((m: any) => m.url)].filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i),
         budget: form.budget.filter((b: any) => b.item).map((b: any) => ({ item: b.item, amount_kobo: Math.round(parseFloat(b.amount || "0") * 100) })),
         beneficiary: form.beneficiary,
         deadline: new Date(Date.now() + parseInt(form.deadlineDays || "30") * 86400000).toISOString(),
@@ -237,7 +243,9 @@ function Builder() {
         )}
 
         {step === 5 && (
-          <StepWrap title="Add a cover image" subtitle="Choose an image that represents your cause.">
+          <StepWrap title="Add photos & video" subtitle="Upload your own photos or a short video — real media builds trust.">
+            <MediaUploader media={form.media} onChange={setMedia} />
+            <AppText variant="label" style={{ marginTop: spacing.xl, marginBottom: spacing.sm }}>Or pick a suggested cover</AppText>
             <View style={styles.coverGrid}>
               {COVERS.map((url) => (
                 <Pressable key={url} testID={`cover-${url}`} onPress={() => set("cover_image", url)} style={[styles.coverItem, form.cover_image === url && styles.coverActive]}>

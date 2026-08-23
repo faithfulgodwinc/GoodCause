@@ -1,4 +1,5 @@
 // Central API client. Talks ONLY to the FastAPI backend at EXPO_PUBLIC_BACKEND_URL + /api.
+import { Platform } from "react-native";
 import { storage } from "@/src/utils/storage";
 
 const BASE = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api`;
@@ -72,4 +73,27 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
 export function track(event: string, props?: Record<string, any>) {
   // fire-and-forget
   api("/analytics/track", { method: "POST", body: { event, props }, auth: true }).catch(() => {});
+}
+
+export async function uploadMedia(uri: string, name: string, type: string): Promise<{ url: string; kind: string }> {
+  const token = await loadToken();
+  const form = new FormData();
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    form.append("file", blob, name);
+  } else {
+    form.append("file", { uri, name, type } as any);
+  }
+  const resp = await fetch(`${BASE}/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+  const text = await resp.text();
+  let data: any = null;
+  try { data = text ? JSON.parse(text) : null; } catch {}
+  if (!resp.ok) {
+    throw new ApiError(resp.status, (data && data.detail) || "We couldn't upload that file. Please try again.");
+  }
+  return { url: `${process.env.EXPO_PUBLIC_BACKEND_URL}${data.url}`, kind: data.kind };
 }

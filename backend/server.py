@@ -5,9 +5,10 @@ from typing import Optional
 import logging
 
 from core import db, get_current_user_optional, track
-import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, ai_assistant
+import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, ai_assistant, routes_media
 from seed import seed
 from payments import provider_mode
+from storage import init_storage
 
 app = FastAPI(title="GoodCause API")
 
@@ -53,6 +54,7 @@ app.include_router(routes_donations.router)
 app.include_router(routes_social.router)
 app.include_router(routes_admin.router)
 app.include_router(ai_assistant.router)
+app.include_router(routes_media.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,6 +88,11 @@ async def startup():
         logger.info("Seed complete.")
     except Exception as e:
         logger.exception("Seed failed: %s", e)
+    try:
+        init_storage()
+        logger.info("Object storage ready.")
+    except Exception as e:
+        logger.warning("Object storage init deferred: %s", e)
 
 
 @app.on_event("shutdown")
