@@ -115,12 +115,22 @@ export default function Explore() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: spacing.lg, paddingBottom: spacing.md, backgroundColor: colors.surface,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surfaceSecondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   search: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    paddingHorizontal: spacing.lg,
+    height: 52,
+    ...shadow.soft,
   },
   input: { flex: 1, marginLeft: spacing.sm, fontFamily: font.medium, fontSize: 15, color: colors.onSurface },
 });

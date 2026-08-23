@@ -1,51 +1,66 @@
-// GoodCause design tokens — Deep green primary, warm gold accent, clean white. (Inter / SF Pro)
+// GoodCause Design Tokens — Rappi-inspired clean surfaces, vibrant classy accents, and soft diffuse shadows.
 export const colors = {
   // surfaces
-  surface: "#F9FAFB",
-  onSurface: "#111827",
+  surface: "#FAFAFC",
+  onSurface: "#0F172A",
   surfaceSecondary: "#FFFFFF",
-  onSurfaceSecondary: "#374151",
-  surfaceTertiary: "#F3F4F6",
-  onSurfaceTertiary: "#6B7280",
-  surfaceInverse: "#0F1F17",
-  onSurfaceInverse: "#F0FDF4",
+  onSurfaceSecondary: "#334155",
+  surfaceTertiary: "#F1F5F9",
+  onSurfaceTertiary: "#64748B",
+  surfaceInverse: "#0F172A",
+  onSurfaceInverse: "#FFFFFF",
 
-  // brand (deep green)
+  // Rappi-inspired brand & accent colors
   brand: "#16A34A",
   brandPrimary: "#16A34A",
   onBrandPrimary: "#FFFFFF",
   brandSecondary: "#22C55E",
   brandTertiary: "#DCFCE7",
   onBrandTertiary: "#15803D",
-  brandDark: "#166534",
+  brandDark: "#14532D",
 
-  // accent (warm gold)
-  accent: "#FBBF24",
+  // Vibrant hero / promo accents (Rappi coral/tangerine + gold)
+  coral: "#FF4A22",
+  coralLight: "#FFF1EE",
+  coralDark: "#E02E08",
+  accent: "#F59E0B",
   accentStrong: "#D97706",
   onAccent: "#78350F",
   accentTint: "#FEF3C7",
 
+  // Pastels for signature category hero cards
+  pastelOrange: "#FFF3EB",
+  pastelOrangeText: "#C2410C",
+  pastelGreen: "#ECFDF5",
+  pastelGreenText: "#047857",
+  pastelBlue: "#EFF6FF",
+  pastelBlueText: "#1D4ED8",
+  pastelPurple: "#FAF5FF",
+  pastelPurpleText: "#7E22CE",
+  pastelYellow: "#FEFCE8",
+  pastelYellowText: "#A16207",
+
   // semantic
   success: "#16A34A",
   onSuccess: "#FFFFFF",
-  warning: "#D97706",
+  warning: "#EA580C",
   onWarning: "#FFFFFF",
-  error: "#DC2626",
+  error: "#EF4444",
   onError: "#FFFFFF",
-  info: "#2563EB",
+  info: "#3B82F6",
   onInfo: "#FFFFFF",
 
   // lines / neutrals
-  border: "#E5E7EB",
-  borderStrong: "#D1D5DB",
-  divider: "#EEF0F2",
-  muted: "#9CA3AF",
+  border: "#F1F5F9",
+  borderStrong: "#E2E8F0",
+  divider: "#F8FAFC",
+  muted: "#94A3B8",
 };
 
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 };
-export const radius = { sm: 8, md: 14, lg: 20, xl: 28, pill: 999 };
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 40 };
+export const radius = { sm: 10, md: 16, lg: 22, xl: 30, xxl: 38, pill: 999 };
 
-// Inter across the app (per design spec).
+// Inter / System font
 export const font = {
   display: "Inter-Bold",
   displaySemi: "Inter-SemiBold",
@@ -56,30 +71,45 @@ export const font = {
 };
 
 export const shadow = {
-  card: {
-    shadowColor: "#0B1F13",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
+  soft: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
   },
+  card: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 4,
+  },
   raised: {
-    shadowColor: "#0B1F13",
+    shadowColor: "#FF4A22",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
     elevation: 8,
+  },
+  dock: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 28,
+    elevation: 12,
   },
 };
 
-// Category accent colors — green-forward with tasteful variety on white.
+// Category accent colors
 export const CATEGORY_COLORS: Record<string, string> = {
-  medical: "#16A34A",
-  education: "#2563EB",
-  emergency: "#D97706",
-  community: "#0D9488",
-  memorial: "#7C3AED",
-  business: "#DB2777",
+  medical: "#EF4444",
+  education: "#3B82F6",
+  emergency: "#EA580C",
+  community: "#10B981",
+  memorial: "#8B5CF6",
+  business: "#EC4899",
   environment: "#059669",
-  animals: "#B45309",
+  animals: "#D97706",
 };
+
