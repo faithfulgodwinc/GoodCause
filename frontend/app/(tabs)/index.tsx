@@ -23,6 +23,7 @@ import {
   LoadingView,
   ErrorView,
   Avatar,
+  BrandLogo,
 } from "@/src/components/ui";
 import { FeaturedCard, CampaignCard, Campaign } from "@/src/components/CampaignCard";
 import { useResponsive } from "@/src/lib/responsive";
@@ -117,9 +118,7 @@ export default function HomeScreen() {
         <View style={styles.navRow}>
           {/* Brand Logo */}
           <Pressable onPress={() => {}} hitSlop={8}>
-            <AppText variant="h1" color={colors.brandPrimary} style={styles.brandLogo}>
-              goodcause
-            </AppText>
+            <BrandLogo size={24} />
           </Pressable>
 
           {/* Right Actions: Quick Search (appears only past in-feed search) & Profile Avatar */}

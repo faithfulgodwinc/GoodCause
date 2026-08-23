@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StyleProp,
   TextStyle,
+  Animated,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -216,12 +217,84 @@ export function EmptyState({ icon = "inbox", title, message, actionLabel, onActi
   );
 }
 
+/* ---------------- BrandLogo ---------------- */
+export function BrandLogo({
+  size = 24,
+  color = colors.brandPrimary,
+  style,
+}: {
+  size?: number;
+  color?: string;
+  style?: StyleProp<TextStyle>;
+}) {
+  return (
+    <RNText
+      style={[
+        {
+          fontFamily: font.display || "Inter-Bold",
+          fontSize: size,
+          fontWeight: "800",
+          letterSpacing: -0.6,
+          color: color,
+        },
+        style,
+      ]}
+    >
+      goodcause
+    </RNText>
+  );
+}
+
 /* ---------------- Loading / Error ---------------- */
 export function LoadingView({ label }: { label?: string }) {
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0.7)).current;
+
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseAnim, {
+            toValue: 0.95,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0.6,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim, opacityAnim]);
+
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={colors.onSurface} size="small" />
-      {label ? <AppText variant="caption" style={{ marginTop: spacing.sm }}>{label}</AppText> : null}
+      <Animated.View
+        style={{
+          transform: [{ scale: pulseAnim }],
+          opacity: opacityAnim,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <BrandLogo size={32} />
+      </Animated.View>
     </View>
   );
 }
