@@ -204,8 +204,43 @@ async def campaign_donations(campaign_id: str):
             "name": "Anonymous" if r.get("anonymous") else (r.get("donor_name") or "Supporter"),
             "amount_kobo": r["amount_kobo"], "message": r.get("message", ""),
             "anonymous": r.get("anonymous", False), "created_at": r.get("paid_at"),
+            "can_thank": bool(r.get("donor_id") and not r.get("anonymous")),
+            "thanked": bool(r.get("thanked")),
         })
     return out
+
+
+class ThankIn(BaseModel):
+    donation_id: str
+    message: str = Field(min_length=1, max_length=500)
+    image: Optional[str] = None
+
+
+@router.post("/campaigns/{campaign_id}/thank")
+async def thank_supporter(campaign_id: str, body: ThankIn, user: dict = Depends(get_current_user)):
+    campaign = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found.")
+    if campaign["organizer_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Only the organizer can thank supporters.")
+    donation = await db.donations.find_one({"id": body.donation_id, "campaign_id": campaign_id}, {"_id": 0})
+    if not donation:
+        raise HTTPException(status_code=404, detail="Donation not found.")
+    if not donation.get("donor_id") or donation.get("anonymous"):
+        raise HTTPException(status_code=400, detail="This supporter can't be messaged.")
+    note = {
+        "id": uid("thx_"), "campaign_id": campaign_id, "donation_id": body.donation_id,
+        "from_id": user["id"], "to_id": donation["donor_id"],
+        "message": body.message.strip(), "image": body.image, "created_at": now_iso(),
+    }
+    await db.thank_you_notes.insert_one(note)
+    await db.donations.update_one({"id": body.donation_id}, {"$set": {"thanked": True}})
+    body_text = body.message.strip()
+    if body.image:
+        body_text += "  📷"
+    await notify(donation["donor_id"], "organizer_thankyou",
+                 f"A thank-you from {campaign['title']}", body_text, campaign_id)
+    return {"ok": True, "message": "Your thank-you has been sent."}
 
 
 @router.get("/donations/mine")

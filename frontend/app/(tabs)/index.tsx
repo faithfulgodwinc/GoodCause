@@ -9,6 +9,7 @@ import { api } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
 import { AppText, LoadingView, ErrorView } from "@/src/components/ui";
 import { FeaturedCard, CampaignCard, Campaign } from "@/src/components/CampaignCard";
+import { useResponsive } from "@/src/lib/responsive";
 import { colors, spacing, radius, CATEGORY_COLORS } from "@/src/theme";
 
 function greeting() {
@@ -32,6 +33,7 @@ export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { columns, maxContentWidth } = useResponsive();
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["home"],
     queryFn: () => api<HomeData>("/home"),
@@ -42,7 +44,7 @@ export default function Home() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 120, width: "100%", maxWidth: maxContentWidth, alignSelf: "center" }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.brandPrimary} />}
       >
@@ -111,10 +113,10 @@ export default function Home() {
               />
             </View>
 
-            <ListSection title="Urgent right now" items={data.urgent} open={open} />
-            <ListSection title="Almost funded" items={data.almost_funded} open={open} />
-            <ListSection title="Recently updated" items={data.recently_updated} open={open} />
-            <ListSection title="Recommended for you" items={data.recommended} open={open} />
+            <ListSection title="Urgent right now" items={data.urgent} open={open} columns={columns} />
+            <ListSection title="Almost funded" items={data.almost_funded} open={open} columns={columns} />
+            <ListSection title="Recently updated" items={data.recently_updated} open={open} columns={columns} />
+            <ListSection title="Recommended for you" items={data.recommended} open={open} columns={columns} />
           </>
         )}
       </ScrollView>
@@ -133,14 +135,16 @@ function SectionHeader({ title, action }: { title: string; action?: () => void }
   );
 }
 
-function ListSection({ title, items, open }: { title: string; items: Campaign[]; open: (id: string) => void }) {
+function ListSection({ title, items, open, columns = 1 }: { title: string; items: Campaign[]; open: (id: string) => void; columns?: number }) {
   if (!items || items.length === 0) return null;
   return (
     <View style={{ marginTop: spacing.xl }}>
       <SectionHeader title={title} />
-      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.md }}>
-        {items.slice(0, 5).map((c) => (
-          <CampaignCard key={c.id} c={c} onPress={() => open(c.id)} />
+      <View style={{ paddingHorizontal: spacing.lg, flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
+        {items.slice(0, columns > 1 ? 6 : 5).map((c) => (
+          <View key={c.id} style={{ flexBasis: columns > 1 ? "47%" : "100%", flexGrow: 1 }}>
+            <CampaignCard c={c} onPress={() => open(c.id)} />
+          </View>
         ))}
       </View>
     </View>

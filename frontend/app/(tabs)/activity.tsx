@@ -17,6 +17,7 @@ type Donation = { id: string; amount_kobo: number; message: string; created_at: 
 const ICON: Record<string, keyof typeof Feather.glyphMap> = {
   donation_received: "gift",
   donation_thankyou: "heart",
+  organizer_thankyou: "mail",
   campaign_verified: "shield",
   campaign_live: "zap",
   campaign_update: "message-square",

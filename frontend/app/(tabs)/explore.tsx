@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/lib/api";
 import { AppText, Chip, LoadingView, ErrorView, EmptyState } from "@/src/components/ui";
 import { CampaignCard, Campaign } from "@/src/components/CampaignCard";
+import { useResponsive } from "@/src/lib/responsive";
 import { colors, spacing, radius, font } from "@/src/theme";
 
 type Cat = { id: string; name: string; slug: string };
@@ -16,6 +17,7 @@ export default function Explore() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string }>();
+  const { columns, maxContentWidth } = useResponsive();
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [category, setCategory] = useState<string | null>(params.category || null);
@@ -92,11 +94,19 @@ export default function Explore() {
         />
       ) : (
         <FlatList
+          key={`cols-${columns}`}
           data={items}
           keyExtractor={(c) => c.id}
+          numColumns={columns}
+          columnWrapperStyle={columns > 1 ? { gap: spacing.md } : undefined}
+          style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <CampaignCard c={item} onPress={() => router.push(`/campaign/${item.id}`)} />}
+          renderItem={({ item }) => (
+            <View style={{ flex: columns > 1 ? 1 : undefined }}>
+              <CampaignCard c={item} onPress={() => router.push(`/campaign/${item.id}`)} />
+            </View>
+          )}
         />
       )}
     </View>

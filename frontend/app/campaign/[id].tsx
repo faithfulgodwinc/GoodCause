@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare, Linking, FlatList } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare, Linking, FlatList, TextInput } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -14,7 +14,9 @@ import { api, track } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
 import { AppText, Button, ProgressBar, VerifiedBadge, Avatar, LoadingView, ErrorView } from "@/src/components/ui";
 import { TrustCard } from "@/src/components/TrustCard";
-import { colors, spacing, radius, shadow, CATEGORY_COLORS } from "@/src/theme";
+import { MediaUploader, Media } from "@/src/components/MediaUploader";
+import { useResponsive } from "@/src/lib/responsive";
+import { colors, spacing, radius, shadow, CATEGORY_COLORS, font } from "@/src/theme";
 import { formatNaira, daysLeft, timeAgo } from "@/src/format";
 
 const REASONS = ["Suspected fraud", "Misleading information", "Impersonation", "Inappropriate content", "Illegal activity", "Harassment"];
@@ -25,10 +27,15 @@ export default function CampaignDetail() {
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { maxContentWidth } = useResponsive();
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [reportDone, setReportDone] = useState(false);
+  const [thankFor, setThankFor] = useState<any>(null);
+  const [thankMsg, setThankMsg] = useState("");
+  const [thankMedia, setThankMedia] = useState<Media[]>([]);
+  const [thankDone, setThankDone] = useState(false);
 
   const campaign = useQuery({ queryKey: ["campaign", id], queryFn: () => api<any>(`/campaigns/${id}`) });
   const updates = useQuery({ queryKey: ["updates", id], queryFn: () => api<any[]>(`/campaigns/${id}/updates`), enabled: !!id });
@@ -54,6 +61,13 @@ export default function CampaignDetail() {
   const reportMut = useMutation({
     mutationFn: () => api(`/campaigns/${id}/report`, { method: "POST", body: { reason: reportReason } }),
     onSuccess: () => setReportDone(true),
+  });
+  const thankMut = useMutation({
+    mutationFn: () => api(`/campaigns/${id}/thank`, {
+      method: "POST",
+      body: { donation_id: thankFor?.id, message: thankMsg.trim(), image: thankMedia[0]?.url || null },
+    }),
+    onSuccess: () => { setThankDone(true); qc.invalidateQueries({ queryKey: ["supporters", id] }); },
   });
 
   if (campaign.isLoading) return <View style={styles.full}><LoadingView /></View>;
@@ -90,7 +104,7 @@ export default function CampaignDetail() {
           </View>
         </View>
 
-        <View style={styles.body}>
+        <View style={[styles.body, { maxWidth: maxContentWidth, alignSelf: "center", width: "100%" }]}>
           <View style={[styles.catPill, { backgroundColor: catColor }]}>
             <AppText variant="caption" color="#fff">{c.category_name}</AppText>
           </View>
@@ -230,7 +244,18 @@ export default function CampaignDetail() {
                       <AppText variant="label">{s.name}</AppText>
                       {s.message ? <AppText variant="caption" numberOfLines={1}>{s.message}</AppText> : null}
                     </View>
-                    <AppText variant="label" color={colors.success}>{formatNaira(s.amount_kobo, { compact: true })}</AppText>
+                    {isOrganizer && s.can_thank ? (
+                      s.thanked ? (
+                        <View style={styles.thankedPill}><Feather name="check" size={12} color={colors.success} /><AppText variant="caption" color={colors.success} style={{ marginLeft: 4 }}>Thanked</AppText></View>
+                      ) : (
+                        <Pressable testID={`thank-${s.id}`} onPress={() => { setThankFor(s); setThankMsg(""); setThankMedia([]); setThankDone(false); }} style={styles.thankBtn}>
+                          <Feather name="mail" size={13} color={colors.brandPrimary} />
+                          <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: 4 }}>Thank</AppText>
+                        </Pressable>
+                      )
+                    ) : (
+                      <AppText variant="label" color={colors.success}>{formatNaira(s.amount_kobo, { compact: true })}</AppText>
+                    )}
                   </View>
                 ))}
               </View>
@@ -314,6 +339,39 @@ export default function CampaignDetail() {
           )}
         </View>
       </Modal>
+
+      {/* Thank-you modal */}
+      <Modal visible={!!thankFor} transparent animationType="slide" onRequestClose={() => setThankFor(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setThankFor(null)} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
+          <View style={styles.grabber} />
+          {thankDone ? (
+            <View style={{ alignItems: "center", paddingVertical: spacing.lg }}>
+              <Feather name="mail" size={36} color={colors.brandPrimary} />
+              <AppText variant="h2" style={{ marginTop: spacing.md }}>Thank-you sent</AppText>
+              <AppText variant="body" style={{ textAlign: "center", marginTop: spacing.xs }}>{thankFor?.name} will see your message.</AppText>
+              <Button title="Done" onPress={() => setThankFor(null)} style={{ marginTop: spacing.lg, alignSelf: "stretch" }} />
+            </View>
+          ) : (
+            <>
+              <AppText variant="h2">Thank {thankFor?.name}</AppText>
+              <AppText variant="caption" style={{ marginBottom: spacing.md }}>Send a personal note (and a photo) to this supporter.</AppText>
+              <TextInput
+                testID="thank-message"
+                value={thankMsg}
+                onChangeText={setThankMsg}
+                placeholder="e.g. Thank you so much — your gift means the world to us."
+                placeholderTextColor={colors.muted}
+                multiline
+                style={styles.thankInput}
+              />
+              <AppText variant="label" style={{ marginTop: spacing.md, marginBottom: spacing.sm }}>Add a photo (optional)</AppText>
+              <MediaUploader media={thankMedia} onChange={(m) => setThankMedia(m.slice(-1))} />
+              <Button title="Send thank-you" icon="send" disabled={thankMsg.trim().length < 1} loading={thankMut.isPending} onPress={() => thankMut.mutate()} style={{ marginTop: spacing.lg }} testID="thank-submit" />
+            </>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -377,4 +435,7 @@ const styles = StyleSheet.create({
   shareBtn: { alignItems: "center" },
   shareIcon: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary, alignItems: "center", justifyContent: "center" },
   reason: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, backgroundColor: colors.surfaceSecondary },
+  thankBtn: { flexDirection: "row", alignItems: "center", backgroundColor: colors.brandTertiary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill },
+  thankedPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 4 },
+  thankInput: { minHeight: 90, backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md, fontFamily: font.regular, fontSize: 14, color: colors.onSurface, textAlignVertical: "top" },
 });
