@@ -75,7 +75,7 @@ class SupabaseCollection:
     def __init__(self, name: str):
         self.name = name
 
-    def _build_where(self, filter_dict: Optional[Dict[str, Any]]) -> tuple[str, list]:
+    def _build_where(self, filter_dict: Optional[Dict[str, Any]], offset: int = 0) -> tuple[str, list]:
         if not filter_dict:
             return "", []
         clauses = []
@@ -83,39 +83,44 @@ class SupabaseCollection:
         for k, v in filter_dict.items():
             if k == "$or" and isinstance(v, list):
                 or_parts = []
+                or_clauses = []
                 for sub in v:
-                    sub_clauses = []
-                    for sub_k, sub_v in sub.items():
-                        params.append(sub_v)
-                        sub_clauses.append(f"{sub_k} = ${len(params)}")
-                    if sub_clauses:
-                        or_parts.append("(" + " AND ".join(sub_clauses) + ")")
-                if or_parts:
-                    clauses.append("(" + " OR ".join(or_parts) + ")")
+                    for sk, sv in sub.items():
+                        if isinstance(sv, dict) and "$regex" in sv:
+                            params.append(f"%{sv['$regex']}%")
+                            idx = offset + len(params)
+                            or_clauses.append(f"{sk} ILIKE ${idx}")
+                if or_clauses:
+                    clauses.append("(" + " OR ".join(or_clauses) + ")")
                 continue
 
             if isinstance(v, dict):
-                # Handle operators like $in, $gte, $lte, $ne, $regex
                 for op, op_val in v.items():
                     if op == "$in":
                         params.append(list(op_val))
-                        clauses.append(f"{k} = ANY(${len(params)})")
+                        idx = offset + len(params)
+                        clauses.append(f"{k} = ANY(${idx})")
                     elif op == "$ne":
                         params.append(op_val)
-                        clauses.append(f"{k} != ${len(params)}")
+                        idx = offset + len(params)
+                        clauses.append(f"{k} != ${idx}")
                     elif op == "$gte":
                         params.append(op_val)
-                        clauses.append(f"{k} >= ${len(params)}")
+                        idx = offset + len(params)
+                        clauses.append(f"{k} >= ${idx}")
                     elif op == "$lte":
                         params.append(op_val)
-                        clauses.append(f"{k} <= ${len(params)}")
+                        idx = offset + len(params)
+                        clauses.append(f"{k} <= ${idx}")
                     elif op == "$regex":
                         params.append(f"%{op_val}%")
-                        clauses.append(f"{k} ILIKE ${len(params)}")
+                        idx = offset + len(params)
+                        clauses.append(f"{k} ILIKE ${idx}")
                 continue
 
             params.append(v)
-            clauses.append(f"{k} = ${len(params)}")
+            idx = offset + len(params)
+            clauses.append(f"{k} = ${idx}")
 
         where_str = ("WHERE " + " AND ".join(clauses)) if clauses else ""
         return where_str, params
@@ -143,9 +148,7 @@ class SupabaseCollection:
                 order_parts.append(f"{col_name} {dir_str}")
             order_clause = "ORDER BY " + ", ".join(order_parts)
 
-        limit_clause = ""
-        if limit is not None:
-            limit_clause = f"LIMIT {limit}"
+        limit_clause = f"LIMIT {limit}" if limit is not None else ""
         skip_clause = f"OFFSET {skip}" if skip > 0 else ""
 
         sql = f"SELECT * FROM {self.name} {where_str} {order_clause} {limit_clause} {skip_clause}".strip()
@@ -180,25 +183,28 @@ class SupabaseCollection:
         return InsertResult()
 
     async def update_one(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> Any:
-        where_str, params = self._build_where(filter_dict)
         set_dict = update_dict.get("$set", update_dict)
         inc_dict = update_dict.get("$inc", {})
 
+        set_params = []
         set_clauses = []
         for k, v in set_dict.items():
-            params.append(_to_db_val(k, v))
+            set_params.append(_to_db_val(k, v))
             col_name = f'"{k}"' if k in ("order", "user", "group", "check") else k
-            set_clauses.append(f"{col_name} = ${len(params)}")
+            set_clauses.append(f"{col_name} = ${len(set_params)}")
 
         for k, v in inc_dict.items():
-            params.append(v)
+            set_params.append(v)
             col_name = f'"{k}"' if k in ("order", "user", "group", "check") else k
-            set_clauses.append(f"{col_name} = COALESCE({col_name}, 0) + ${len(params)}")
+            set_clauses.append(f"{col_name} = COALESCE({col_name}, 0) + ${len(set_params)}")
 
         if not set_clauses:
             return
+
+        where_str, where_params = self._build_where(filter_dict, offset=len(set_params))
+        all_params = set_params + where_params
         sql = f"UPDATE {self.name} SET {', '.join(set_clauses)} {where_str}"
-        await supabase_db.execute(sql, *params)
+        await supabase_db.execute(sql, *all_params)
 
     async def delete_one(self, filter_dict: Dict[str, Any]) -> Any:
         where_str, params = self._build_where(filter_dict)

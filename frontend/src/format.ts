@@ -40,3 +40,19 @@ export function timeAgo(iso?: string | null): string {
   const mo = Math.floor(days / 30);
   return `${mo}mo ago`;
 }
+
+export function formatAmountInput(val: string): string {
+  if (!val) return "";
+  const clean = val.replace(/\D/g, "");
+  if (!clean) return "";
+  const num = parseInt(clean, 10);
+  if (isNaN(num)) return "";
+  return num.toLocaleString("en-US");
+}
+
+export function parseAmountInput(val: string): number {
+  if (!val) return 0;
+  const clean = val.replace(/,/g, "").replace(/\D/g, "");
+  return parseInt(clean, 10) || 0;
+}
+

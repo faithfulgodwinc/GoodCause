@@ -11,7 +11,7 @@ import * as WebBrowser from "expo-web-browser";
 import { api, track } from "@/src/lib/api";
 import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { formatNaira } from "@/src/format";
+import { formatNaira, formatAmountInput } from "@/src/format";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
@@ -229,11 +229,11 @@ export default function Donate() {
           <AppText variant="label" color={colors.muted}>₦</AppText>
           <TextInput
             testID="custom-amount-input"
-            value={custom}
-            onChangeText={setCustom}
+            value={custom ? formatAmountInput(custom) : ""}
+            onChangeText={(v) => setCustom(v.replace(/\D/g, ""))}
             placeholder="Enter custom amount"
             placeholderTextColor={colors.muted}
-            keyboardType="numeric"
+            keyboardType="number-pad"
             style={styles.customInput}
           />
         </View>

@@ -42,6 +42,7 @@ CATEGORIES = [
     {"slug": "business", "name": "Business", "icon": "briefcase", "color": "#C05C3D", "order": 6},
     {"slug": "environment", "name": "Environment", "icon": "sun", "color": "#2D7A5D", "order": 7},
     {"slug": "animals", "name": "Animals", "icon": "github", "color": "#5C5954", "order": 8},
+    {"slug": "others", "name": "Others", "icon": "more-horizontal", "color": "#71717A", "order": 9},
 ]
 
 def seed():

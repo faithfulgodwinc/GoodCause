@@ -10,7 +10,7 @@ import { api } from "@/src/lib/api";
 import { useSubscription } from "@/src/lib/revenuecat";
 import { AppText, Button, ProgressBar, VerifiedBadge, LoadingView, EmptyState } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { formatNaira } from "@/src/format";
+import { formatNaira, formatAmountInput } from "@/src/format";
 import { CampaignCard } from "@/src/components/CampaignCard";
 import { MediaUploader, Media } from "@/src/components/MediaUploader";
 
@@ -209,7 +209,15 @@ function Builder() {
           <StepWrap title="Set your goal" subtitle="How much do you need to raise? You can adjust later.">
             <View style={styles.goalBox}>
               <AppText variant="h1" color={colors.muted}>₦</AppText>
-              <TextInput testID="input-goal" value={form.goal} onChangeText={(v: string) => set("goal", v.replace(/[^0-9.]/g, ""))} keyboardType="numeric" placeholder="0" placeholderTextColor={colors.muted} style={styles.goalInput} />
+              <TextInput
+                testID="input-goal"
+                value={form.goal ? formatAmountInput(form.goal) : ""}
+                onChangeText={(v: string) => set("goal", v.replace(/\D/g, ""))}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor={colors.muted}
+                style={styles.goalInput}
+              />
             </View>
             <Label text="Campaign length (days)" />
             <View style={styles.chipsWrap}>
@@ -227,7 +235,17 @@ function Builder() {
             {form.budget.map((b: any, i: number) => (
               <View key={i} style={styles.budgetRow}>
                 <Input value={b.item} onChangeText={(v: string) => { const nb = [...form.budget]; nb[i].item = v; set("budget", nb); }} placeholder="Item" style={{ flex: 1 }} />
-                <Input value={b.amount} onChangeText={(v: string) => { const nb = [...form.budget]; nb[i].amount = v.replace(/[^0-9.]/g, ""); set("budget", nb); }} placeholder="₦" keyboardType="numeric" style={{ width: 110, marginLeft: spacing.sm }} />
+                <Input
+                  value={b.amount ? formatAmountInput(b.amount) : ""}
+                  onChangeText={(v: string) => {
+                    const nb = [...form.budget];
+                    nb[i].amount = v.replace(/\D/g, "");
+                    set("budget", nb);
+                  }}
+                  placeholder="₦ Amount"
+                  keyboardType="number-pad"
+                  style={{ width: 130, marginLeft: spacing.sm }}
+                />
                 <Pressable onPress={() => set("budget", form.budget.filter((_: any, j: number) => j !== i))} style={{ marginLeft: spacing.sm }}><Feather name="trash-2" size={18} color={colors.error} /></Pressable>
               </View>
             ))}

@@ -85,4 +85,5 @@ export const CATEGORY_COLORS: Record<string, string> = {
   business: "#8B5CF6",
   environment: "#02A95C",
   animals: "#78716C",
+  others: "#71717A",
 };
