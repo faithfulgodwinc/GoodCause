@@ -166,10 +166,17 @@ class SupabaseCollection:
             cols.append(col_name)
             vals.append(_to_db_val(k, v))
             placeholders.append(f"${len(vals)}")
-        sql = f"INSERT INTO {self.name} ({', '.join(cols)}) VALUES ({', '.join(placeholders)}) ON CONFLICT (id) DO NOTHING"
+        conflict_clause = ""
+        if "id" in doc:
+            conflict_clause = "ON CONFLICT (id) DO NOTHING"
+        elif "session_token" in doc:
+            conflict_clause = "ON CONFLICT (session_token) DO NOTHING"
+        elif "reference" in doc:
+            conflict_clause = "ON CONFLICT (reference) DO NOTHING"
+        sql = f"INSERT INTO {self.name} ({', '.join(cols)}) VALUES ({', '.join(placeholders)}) {conflict_clause}".strip()
         await supabase_db.execute(sql, *vals)
         class InsertResult:
-            inserted_id = doc.get("id")
+            inserted_id = doc.get("id") or doc.get("session_token")
         return InsertResult()
 
     async def update_one(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> Any:
@@ -194,6 +201,11 @@ class SupabaseCollection:
         await supabase_db.execute(sql, *params)
 
     async def delete_one(self, filter_dict: Dict[str, Any]) -> Any:
+        where_str, params = self._build_where(filter_dict)
+        sql = f"DELETE FROM {self.name} {where_str}"
+        await supabase_db.execute(sql, *params)
+
+    async def delete_many(self, filter_dict: Dict[str, Any]) -> Any:
         where_str, params = self._build_where(filter_dict)
         sql = f"DELETE FROM {self.name} {where_str}"
         await supabase_db.execute(sql, *params)

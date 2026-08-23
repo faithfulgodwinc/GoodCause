@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { colors, radius, spacing, shadow, CATEGORY_COLORS } from "@/src/theme";
 import { AppText, ProgressBar, VerifiedBadge } from "@/src/components/ui";
@@ -32,37 +31,57 @@ function catColor(name?: string) {
 
 export function FeaturedCard({ c, onPress }: { c: Campaign; onPress: () => void }) {
   const { width } = useWindowDimensions();
-  const w = Math.min(width - spacing.lg * 2, 520);
+  const cardWidth = Math.min(width - spacing.lg * 2, 310);
   const dl = daysLeft(c.deadline);
+
   return (
-    <Pressable testID={`featured-card-${c.id}`} onPress={onPress} style={({ pressed }) => [{ width: w }, pressed && { opacity: 0.95 }]}>
-      <View style={styles.heroWrap}>
-        <Image source={{ uri: c.cover_image }} placeholder={BLUR} style={styles.heroImg} contentFit="cover" transition={250} />
-        <LinearGradient colors={["transparent", "rgba(35,33,31,0.35)", "rgba(35,33,31,0.92)"]} style={StyleSheet.absoluteFill} />
-        <View style={styles.heroTopRow}>
-          <View style={[styles.catPill, { backgroundColor: catColor(c.category_name) }]}>
-            <AppText variant="caption" color="#fff">{c.category_name}</AppText>
-          </View>
-          {c.urgent ? (
-            <View style={[styles.catPill, { backgroundColor: colors.warning }]}>
-              <Feather name="clock" size={11} color="#fff" />
-              <AppText variant="caption" color="#fff" style={{ marginLeft: 4 }}>Urgent</AppText>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.heroContent}>
-          <AppText variant="h1" color="#fff" numberOfLines={2}>{c.title}</AppText>
-          <View style={{ marginTop: spacing.md }}>
-            <ProgressBar percent={c.percent} color="#fff" />
-            <View style={styles.heroStatsRow}>
-              <AppText variant="label" color="#fff">
-                {formatNaira(c.raised_kobo, { compact: true })} of {formatNaira(c.goal_kobo, { compact: true })}
+    <Pressable
+      testID={`featured-card-${c.id}`}
+      onPress={onPress}
+      style={({ pressed }) => [{ width: cardWidth }, pressed && { opacity: 0.95 }]}
+    >
+      <View style={styles.featuredCard}>
+        <View style={styles.featuredImgWrap}>
+          <Image
+            source={{ uri: c.cover_image }}
+            placeholder={BLUR}
+            style={styles.featuredImg}
+            contentFit="cover"
+            transition={200}
+          />
+          <View style={styles.featuredTopRow}>
+            <View style={styles.catPill}>
+              <AppText variant="caption" color={colors.onSurface} style={{ fontWeight: "600", fontSize: 11 }}>
+                {c.category_name}
               </AppText>
-              <AppText variant="label" color="rgba(255,255,255,0.85)">{c.percent}%</AppText>
             </View>
-            <View style={styles.heroMeta}>
-              <AppText variant="caption" color="rgba(255,255,255,0.85)">
-                {c.supporters_count} supporters{dl != null ? `  ·  ${dl} days left` : ""}
+            {c.urgent ? (
+              <View style={[styles.catPill, { backgroundColor: colors.warning }]}>
+                <Feather name="clock" size={10} color="#fff" />
+                <AppText variant="caption" color="#fff" style={{ marginLeft: 3, fontWeight: "600", fontSize: 11 }}>
+                  Urgent
+                </AppText>
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.featuredBody}>
+          <AppText variant="title" numberOfLines={2} style={styles.featuredTitle}>
+            {c.title}
+          </AppText>
+
+          <View style={{ marginTop: spacing.sm }}>
+            <ProgressBar percent={c.percent} color={colors.brandPrimary} height={5} />
+            <View style={styles.statsRow}>
+              <AppText variant="label" style={{ fontSize: 13, fontWeight: "700", color: colors.onSurface }}>
+                {formatNaira(c.raised_kobo, { compact: true })}{" "}
+                <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontWeight: "400" }}>
+                  raised of {formatNaira(c.goal_kobo, { compact: true })}
+                </AppText>
+              </AppText>
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontSize: 11.5 }}>
+                {c.supporters_count} donations
               </AppText>
             </View>
           </View>
@@ -74,26 +93,46 @@ export function FeaturedCard({ c, onPress }: { c: Campaign; onPress: () => void 
 
 export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void }) {
   const dl = daysLeft(c.deadline);
+
   return (
-    <Pressable testID={`campaign-card-${c.id}`} onPress={onPress} style={({ pressed }) => [styles.card, pressed && { opacity: 0.95 }]}>
-      <Image source={{ uri: c.cover_image }} placeholder={BLUR} style={styles.thumb} contentFit="cover" transition={200} />
-      <View style={{ flex: 1, marginLeft: spacing.md }}>
-        <View style={styles.rowBetween}>
-          <View style={[styles.catDot, { backgroundColor: catColor(c.category_name) }]} />
-          <AppText variant="caption" color={catColor(c.category_name)} style={{ flex: 1, marginLeft: 6 }}>
-            {c.category_name}
-          </AppText>
-          <VerifiedBadge status={c.verification_status} />
-        </View>
-        <AppText variant="title" numberOfLines={2} style={{ marginTop: 4 }}>{c.title}</AppText>
-        <View style={{ marginTop: spacing.sm }}>
-          <ProgressBar percent={c.percent} />
+    <Pressable
+      testID={`campaign-card-${c.id}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.94 }]}
+    >
+      <Image
+        source={{ uri: c.cover_image }}
+        placeholder={BLUR}
+        style={styles.thumb}
+        contentFit="cover"
+        transition={150}
+      />
+      <View style={styles.cardContent}>
+        <View>
           <View style={styles.rowBetween}>
-            <AppText variant="label" style={{ marginTop: 6 }}>
-              {formatNaira(c.raised_kobo, { compact: true })} raised
+            <View style={styles.catRow}>
+              <AppText variant="caption" color={catColor(c.category_name)} style={{ fontWeight: "600", fontSize: 11 }}>
+                {c.category_name?.toUpperCase()}
+              </AppText>
+            </View>
+            <VerifiedBadge status={c.verification_status} />
+          </View>
+          <AppText variant="title" numberOfLines={2} style={styles.cardTitle}>
+            {c.title}
+          </AppText>
+        </View>
+
+        <View style={{ marginTop: spacing.xs }}>
+          <ProgressBar percent={c.percent} color={colors.brandPrimary} height={4.5} />
+          <View style={styles.cardStatsRow}>
+            <AppText variant="label" style={{ fontSize: 13, fontWeight: "700", color: colors.onSurface }}>
+              {formatNaira(c.raised_kobo, { compact: true })}{" "}
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontWeight: "400", fontSize: 11 }}>
+                raised
+              </AppText>
             </AppText>
-            <AppText variant="caption" style={{ marginTop: 6 }}>
-              {c.supporters_count} supporters{dl != null ? ` · ${dl}d left` : ""}
+            <AppText variant="caption" color={colors.onSurfaceTertiary} style={{ fontSize: 11 }}>
+              {c.supporters_count} donations{dl != null ? ` · ${dl}d left` : ""}
             </AppText>
           </View>
         </View>
@@ -103,24 +142,96 @@ export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void 
 }
 
 const styles = StyleSheet.create({
-  heroWrap: {
-    height: 260, borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surfaceTertiary,
-    ...shadow.card,
+  featuredCard: {
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.soft,
   },
-  heroImg: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
-  heroTopRow: {
-    position: "absolute", top: spacing.md, left: spacing.md, right: spacing.md,
-    flexDirection: "row", justifyContent: "space-between",
+  featuredImgWrap: {
+    height: 155,
+    position: "relative",
+    backgroundColor: colors.surfaceTertiary,
   },
-  catPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
-  heroContent: { position: "absolute", left: spacing.lg, right: spacing.lg, bottom: spacing.lg },
-  heroStatsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm },
-  heroMeta: { marginTop: 4 },
+  featuredImg: {
+    width: "100%",
+    height: "100%",
+  },
+  featuredTopRow: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  catPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    ...shadow.soft,
+  },
+  featuredBody: {
+    padding: spacing.md,
+  },
+  featuredTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 20,
+    color: colors.onSurface,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+  },
   card: {
-    flexDirection: "row", backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg,
-    padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.card,
+    flexDirection: "row",
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 96,
+    ...shadow.soft,
   },
-  thumb: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: colors.surfaceTertiary },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  catDot: { width: 8, height: 8, borderRadius: 4 },
+  thumb: {
+    width: 86,
+    height: 86,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceTertiary,
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+    justifyContent: "space-between",
+  },
+  catRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 19,
+    marginTop: 2,
+    color: colors.onSurface,
+  },
+  cardStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 });

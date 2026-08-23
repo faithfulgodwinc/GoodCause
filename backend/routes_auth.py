@@ -115,8 +115,8 @@ async def google_session(body: SessionIn):
         "expires_at": (now() + timedelta(days=SESSION_DAYS)).isoformat(),
         "created_at": now_iso(),
     })
-    await track("login", user["id"], {"provider": "google"})
-    return {"session_token": session_token, "token": session_token, "user": _user_out(user)}
+    jwt_token = create_jwt(user["id"])
+    return {"session_token": session_token, "token": jwt_token, "user": _user_out(user)}
 
 
 @router.get("/me")

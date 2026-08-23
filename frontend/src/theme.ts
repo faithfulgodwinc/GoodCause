@@ -1,51 +1,48 @@
-// GoodCause Design Tokens — Warm, trusted Nigerian crowdfunding theme.
+// GoodCause Design Tokens — Inspired by GoFundMe's clean, trusted, signature UI.
 export const colors = {
-  // surfaces
-  surface: "#FAF8F5",
-  onSurface: "#23211F",
+  // Pure white canvas & clean neutral typography
+  surface: "#FFFFFF",
   surfaceSecondary: "#FFFFFF",
-  onSurfaceSecondary: "#5C5954",
-  surfaceTertiary: "#F3EFEA",
-  onSurfaceTertiary: "#8A847C",
-  surfaceInverse: "#23211F",
-  onSurfaceInverse: "#FAF8F5",
+  surfaceTertiary: "#F7F7F8",
+  surfaceHover: "#EFEFEF",
+  surfaceInverse: "#1A1A1A",
 
-  // brand — Trust Green
-  brand: "#2D7A5D",
-  brandPrimary: "#2D7A5D",
+  onSurface: "#1A1A1A",          // GoFundMe deep charcoal/black
+  onSurfaceSecondary: "#595959", // Clear readable secondary text
+  onSurfaceTertiary: "#8C8C8C",  // Timestamps and metadata
+  onSurfaceInverse: "#FFFFFF",
+
+  // GoFundMe Signature Green
+  brand: "#02A95C",
+  brandPrimary: "#02A95C",       // Signature GoFundMe Kelly Green
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#439373",
-  brandTertiary: "#EAF4EF",
-  onBrandTertiary: "#205742",
-  brandDark: "#1E543F",
+  brandSecondary: "#008748",
+  brandTertiary: "#E8F5E9",
+  onBrandTertiary: "#00693E",
+  brandDark: "#005C33",
 
-  // warm amber accent
-  accent: "#D99026",
-  accentStrong: "#B87314",
-  onAccent: "#FFFFFF",
-  accentTint: "#FBF1E0",
-
-  // semantic
-  success: "#2D7A5D",
+  // Warm accent & semantic
+  accent: "#F59E0B",
+  accentTint: "#FEF3C7",
+  success: "#02A95C",
   onSuccess: "#FFFFFF",
-  warning: "#D99026",
+  warning: "#D97706",
   onWarning: "#FFFFFF",
-  error: "#B83A3A",
+  error: "#E02E2E",
   onError: "#FFFFFF",
-  info: "#3A7299",
+  info: "#0284C7",
   onInfo: "#FFFFFF",
 
-  // lines / neutrals
-  border: "#EBE6DF",
-  borderStrong: "#D5CEC4",
-  divider: "#F1ECE5",
-  muted: "#9E988F",
+  // Clean borders & dividers
+  border: "#EDEDED",
+  borderStrong: "#DFDFDF",
+  divider: "#F0F0F0",
+  muted: "#8C8C8C",
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 40 };
-export const radius = { sm: 6, md: 12, lg: 18, xl: 24, pill: 999 };
+export const radius = { sm: 6, md: 12, lg: 16, xl: 22, pill: 999 };
 
-// Inter / System font
 export const font = {
   display: "Inter-Bold",
   displaySemi: "Inter-SemiBold",
@@ -57,36 +54,35 @@ export const font = {
 
 export const shadow = {
   soft: {
-    shadowColor: "#23211F",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 2,
   },
   card: {
-    shadowColor: "#23211F",
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 12,
     elevation: 3,
   },
   raised: {
-    shadowColor: "#23211F",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowColor: "#02A95C",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
+    elevation: 4,
   },
 };
 
-// Category accent colors
 export const CATEGORY_COLORS: Record<string, string> = {
-  medical: "#B83A3A",
-  education: "#4A6E82",
-  emergency: "#D99026",
-  community: "#2D7A5D",
-  memorial: "#7A3520",
-  business: "#C05C3D",
-  environment: "#2D7A5D",
-  animals: "#5C5954",
+  medical: "#E02E2E",
+  education: "#0284C7",
+  emergency: "#D97706",
+  community: "#02A95C",
+  memorial: "#6B7280",
+  business: "#8B5CF6",
+  environment: "#02A95C",
+  animals: "#78716C",
 };

@@ -20,7 +20,8 @@ WebBrowser.maybeCompleteAuthSession();
 const HERO = "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxjb21tdW5pdHklMjBoYW5kcyUyMHRvZ2V0aGVyfGVufDB8fHx8MTc4NzQ4MDMyMnww&ixlib=rb-4.1.0&q=85";
 
 function extractSessionId(url: string): string | null {
-  const m = url.match(/[?#&]session_id=([^&#]+)/);
+  if (!url) return null;
+  const m = url.match(/[?#&]session_id=([^&#]+)/) || url.match(/session_id=([^&#]+)/);
   return m ? decodeURIComponent(m[1]) : null;
 }
 
@@ -45,6 +46,7 @@ export default function AuthScreen() {
       await completeGoogleSession(sessionId);
       router.replace("/(tabs)");
     } catch (e) {
+      console.warn("Google session error:", e);
       setError(e instanceof ApiError ? e.message : "Could not complete Google sign-in.");
     } finally {
       setGoogleLoading(false);

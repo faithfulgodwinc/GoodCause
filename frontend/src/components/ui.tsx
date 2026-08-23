@@ -21,16 +21,16 @@ type Variant =
   | "label" | "caption" | "button";
 
 const VARIANT: Record<Variant, TextStyle> = {
-  display: { fontFamily: font.display, fontSize: 30, lineHeight: 36, color: colors.onSurface },
-  h1: { fontFamily: font.display, fontSize: 24, lineHeight: 30, color: colors.onSurface },
-  h2: { fontFamily: font.displaySemi, fontSize: 20, lineHeight: 26, color: colors.onSurface },
-  title: { fontFamily: font.bold, fontSize: 16, lineHeight: 22, color: colors.onSurface },
-  subtitle: { fontFamily: font.semibold, fontSize: 14, lineHeight: 20, color: colors.onSurfaceSecondary },
-  body: { fontFamily: font.regular, fontSize: 14, lineHeight: 21, color: colors.onSurfaceSecondary },
-  bodyMedium: { fontFamily: font.medium, fontSize: 14, lineHeight: 21, color: colors.onSurface },
-  label: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: colors.onSurface },
+  display: { fontFamily: font.display, fontSize: 26, lineHeight: 32, color: colors.onSurface, letterSpacing: -0.5 },
+  h1: { fontFamily: font.display, fontSize: 22, lineHeight: 28, color: colors.onSurface, letterSpacing: -0.4 },
+  h2: { fontFamily: font.displaySemi, fontSize: 18, lineHeight: 24, color: colors.onSurface, letterSpacing: -0.3 },
+  title: { fontFamily: font.bold, fontSize: 15, lineHeight: 21, color: colors.onSurface, letterSpacing: -0.2 },
+  subtitle: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: colors.onSurfaceSecondary },
+  body: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: colors.onSurfaceSecondary },
+  bodyMedium: { fontFamily: font.medium, fontSize: 14, lineHeight: 20, color: colors.onSurface },
+  label: { fontFamily: font.semibold, fontSize: 13, lineHeight: 17, color: colors.onSurface },
   caption: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: colors.onSurfaceTertiary },
-  button: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
+  button: { fontFamily: font.semibold, fontSize: 14, lineHeight: 18, letterSpacing: -0.1 },
 };
 
 export function AppText({
@@ -77,9 +77,9 @@ export function Button({
     : "transparent";
   const fg =
     variant === "primary" ? colors.onBrandPrimary
-    : variant === "outline" ? colors.brandPrimary
+    : variant === "outline" ? colors.onSurface
     : colors.onSurface;
-  const border = variant === "outline" ? { borderWidth: 1.5, borderColor: colors.brandPrimary } : null;
+  const border = variant === "outline" ? { borderWidth: 1, borderColor: colors.borderStrong } : null;
 
   return (
     <Pressable
@@ -87,24 +87,24 @@ export function Button({
       disabled={isDisabled}
       onPress={() => {
         if (isDisabled) return;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         onPress?.();
       }}
       style={({ pressed }) => [
         styles.btn,
-        small && { height: 40, paddingHorizontal: spacing.lg },
+        small && { height: 38, paddingHorizontal: spacing.md, borderRadius: radius.sm },
         { backgroundColor: bg },
         border,
-        isDisabled && { opacity: 0.5 },
+        isDisabled && { opacity: 0.4 },
         pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={fg} />
+        <ActivityIndicator color={fg} size="small" />
       ) : (
         <View style={styles.btnRow}>
-          {icon ? <Feather name={icon} size={18} color={fg} style={{ marginRight: 8 }} /> : null}
+          {icon ? <Feather name={icon} size={16} color={fg} style={{ marginRight: 6 }} /> : null}
           <AppText variant="button" color={fg}>{title}</AppText>
         </View>
       )}
@@ -119,7 +119,7 @@ export function Card({ children, style, onPress, testID }: {
   const inner = <View style={[styles.card, style]}>{children}</View>;
   if (onPress) {
     return (
-      <Pressable testID={testID} onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.9 }}>
+      <Pressable testID={testID} onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.92 }}>
         {inner}
       </Pressable>
     );
@@ -128,7 +128,7 @@ export function Card({ children, style, onPress, testID }: {
 }
 
 /* ---------------- ProgressBar ---------------- */
-export function ProgressBar({ percent, color = colors.brandPrimary, height = 8 }: {
+export function ProgressBar({ percent, color = colors.brandAccent, height = 4 }: {
   percent: number; color?: string; height?: number;
 }) {
   const pct = Math.max(0, Math.min(100, percent || 0));
@@ -143,14 +143,15 @@ export function ProgressBar({ percent, color = colors.brandPrimary, height = 8 }
 export function VerifiedBadge({ status, compact = true }: { status?: string; compact?: boolean }) {
   const verified = status === "VERIFIED";
   const inReview = status === "IN_REVIEW" || status === "PENDING";
-  const bg = verified ? "#EAF4EF" : inReview ? "#FBF1E0" : colors.surfaceTertiary;
-  const fg = verified ? colors.success : inReview ? colors.warning : colors.onSurfaceTertiary;
-  const label = verified ? "Verified" : inReview ? "In review" : "Unverified";
+  if (!verified && !inReview) return null;
+  const bg = verified ? "#F0FDF4" : "#FFFBEB";
+  const fg = verified ? colors.brandAccent : colors.warning;
+  const label = verified ? "Verified" : "Pending";
   const icon = verified ? "shield" : "clock";
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Feather name={icon as any} size={12} color={fg} />
-      <AppText variant="caption" color={fg} style={{ marginLeft: 4 }}>{label}</AppText>
+      <Feather name={icon as any} size={10} color={fg} />
+      <AppText variant="caption" color={fg} style={{ marginLeft: 3, fontSize: 11, fontWeight: "600" }}>{label}</AppText>
     </View>
   );
 }
@@ -168,7 +169,11 @@ export function Chip({ label, active, onPress, testID }: {
       }}
       style={[styles.chip, active ? styles.chipActive : null]}
     >
-      <AppText variant="label" color={active ? colors.onBrandPrimary : colors.onSurfaceSecondary}>
+      <AppText
+        variant="caption"
+        color={active ? "#FFFFFF" : colors.onSurfaceSecondary}
+        style={{ fontWeight: active ? "600" : "500", fontSize: 13 }}
+      >
         {label}
       </AppText>
     </Pressable>
@@ -176,16 +181,18 @@ export function Chip({ label, active, onPress, testID }: {
 }
 
 /* ---------------- Avatar ---------------- */
-export function Avatar({ name, uri, size = 40 }: { name?: string; uri?: string | null; size?: number }) {
+export function Avatar({ name, uri, size = 36 }: { name?: string; uri?: string | null; size?: number }) {
   const initials = (name || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   if (uri) {
-    return <View style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: colors.surfaceTertiary }}>
-      <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" transition={200} />
-    </View>;
+    return (
+      <View style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: colors.surfaceTertiary }}>
+        <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" transition={150} />
+      </View>
+    );
   }
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" }}>
-      <AppText variant="label" color={colors.onBrandTertiary}>{initials}</AppText>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceTertiary, borderWidth: 1, borderColor: colors.borderStrong, alignItems: "center", justifyContent: "center" }}>
+      <AppText variant="caption" color={colors.onSurface} style={{ fontWeight: "600", fontSize: size * 0.38 }}>{initials}</AppText>
     </View>
   );
 }
@@ -198,12 +205,12 @@ export function EmptyState({ icon = "inbox", title, message, actionLabel, onActi
   return (
     <View style={styles.empty} testID={testID}>
       <View style={styles.emptyIcon}>
-        <Feather name={icon} size={26} color={colors.brandPrimary} />
+        <Feather name={icon} size={22} color={colors.onSurfaceSecondary} />
       </View>
-      <AppText variant="h2" style={{ marginTop: spacing.lg, textAlign: "center" }}>{title}</AppText>
-      {message ? <AppText variant="body" style={{ marginTop: spacing.sm, textAlign: "center", maxWidth: 300 }}>{message}</AppText> : null}
+      <AppText variant="h2" style={{ marginTop: spacing.md, textAlign: "center" }}>{title}</AppText>
+      {message ? <AppText variant="body" style={{ marginTop: spacing.xs, textAlign: "center", maxWidth: 280 }}>{message}</AppText> : null}
       {actionLabel && onAction ? (
-        <Button title={actionLabel} onPress={onAction} style={{ marginTop: spacing.lg, alignSelf: "center", paddingHorizontal: spacing.xl }} />
+        <Button title={actionLabel} onPress={onAction} small style={{ marginTop: spacing.md }} />
       ) : null}
     </View>
   );
@@ -213,8 +220,8 @@ export function EmptyState({ icon = "inbox", title, message, actionLabel, onActi
 export function LoadingView({ label }: { label?: string }) {
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={colors.brandPrimary} size="large" />
-      {label ? <AppText variant="caption" style={{ marginTop: spacing.md }}>{label}</AppText> : null}
+      <ActivityIndicator color={colors.onSurface} size="small" />
+      {label ? <AppText variant="caption" style={{ marginTop: spacing.sm }}>{label}</AppText> : null}
     </View>
   );
 }
@@ -222,61 +229,60 @@ export function LoadingView({ label }: { label?: string }) {
 export function ErrorView({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
     <View style={styles.center}>
-      <Feather name="cloud-off" size={28} color={colors.onSurfaceTertiary} />
-      <AppText variant="subtitle" style={{ marginTop: spacing.md, textAlign: "center" }}>
+      <Feather name="cloud-off" size={24} color={colors.onSurfaceTertiary} />
+      <AppText variant="subtitle" style={{ marginTop: spacing.sm, textAlign: "center" }}>
         {message || "Something went wrong."}
       </AppText>
-      {onRetry ? <Button title="Try again" variant="outline" small onPress={onRetry} style={{ marginTop: spacing.md }} /> : null}
+      {onRetry ? <Button title="Try again" variant="outline" small onPress={onRetry} style={{ marginTop: spacing.sm }} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   btn: {
-    height: 50,
+    height: 46,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   btnRow: { flexDirection: "row", alignItems: "center" },
   card: {
     backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+    borderRadius: radius.md,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadow.card,
   },
   track: { width: "100%", backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: radius.pill,
   },
   chip: {
-    height: 36,
-    paddingHorizontal: spacing.lg,
+    height: 32,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
     backgroundColor: colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   chipActive: {
-    backgroundColor: colors.brandPrimary,
-    borderColor: colors.brandPrimary,
+    backgroundColor: colors.onSurface,
+    borderColor: colors.onSurface,
   },
-  empty: { alignItems: "center", justifyContent: "center", paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xl },
+  empty: { alignItems: "center", justifyContent: "center", paddingVertical: spacing.xxl, paddingHorizontal: spacing.xl },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.brandTertiary,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceTertiary,
     alignItems: "center",
     justifyContent: "center",
   },

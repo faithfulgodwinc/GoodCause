@@ -81,42 +81,48 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
     >
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+      {/* GoFundMe-Style Clean White Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.topRow}>
           <View>
-            <AppText variant="caption" color={colors.onSurfaceTertiary}>
-              {displayName ? `Good day, ${displayName}` : "Welcome to GoodCause"}
+            <AppText variant="h1" color={colors.brandPrimary} style={styles.brandLogo}>
+              goodcause
             </AppText>
-            <AppText variant="display" color={colors.brandPrimary} style={{ marginTop: 2 }}>
-              GoodCause
-            </AppText>
+            {displayName ? (
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 1 }}>
+                Welcome back, {displayName}
+              </AppText>
+            ) : (
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 1 }}>
+                Trust makes generosity go further
+              </AppText>
+            )}
           </View>
           <Pressable onPress={() => router.push("/profile")}>
-            <Avatar name={user?.name} uri={user?.picture} size={42} />
+            <Avatar name={user?.name} uri={user?.picture} size={38} />
           </Pressable>
         </View>
 
-        {/* Search prompt */}
+        {/* GoFundMe Search Bar */}
         <Pressable
           testID="home-search-bar"
           onPress={() => router.push("/explore")}
           style={styles.searchBar}
         >
-          <Feather name="search" size={18} color={colors.muted} />
-          <AppText variant="body" color={colors.muted} style={{ marginLeft: spacing.sm, flex: 1 }}>
-            Search causes, charities, organizers...
+          <Feather name="search" size={17} color={colors.onSurfaceSecondary} />
+          <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginLeft: spacing.sm, flex: 1, fontSize: 14 }}>
+            Search by cause, name, or city
           </AppText>
         </Pressable>
 
-        {/* Category horizontal chips */}
+        {/* Categories Bar */}
         <FlatList
           horizontal
           data={categories}
           keyExtractor={(c) => c.id}
           showsHorizontalScrollIndicator={false}
           style={{ marginTop: spacing.md }}
-          contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }}
+          contentContainerStyle={{ gap: spacing.xs, paddingRight: spacing.lg }}
           renderItem={({ item }) => (
             <Chip
               testID={`cat-chip-${item.slug}`}
@@ -128,11 +134,11 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
-        {/* Featured carousel */}
+        {/* Featured Fundraisers Carousel */}
         {featured.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <AppText variant="h2">Featured causes</AppText>
+              <AppText variant="h2">Featured fundraisers</AppText>
               <Pressable onPress={() => router.push("/explore")}>
                 <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
               </Pressable>
@@ -150,13 +156,26 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        {/* Urgent Causes */}
+        {/* GoFundMe Trust Banner */}
+        <View style={styles.trustBanner}>
+          <View style={styles.trustIconWrap}>
+            <Feather name="shield" size={18} color={colors.brandPrimary} />
+          </View>
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <AppText variant="label" style={{ color: colors.onSurface }}>GoodCause Giving Guarantee</AppText>
+            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 2 }}>
+              100% verified causes with itemized budgets & milestone proof.
+            </AppText>
+          </View>
+        </View>
+
+        {/* Urgent Fundraisers */}
         {urgent.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <View style={styles.urgentTitleRow}>
-                <Feather name="clock" size={18} color={colors.warning} />
-                <AppText variant="h2" style={{ marginLeft: 6 }}>Urgent cases</AppText>
+              <View style={styles.rowCenter}>
+                <Feather name="clock" size={16} color={colors.warning} />
+                <AppText variant="h2" style={{ marginLeft: 6 }}>Urgent fundraisers</AppText>
               </View>
               <Pressable onPress={() => router.push("/explore")}>
                 <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
@@ -174,7 +193,7 @@ export default function HomeScreen() {
         {almost_funded.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <AppText variant="h2">Almost funded</AppText>
+              <AppText variant="h2">Close to goal</AppText>
               <Pressable onPress={() => router.push("/explore")}>
                 <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
               </Pressable>
@@ -187,11 +206,11 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        {/* Recommended / Explore more */}
+        {/* Discover Fundraisers */}
         {recommended.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <AppText variant="h2">Discover causes</AppText>
+              <AppText variant="h2">Top causes near you</AppText>
               <Pressable onPress={() => router.push("/explore")}>
                 <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
               </Pressable>
@@ -214,7 +233,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   header: {
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
@@ -225,14 +244,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  brandLogo: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surfaceTertiary,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
     height: 46,
     marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   section: {
     marginTop: spacing.xl,
@@ -242,14 +268,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
-  urgentTitleRow: {
+  rowCenter: {
     flexDirection: "row",
     alignItems: "center",
   },
   listWrap: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.md,
+    gap: spacing.sm,
+  },
+  trustBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.brandTertiary,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xl,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "#D1E7DD",
+  },
+  trustIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

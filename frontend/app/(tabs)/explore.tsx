@@ -100,7 +100,7 @@ export default function Explore() {
           numColumns={columns}
           columnWrapperStyle={columns > 1 ? { gap: spacing.md } : undefined}
           style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}
-          contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 120 }}
+          contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={{ flex: columns > 1 ? 1 : undefined }}>
@@ -116,8 +116,8 @@ export default function Explore() {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.surfaceSecondary,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -125,9 +125,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surfaceTertiary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    height: 46,
+    height: 42,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  input: { flex: 1, marginLeft: spacing.sm, fontFamily: font.medium, fontSize: 15, color: colors.onSurface },
+  input: { flex: 1, marginLeft: spacing.sm, fontFamily: font.medium, fontSize: 14, color: colors.onSurface },
 });
