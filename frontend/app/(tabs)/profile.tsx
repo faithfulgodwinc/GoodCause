@@ -28,10 +28,10 @@ export default function Profile() {
   const { data: impact } = useQuery({ queryKey: ["impact"], queryFn: () => api<Impact>("/impact") });
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.profileRow}>
-          <Avatar name={user?.name} uri={user?.picture} size={64} />
+          <Avatar name={user?.name} uri={user?.picture} size={58} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
             <AppText variant="h2">{user?.name}</AppText>
             <AppText variant="caption" style={{ marginTop: 2 }}>{user?.email}</AppText>
@@ -41,6 +41,8 @@ export default function Profile() {
           </View>
         </View>
       </View>
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
       {/* Impact */}
       <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
@@ -89,7 +91,8 @@ export default function Profile() {
       <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl }}>
         GoodCause · Trust makes generosity go further.
       </AppText>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

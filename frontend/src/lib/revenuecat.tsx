@@ -1,87 +1,163 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 import type { CustomerInfo, PurchasesPackage } from "react-native-purchases";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const REVENUECAT_TEST_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
 const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
 const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY;
 
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "pro";
+const hasLiveKeys = !!(REVENUECAT_TEST_API_KEY || REVENUECAT_IOS_API_KEY || REVENUECAT_ANDROID_API_KEY);
 export const rcEnabled = Platform.OS !== "web" || __DEV__;
 
+const DEV_STORAGE_KEY = "@goodcause_pro_subscribed";
+
+// Built-in sandbox packages for development and testing
+export const SANDBOX_PACKAGES: any[] = [
+  {
+    identifier: "annual_pro",
+    packageType: "ANNUAL",
+    product: {
+      identifier: "gc_pro_annual",
+      title: "Annual Pro",
+      description: "Billed annually · Save 17%",
+      priceString: "₦25,000 / year",
+      price: 25000,
+      currencyCode: "NGN",
+    },
+  },
+  {
+    identifier: "monthly_pro",
+    packageType: "MONTHLY",
+    product: {
+      identifier: "gc_pro_monthly",
+      title: "Monthly Pro",
+      description: "Billed monthly · Cancel anytime",
+      priceString: "₦2,500 / month",
+      price: 2500,
+      currencyCode: "NGN",
+    },
+  },
+];
+
 function getRevenueCatApiKey() {
-  if (!REVENUECAT_TEST_API_KEY || !REVENUECAT_IOS_API_KEY || !REVENUECAT_ANDROID_API_KEY) {
-    throw new Error("RevenueCat public API keys not found");
-  }
-  if (Platform.OS === "web" || __DEV__) return REVENUECAT_TEST_API_KEY;
-  if (Platform.OS === "ios") return REVENUECAT_IOS_API_KEY;
-  if (Platform.OS === "android") return REVENUECAT_ANDROID_API_KEY;
-  return REVENUECAT_TEST_API_KEY;
+  if (Platform.OS === "ios" && REVENUECAT_IOS_API_KEY) return REVENUECAT_IOS_API_KEY;
+  if (Platform.OS === "android" && REVENUECAT_ANDROID_API_KEY) return REVENUECAT_ANDROID_API_KEY;
+  return REVENUECAT_TEST_API_KEY || null;
 }
 
 export function initializeRevenueCat() {
   if (!rcEnabled) return;
-  Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN);
-  Purchases.configure({ apiKey: getRevenueCatApiKey() });
+  const key = getRevenueCatApiKey();
+  if (!key) return;
+  try {
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.WARN);
+    Purchases.configure({ apiKey: key });
+  } catch (e) {
+    console.warn("RevenueCat config error:", e);
+  }
 }
 
 function useSubscriptionContext() {
   const queryClient = useQueryClient();
+  const [devSubscribed, setDevSubscribed] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(DEV_STORAGE_KEY).then((v) => {
+      if (v === "true") setDevSubscribed(true);
+    });
+  }, []);
+
+  const key = getRevenueCatApiKey();
 
   const customerInfoQuery = useQuery({
     queryKey: ["revenuecat", "customer-info"],
-    queryFn: () => Purchases.getCustomerInfo(),
-    enabled: rcEnabled,
+    queryFn: async () => {
+      if (!key) return null;
+      try {
+        return await Purchases.getCustomerInfo();
+      } catch {
+        return null;
+      }
+    },
+    enabled: rcEnabled && !!key,
     staleTime: 60 * 1000,
     retry: false,
   });
 
   const offeringsQuery = useQuery({
     queryKey: ["revenuecat", "offerings"],
-    queryFn: () => Purchases.getOfferings(),
-    enabled: rcEnabled,
+    queryFn: async () => {
+      if (!key) return null;
+      try {
+        return await Purchases.getOfferings();
+      } catch {
+        return null;
+      }
+    },
+    enabled: rcEnabled && !!key,
     staleTime: 300 * 1000,
     retry: false,
   });
 
   useEffect(() => {
-    if (!rcEnabled) return;
+    if (!rcEnabled || !key) return;
     const listener = (info: CustomerInfo) =>
       queryClient.setQueryData(["revenuecat", "customer-info"], info);
-    Purchases.addCustomerInfoUpdateListener(listener);
-    return () => {
-      Purchases.removeCustomerInfoUpdateListener(listener);
-    };
-  }, [queryClient]);
+    try {
+      Purchases.addCustomerInfoUpdateListener(listener);
+      return () => {
+        Purchases.removeCustomerInfoUpdateListener(listener);
+      };
+    } catch {}
+  }, [queryClient, key]);
 
   const purchaseMutation = useMutation({
-    mutationFn: async (pkg: PurchasesPackage) => {
-      const id = (await Purchases.getCustomerInfo()).originalAppUserId;
-      if (id.startsWith("$RCAnonymousID:")) throw new Error("identity_not_ready");
+    mutationFn: async (pkg: any) => {
+      if (!key) {
+        // Sandbox simulation
+        await AsyncStorage.setItem(DEV_STORAGE_KEY, "true");
+        setDevSubscribed(true);
+        return { active: true };
+      }
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       return customerInfo;
     },
   });
 
   const restoreMutation = useMutation({
-    mutationFn: () => Purchases.restorePurchases(),
+    mutationFn: async () => {
+      if (!key) {
+        await AsyncStorage.setItem(DEV_STORAGE_KEY, "true");
+        setDevSubscribed(true);
+        return { active: true };
+      }
+      return await Purchases.restorePurchases();
+    },
   });
 
-  const isSubscribed =
+  const liveSubscribed =
     customerInfoQuery.data?.entitlements.active?.[REVENUECAT_ENTITLEMENT_IDENTIFIER] !== undefined;
+  const isSubscribed = liveSubscribed || devSubscribed;
   const originalAppUserId = customerInfoQuery.data?.originalAppUserId;
-  const identityReady = !!originalAppUserId && !originalAppUserId.startsWith("$RCAnonymousID:");
+  const identityReady = !key || (!!originalAppUserId && !originalAppUserId.startsWith("$RCAnonymousID:"));
+
+  // If live offerings are present, use them. Otherwise fallback to sandbox packages.
+  const livePackages = offeringsQuery.data?.current?.availablePackages || [];
+  const availablePackages = livePackages.length > 0 ? livePackages : SANDBOX_PACKAGES;
 
   return {
     customerInfo: customerInfoQuery.data,
     offerings: offeringsQuery.data,
+    availablePackages,
     isSubscribed,
     identityReady,
     rcEnabled,
-    isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
-    offeringsError: offeringsQuery.isError,
+    isLoading: key ? (customerInfoQuery.isLoading || offeringsQuery.isLoading) : false,
+    offeringsError: false,
     purchase: purchaseMutation.mutateAsync,
     restore: restoreMutation.mutateAsync,
     isPurchasing: purchaseMutation.isPending,

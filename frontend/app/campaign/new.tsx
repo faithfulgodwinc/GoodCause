@@ -14,14 +14,6 @@ import { formatNaira, formatAmountInput } from "@/src/format";
 import { CampaignCard } from "@/src/components/CampaignCard";
 import { MediaUploader, Media } from "@/src/components/MediaUploader";
 
-const COVERS = [
-  "https://images.unsplash.com/photo-1631815590058-860e4f83c1e8?w=800&q=80",
-  "https://images.unsplash.com/photo-1584750153892-38414eb8e76a?w=800&q=80",
-  "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=800&q=80",
-  "https://picsum.photos/seed/gc1/800/600",
-  "https://picsum.photos/seed/gc2/800/600",
-  "https://picsum.photos/seed/gc3/800/600",
-];
 const RELATIONSHIPS = ["self", "family", "friend", "community", "organization"];
 const STEPS = ["Cause", "Story", "Goal", "Budget", "Beneficiary", "Media", "Verification", "Preview", "Submit"];
 
@@ -80,7 +72,7 @@ function Builder() {
     title: "", summary: "", story: "", category_id: null, goal: "",
     budget: [] as { item: string; amount: string }[],
     beneficiary: { name: "", relationship: "self", type: "individual" },
-    cover_image: COVERS[0], location: { city: "", country: "NG" },
+    cover_image: "", location: { city: "", country: "NG" },
     media: [] as Media[],
     hero_video: null as string | null,
     deadlineDays: "30",
@@ -92,7 +84,7 @@ function Builder() {
     return {
       ...f,
       media: m,
-      cover_image: firstImage ? firstImage.url : f.cover_image,
+      cover_image: firstImage ? firstImage.url : (m[0]?.url || ""),
       hero_video: firstVideo ? firstVideo.url : null,
     };
   });
@@ -121,6 +113,7 @@ function Builder() {
     if (step === 1 && form.story.trim().length < 20) { setError("Tell your story (at least a couple of sentences)."); return false; }
     if (step === 2 && (!form.goal || parseFloat(form.goal) < 1000)) { setError("Set a goal of at least ₦1,000."); return false; }
     if (step === 4 && !form.beneficiary.name.trim()) { setError("Who is this campaign for?"); return false; }
+    if (step === 5 && (!form.media || form.media.length === 0)) { setError("Please upload at least one photo or video for your campaign."); return false; }
     return true;
   };
 
@@ -269,17 +262,8 @@ function Builder() {
         )}
 
         {step === 5 && (
-          <StepWrap title="Add photos & video" subtitle="Upload your own photos or a short video — real media builds trust.">
+          <StepWrap title="Add photos & video" subtitle="Upload your own photos or a short video — genuine media builds trust.">
             <MediaUploader media={form.media} onChange={setMedia} />
-            <AppText variant="label" style={{ marginTop: spacing.xl, marginBottom: spacing.sm }}>Or pick a suggested cover</AppText>
-            <View style={styles.coverGrid}>
-              {COVERS.map((url) => (
-                <Pressable key={url} testID={`cover-${url}`} onPress={() => set("cover_image", url)} style={[styles.coverItem, form.cover_image === url && styles.coverActive]}>
-                  <Image source={{ uri: url }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                  {form.cover_image === url ? <View style={styles.coverCheck}><Feather name="check" size={16} color="#fff" /></View> : null}
-                </Pressable>
-              ))}
-            </View>
           </StepWrap>
         )}
 

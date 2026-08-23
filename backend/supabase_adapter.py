@@ -182,9 +182,18 @@ class SupabaseCollection:
             inserted_id = doc.get("id") or doc.get("session_token")
         return InsertResult()
 
-    async def update_one(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> Any:
-        set_dict = update_dict.get("$set", update_dict)
+    async def update_one(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any], upsert: bool = False) -> Any:
+        set_dict = update_dict.get("$set", {})
+        if "$set" not in update_dict and "$setOnInsert" not in update_dict and "$inc" not in update_dict:
+            set_dict = update_dict
         inc_dict = update_dict.get("$inc", {})
+        set_on_insert = update_dict.get("$setOnInsert", {})
+
+        if upsert:
+            existing = await self.find_one(filter_dict)
+            if not existing:
+                insert_doc = {**filter_dict, **set_on_insert, **set_dict}
+                return await self.insert_one(insert_doc)
 
         set_params = []
         set_clauses = []

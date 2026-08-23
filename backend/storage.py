@@ -1,56 +1,44 @@
-"""Emergent Managed Object Storage helper (sync `requests`, call via threadpool)."""
+"""Direct file storage with persistent local filesystem and MIME handling."""
 import os
+import mimetypes
 
-import requests
-
-STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
-STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 APP_NAME = "goodcause"
-
-_storage_key = None
 
 
 def init_storage():
-    global _storage_key
-    if _storage_key:
-        return _storage_key
-    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
-    resp.raise_for_status()
-    _storage_key = resp.json()["storage_key"]
-    return _storage_key
-
-
-def _reset():
-    global _storage_key
-    _storage_key = None
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    return "local_storage"
 
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data, timeout=180,
-    )
-    if resp.status_code == 503:
-        _reset()
-        key = init_storage()
-        resp = requests.put(
-            f"{STORAGE_URL}/objects/{path}",
-            headers={"X-Storage-Key": key, "Content-Type": content_type},
-            data=data, timeout=180,
-        )
-    resp.raise_for_status()
-    return resp.json()
+    file_path = os.path.join(UPLOADS_DIR, path)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, "wb") as f:
+        f.write(data)
+    return {"status": "ok", "path": path, "size": len(data)}
 
 
-def get_object(path: str):
-    key = init_storage()
-    resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
-    if resp.status_code == 503:
-        _reset()
-        key = init_storage()
-        resp = requests.get(f"{STORAGE_URL}/objects/{path}", headers={"X-Storage-Key": key}, timeout=60)
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+def get_object(path: str) -> tuple[bytes, str]:
+    file_path = os.path.join(UPLOADS_DIR, path)
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {path}")
+    ctype, _ = mimetypes.guess_type(file_path)
+    if not ctype:
+        if path.endswith(".jpg") or path.endswith(".jpeg"):
+            ctype = "image/jpeg"
+        elif path.endswith(".png"):
+            ctype = "image/png"
+        elif path.endswith(".webp"):
+            ctype = "image/webp"
+        elif path.endswith(".mp4"):
+            ctype = "video/mp4"
+        elif path.endswith(".mov"):
+            ctype = "video/quicktime"
+        else:
+            ctype = "application/octet-stream"
+    with open(file_path, "rb") as f:
+        content = f.read()
+    return content, ctype

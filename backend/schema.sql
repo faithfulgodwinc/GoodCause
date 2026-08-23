@@ -218,3 +218,16 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 
 CREATE INDEX IF NOT EXISTS idx_analytics_event ON analytics_events(event);
 CREATE INDEX IF NOT EXISTS idx_analytics_user ON analytics_events(user_id);
+
+-- 14. MEDIA UPLOADS
+CREATE TABLE IF NOT EXISTS media (
+    id VARCHAR(64) PRIMARY KEY,
+    owner_id VARCHAR(64) REFERENCES users(id) ON DELETE CASCADE,
+    storage_path TEXT NOT NULL,
+    content_type VARCHAR(100),
+    kind VARCHAR(20) DEFAULT 'image',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_media_owner ON media(owner_id);
+

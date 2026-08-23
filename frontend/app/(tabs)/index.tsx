@@ -75,14 +75,9 @@ export default function HomeScreen() {
   const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : null);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 100 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-    >
-      {/* GoFundMe-Style Clean White Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      {/* Pinned Top Bar: GoodCause logo on left, Profile icon on right */}
+      <View style={[styles.pinnedHeader, { paddingTop: insets.top + spacing.xs }]}>
         <View style={styles.topRow}>
           <View>
             <AppText variant="h1" color={colors.brandPrimary} style={styles.brandLogo}>
@@ -102,128 +97,157 @@ export default function HomeScreen() {
             <Avatar name={user?.name} uri={user?.picture} size={38} />
           </Pressable>
         </View>
-
-        {/* GoFundMe Search Bar */}
-        <Pressable
-          testID="home-search-bar"
-          onPress={() => router.push("/explore")}
-          style={styles.searchBar}
-        >
-          <Feather name="search" size={17} color={colors.onSurfaceSecondary} />
-          <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginLeft: spacing.sm, flex: 1, fontSize: 14 }}>
-            Search by cause, name, or city
-          </AppText>
-        </Pressable>
-
-        {/* Categories Bar */}
-        <FlatList
-          horizontal
-          data={categories}
-          keyExtractor={(c) => c.id}
-          showsHorizontalScrollIndicator={false}
-          style={{ marginTop: spacing.md }}
-          contentContainerStyle={{ gap: spacing.xs, paddingRight: spacing.lg }}
-          renderItem={({ item }) => (
-            <Chip
-              testID={`cat-chip-${item.slug}`}
-              label={item.name}
-              onPress={() => router.push(`/explore?category=${item.id}`)}
-            />
-          )}
-        />
       </View>
 
-      <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
-        {/* Featured Fundraisers Carousel */}
-        {featured.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <AppText variant="h2">Featured fundraisers</AppText>
-              <Pressable onPress={() => router.push("/explore")}>
-                <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-              </Pressable>
-            </View>
-            <FlatList
-              horizontal
-              data={featured}
-              keyExtractor={(c) => c.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }}
-              renderItem={({ item }) => (
-                <FeaturedCard c={item} onPress={() => router.push(`/campaign/${item.id}`)} />
-              )}
-            />
+      {/* Scrollable Area: Search bar down to the rest of the feed */}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      >
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
+          {/* GoFundMe Search Bar */}
+          <View style={{ paddingHorizontal: spacing.lg }}>
+            <Pressable
+              testID="home-search-bar"
+              onPress={() => router.push("/explore")}
+              style={styles.searchBar}
+            >
+              <Feather name="search" size={17} color={colors.onSurfaceSecondary} />
+              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginLeft: spacing.sm, flex: 1, fontSize: 14 }}>
+                Search by cause, name, or city
+              </AppText>
+            </Pressable>
           </View>
-        ) : null}
 
-        {/* GoFundMe Trust Banner */}
-        <View style={styles.trustBanner}>
-          <View style={styles.trustIconWrap}>
-            <Feather name="shield" size={18} color={colors.brandPrimary} />
-          </View>
-          <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <AppText variant="label" style={{ color: colors.onSurface }}>GoodCause Giving Guarantee</AppText>
-            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 2 }}>
-              100% verified causes with itemized budgets & milestone proof.
-            </AppText>
-          </View>
-        </View>
+          {/* Categories Bar */}
+          <FlatList
+            horizontal
+            data={categories}
+            keyExtractor={(c) => c.id}
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: spacing.md }}
+            contentContainerStyle={{ gap: spacing.xs, paddingHorizontal: spacing.lg }}
+            renderItem={({ item }) => (
+              <Chip
+                testID={`cat-chip-${item.slug}`}
+                label={item.name}
+                onPress={() => router.push(`/explore?category=${item.id}`)}
+              />
+            )}
+          />
 
-        {/* Urgent Fundraisers */}
-        {urgent.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.rowCenter}>
-                <Feather name="clock" size={16} color={colors.warning} />
-                <AppText variant="h2" style={{ marginLeft: 6 }}>Urgent fundraisers</AppText>
+          {/* Featured Fundraisers Carousel */}
+          {featured.length > 0 ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <AppText variant="h2">Featured fundraisers</AppText>
+                <Pressable onPress={() => router.push("/explore")}>
+                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+                </Pressable>
               </View>
-              <Pressable onPress={() => router.push("/explore")}>
-                <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-              </Pressable>
+              <FlatList
+                horizontal
+                data={featured}
+                keyExtractor={(c) => c.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }}
+                renderItem={({ item }) => (
+                  <FeaturedCard c={item} onPress={() => router.push(`/campaign/${item.id}`)} />
+                )}
+              />
             </View>
-            <View style={styles.listWrap}>
-              {urgent.slice(0, 4).map((c) => (
-                <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-              ))}
-            </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {/* Almost Funded */}
-        {almost_funded.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <AppText variant="h2">Close to goal</AppText>
-              <Pressable onPress={() => router.push("/explore")}>
-                <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-              </Pressable>
+          {/* GoFundMe Trust Banner */}
+          <View style={styles.trustBanner}>
+            <View style={styles.trustIconWrap}>
+              <Feather name="shield" size={18} color={colors.brandPrimary} />
             </View>
-            <View style={styles.listWrap}>
-              {almost_funded.slice(0, 4).map((c) => (
-                <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-              ))}
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <AppText variant="label" style={{ color: colors.onSurface }}>GoodCause Giving Guarantee</AppText>
+              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 2 }}>
+                100% verified causes with itemized budgets & milestone proof.
+              </AppText>
             </View>
           </View>
-        ) : null}
 
-        {/* Discover Fundraisers */}
-        {recommended.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <AppText variant="h2">Top causes near you</AppText>
-              <Pressable onPress={() => router.push("/explore")}>
-                <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+          {/* Urgent Fundraisers */}
+          {urgent.length > 0 ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.rowCenter}>
+                  <Feather name="clock" size={16} color={colors.warning} />
+                  <AppText variant="h2" style={{ marginLeft: 6 }}>Urgent fundraisers</AppText>
+                </View>
+                <Pressable onPress={() => router.push("/explore")}>
+                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+                </Pressable>
+              </View>
+              <View style={styles.listWrap}>
+                {urgent.slice(0, 4).map((c) => (
+                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Almost Funded */}
+          {almost_funded.length > 0 ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <AppText variant="h2">Close to goal</AppText>
+                <Pressable onPress={() => router.push("/explore")}>
+                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+                </Pressable>
+              </View>
+              <View style={styles.listWrap}>
+                {almost_funded.slice(0, 4).map((c) => (
+                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Discover Fundraisers */}
+          {recommended.length > 0 ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <AppText variant="h2">Top causes near you</AppText>
+                <Pressable onPress={() => router.push("/explore")}>
+                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+                </Pressable>
+              </View>
+              <View style={styles.listWrap}>
+                {recommended.slice(0, 6).map((c) => (
+                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Clean Empty State when no fundraisers exist */}
+          {featured.length === 0 && urgent.length === 0 && recommended.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Feather name="heart" size={32} color={colors.brandPrimary} />
+              <AppText variant="h2" style={{ marginTop: spacing.md, textAlign: "center" }}>
+                Start the first fundraiser
+              </AppText>
+              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.xs, textAlign: "center", maxWidth: 280 }}>
+                Rally support for medical emergencies, school tuition, or community relief.
+              </AppText>
+              <Pressable
+                onPress={() => router.push("/campaign/new")}
+                style={styles.startBtn}
+              >
+                <AppText variant="label" color="#FFFFFF">Start a campaign</AppText>
               </Pressable>
             </View>
-            <View style={styles.listWrap}>
-              {recommended.slice(0, 6).map((c) => (
-                <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-              ))}
-            </View>
-          </View>
-        ) : null}
-      </View>
-    </ScrollView>
+          ) : null}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -232,12 +256,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  header: {
+  pinnedHeader: {
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    zIndex: 10,
   },
   topRow: {
     flexDirection: "row",
@@ -296,5 +321,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
+  },
+  emptyWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.lg,
+  },
+  startBtn: {
+    backgroundColor: colors.brandPrimary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    marginTop: spacing.lg,
   },
 });
