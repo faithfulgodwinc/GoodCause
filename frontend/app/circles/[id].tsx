@@ -22,13 +22,14 @@ export default function CircleDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
-        <AppText variant="title" numberOfLines={1} style={{ flex: 1, textAlign: "center", marginHorizontal: spacing.md }}>{c.name}</AppText>
-        <View style={{ width: 24 }} />
-      </View>
+      <View style={{ alignSelf: "center", width: "100%", maxWidth: 680, flex: 1 }}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title" numberOfLines={1} style={{ flex: 1, textAlign: "center", marginHorizontal: spacing.md }}>{c.name}</AppText>
+          <View style={{ width: 24 }} />
+        </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
         <View style={styles.hero}>
           <View style={styles.icon}><Feather name="users" size={24} color={colors.onBrandPrimary} /></View>
           <AppText variant="h1" style={{ marginTop: spacing.md }}>{c.name}</AppText>
@@ -74,6 +75,7 @@ export default function CircleDetail() {
           )}
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 }

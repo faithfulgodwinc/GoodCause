@@ -12,15 +12,18 @@ import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { AuthProvider } from "@/src/context/auth";
 import { SubscriptionProvider, initializeRevenueCat } from "@/src/lib/revenuecat";
 import { colors } from "@/src/theme";
+import { GlobalHeader } from "@/src/components/GlobalHeader";
+import { injectWebGlobalStyles } from "@/src/lib/WebGlobalStyles";
 
 LogBox.ignoreAllLogs(true);
 SplashScreen.preventAutoHideAsync();
 
-// Configure RevenueCat once at module scope, before any component mounts.
+// Configure RevenueCat and Web Styles once at module scope, before any component mounts.
 try {
   initializeRevenueCat();
+  injectWebGlobalStyles();
 } catch (err) {
-  console.warn("RevenueCat unavailable:", err);
+  console.warn("Initialization error:", err);
 }
 
 const queryClient = new QueryClient({
@@ -61,6 +64,7 @@ export default function RootLayout() {
             <SubscriptionProvider>
               <StatusBar style="dark" />
               <View style={{ flex: 1, backgroundColor: colors.surface }}>
+                <GlobalHeader />
                 <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
                   <Stack.Screen name="index" />
                   <Stack.Screen name="auth/index" />

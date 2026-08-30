@@ -10,6 +10,7 @@ import { api } from "@/src/lib/api";
 import { AppText, LoadingView, EmptyState } from "@/src/components/ui";
 import { colors, spacing, radius } from "@/src/theme";
 import { formatNaira, timeAgo } from "@/src/format";
+import { useResponsive } from "@/src/lib/responsive";
 
 type Notif = { id: string; type: string; title: string; body: string; campaign_id?: string; read: boolean; created_at: string };
 type Donation = { id: string; amount_kobo: number; message: string; created_at: string; campaign?: { id: string; title: string; cover_image?: string; status: string } };
@@ -28,6 +29,7 @@ export default function Activity() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const qc = useQueryClient();
+  const { feedMaxWidth } = useResponsive();
   const [tab, setTab] = useState<"alerts" | "donations">("alerts");
 
   const notifs = useQuery({ queryKey: ["notifications"], queryFn: () => api<{ items: Notif[]; unread: number }>("/notifications") });
@@ -41,15 +43,17 @@ export default function Activity() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <View style={styles.headerRow}>
-          <AppText variant="h1">Activity</AppText>
-          {tab === "alerts" && (notifs.data?.unread || 0) > 0 ? (
-            <Pressable onPress={markAll} testID="mark-all-read"><AppText variant="label" color={colors.brandPrimary}>Mark all read</AppText></Pressable>
-          ) : null}
-        </View>
-        <View style={styles.seg}>
-          <Seg label="Notifications" active={tab === "alerts"} onPress={() => setTab("alerts")} />
-          <Seg label="My donations" active={tab === "donations"} onPress={() => setTab("donations")} />
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: feedMaxWidth }}>
+          <View style={styles.headerRow}>
+            <AppText variant="h1">Activity</AppText>
+            {tab === "alerts" && (notifs.data?.unread || 0) > 0 ? (
+              <Pressable onPress={markAll} testID="mark-all-read"><AppText variant="label" color={colors.brandPrimary}>Mark all read</AppText></Pressable>
+            ) : null}
+          </View>
+          <View style={styles.seg}>
+            <Seg label="Notifications" active={tab === "alerts"} onPress={() => setTab("alerts")} />
+            <Seg label="My donations" active={tab === "donations"} onPress={() => setTab("donations")} />
+          </View>
         </View>
       </View>
 
@@ -57,6 +61,7 @@ export default function Activity() {
         <FlatList
           data={notifs.data?.items || []}
           keyExtractor={(n) => n.id}
+          style={{ alignSelf: "center", width: "100%", maxWidth: feedMaxWidth }}
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.sm, paddingBottom: 120, flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={notifs.isRefetching} onRefresh={notifs.refetch} />}
           ListEmptyComponent={notifs.isLoading ? null : <EmptyState testID="notifications-empty" icon="bell" title="No notifications yet" message="Follow a cause and you'll hear about milestones and updates here." />}
@@ -83,6 +88,7 @@ export default function Activity() {
         <FlatList
           data={donations.data || []}
           keyExtractor={(d) => d.id}
+          style={{ alignSelf: "center", width: "100%", maxWidth: feedMaxWidth }}
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 120, flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={donations.isRefetching} onRefresh={donations.refetch} />}
           ListEmptyComponent={donations.isLoading ? null : <EmptyState testID="donations-empty" icon="heart" title="No donations yet" message="When you support a cause, it will appear here with your impact." actionLabel="Explore causes" onAction={() => router.push("/explore")} />}

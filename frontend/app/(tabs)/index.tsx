@@ -43,7 +43,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { maxContentWidth } = useResponsive();
+  const { maxContentWidth, columns, isMobile, isDesktop } = useResponsive();
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNavSearch, setShowNavSearch] = useState(false);
   const searchOpacity = useRef(new Animated.Value(0)).current;
@@ -91,44 +91,46 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* GoFundMe Authentic Sticky Navigation Bar */}
-      <View
-        style={[
-          styles.stickyNav,
-          { paddingTop: insets.top + spacing.xs },
-          isScrolled && styles.stickyNavScrolled,
-        ]}
-      >
-        <View style={styles.navRow}>
-          {/* Brand Logo */}
-          <Pressable onPress={() => {}} hitSlop={8}>
-            <BrandLogo size={24} />
-          </Pressable>
-
-          {/* Right Actions: Quick Search (appears only past in-feed search) & Profile Avatar */}
-          <View style={styles.navRight}>
-            {showNavSearch ? (
-              <Animated.View style={{ opacity: searchOpacity }}>
-                <Pressable
-                  testID="nav-search-btn"
-                  onPress={() => router.push("/explore")}
-                  style={styles.navIconBtn}
-                  hitSlop={8}
-                >
-                  <Feather name="search" size={19} color={colors.onSurface} />
-                </Pressable>
-              </Animated.View>
-            ) : null}
-            <Pressable
-              testID="nav-profile-btn"
-              onPress={() => router.push("/profile")}
-              style={{ marginLeft: spacing.sm }}
-            >
-              <Avatar name={user?.name} uri={user?.picture} size={32} />
+      {/* On mobile, show local sticky nav. On desktop, GlobalHeader handles this. */}
+      {!isDesktop && (
+        <View
+          style={[
+            styles.stickyNav,
+            { paddingTop: insets.top + spacing.xs },
+            isScrolled && styles.stickyNavScrolled,
+          ]}
+        >
+          <View style={styles.navRow}>
+            {/* Brand Logo */}
+            <Pressable onPress={() => {}} hitSlop={8}>
+              <BrandLogo size={24} />
             </Pressable>
+
+            {/* Right Actions: Quick Search & Profile Avatar */}
+            <View style={styles.navRight}>
+              {showNavSearch ? (
+                <Animated.View style={{ opacity: searchOpacity }}>
+                  <Pressable
+                    testID="nav-search-btn"
+                    onPress={() => router.push("/explore")}
+                    style={styles.navIconBtn}
+                    hitSlop={8}
+                  >
+                    <Feather name="search" size={19} color={colors.onSurface} />
+                  </Pressable>
+                </Animated.View>
+              ) : null}
+              <Pressable
+                testID="nav-profile-btn"
+                onPress={() => router.push("/profile")}
+                style={{ marginLeft: spacing.sm }}
+              >
+                <Avatar name={user?.name} uri={user?.picture} size={32} />
+              </Pressable>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Main Scrollable Feed */}
       <ScrollView
@@ -226,9 +228,11 @@ export default function HomeScreen() {
                   <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
                 </Pressable>
               </View>
-              <View style={styles.listWrap}>
-                {urgent.slice(0, 4).map((c) => (
-                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
+                {urgent.slice(0, 6).map((c) => (
+                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
+                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                  </View>
                 ))}
               </View>
             </View>
@@ -243,9 +247,11 @@ export default function HomeScreen() {
                   <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
                 </Pressable>
               </View>
-              <View style={styles.listWrap}>
-                {almost_funded.slice(0, 4).map((c) => (
-                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
+                {almost_funded.slice(0, 6).map((c) => (
+                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
+                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                  </View>
                 ))}
               </View>
             </View>
@@ -260,9 +266,11 @@ export default function HomeScreen() {
                   <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
                 </Pressable>
               </View>
-              <View style={styles.listWrap}>
+              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
                 {recommended.slice(0, 6).map((c) => (
-                  <CampaignCard key={c.id} c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
+                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                  </View>
                 ))}
               </View>
             </View>
@@ -314,6 +322,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     height: 40,
+    width: "100%",
+    maxWidth: 1160,
+    alignSelf: "center",
   },
   navRight: {
     flexDirection: "row",
@@ -371,6 +382,11 @@ const styles = StyleSheet.create({
   listWrap: {
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
+  },
+  listWrapGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
   },
   trustBanner: {
     flexDirection: "row",

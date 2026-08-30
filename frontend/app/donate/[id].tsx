@@ -12,6 +12,7 @@ import { api, track } from "@/src/lib/api";
 import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira, formatAmountInput } from "@/src/format";
+import { useResponsive } from "@/src/lib/responsive";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
@@ -20,6 +21,7 @@ export default function Donate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
+  const { modalMaxWidth, isMobile } = useResponsive();
 
   const [amount, setAmount] = useState<number>(500000);
   const [custom, setCustom] = useState("");
@@ -298,7 +300,7 @@ export default function Donate() {
 }
 
 const styles = StyleSheet.create({
-  full: { flex: 1, backgroundColor: colors.surface },
+  full: { flex: 1, backgroundColor: colors.surface, width: "100%", maxWidth: 560, alignSelf: "center" },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   campRow: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   thumb: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceTertiary },

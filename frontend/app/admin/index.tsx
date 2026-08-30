@@ -47,17 +47,18 @@ export default function Admin() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
-        <AppText variant="title">Admin</AppText>
-        <View style={{ width: 24 }} />
-      </View>
+      <View style={{ alignSelf: "center", width: "100%", maxWidth: 960, flex: 1 }}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">Admin</AppText>
+          <View style={{ width: 24 }} />
+        </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Stats */}
-        <View style={styles.statsGrid}>
-          <StatCard label="Live campaigns" value={String(s?.live_campaigns ?? "—")} icon="zap" />
-          <StatCard label="Pending review" value={String(s?.pending_review ?? "—")} icon="clock" tint={colors.warning} />
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          {/* Stats */}
+          <View style={styles.statsGrid}>
+            <StatCard label="Live campaigns" value={String(s?.live_campaigns ?? "—")} icon="zap" />
+            <StatCard label="Pending review" value={String(s?.pending_review ?? "—")} icon="clock" tint={colors.warning} />
           <StatCard label="Total raised" value={formatNaira(s?.total_raised_kobo || 0, { compact: true })} icon="trending-up" tint={colors.success} />
           <StatCard label="Open reports" value={String(s?.open_reports ?? "—")} icon="flag" tint={colors.error} />
         </View>
@@ -120,6 +121,7 @@ export default function Admin() {
           )) : <EmptyState icon="credit-card" title="No transactions" />))}
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 }

@@ -30,42 +30,44 @@ function MyCampaigns() {
   const items = data?.items || [];
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
-        <AppText variant="title">My campaigns</AppText>
-        <Pressable onPress={() => router.replace("/campaign/new")}><Feather name="plus" size={24} color={colors.brandPrimary} /></Pressable>
+      <View style={{ alignSelf: "center", width: "100%", maxWidth: 680, flex: 1 }}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">My campaigns</AppText>
+          <Pressable onPress={() => router.replace("/campaign/new")}><Feather name="plus" size={24} color={colors.brandPrimary} /></Pressable>
+        </View>
+        {isLoading ? <LoadingView /> : items.length === 0 ? (
+          <EmptyState icon="flag" title="No campaigns yet" message="Start a fundraiser and rally your community around a cause you care about." actionLabel="Start a campaign" onAction={() => router.replace("/campaign/new")} />
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: 60 }}>
+            {items.map((c) => (
+              <View key={c.id} style={{ gap: spacing.xs }}>
+                <View style={styles.statusRow}>
+                  <VerifiedBadge status={c.verification_status} />
+                  <AppText variant="caption" style={{ marginLeft: spacing.sm }}>{c.status}</AppText>
+                </View>
+                <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: 4 }}>
+                  <Button
+                    title="Withdraw funds"
+                    icon="credit-card"
+                    small
+                    variant="outline"
+                    onPress={() => router.push({ pathname: "/payouts/[id]", params: { id: c.id } } as any)}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    title="View page"
+                    small
+                    onPress={() => router.push(`/campaign/${c.id}`)}
+                    style={{ flex: 1, backgroundColor: colors.brandPrimary }}
+                  />
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        )}
       </View>
-      {isLoading ? <LoadingView /> : items.length === 0 ? (
-        <EmptyState icon="flag" title="No campaigns yet" message="Start a fundraiser and rally your community around a cause you care about." actionLabel="Start a campaign" onAction={() => router.replace("/campaign/new")} />
-      ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-          {items.map((c) => (
-            <View key={c.id} style={{ gap: spacing.xs }}>
-              <View style={styles.statusRow}>
-                <VerifiedBadge status={c.verification_status} />
-                <AppText variant="caption" style={{ marginLeft: spacing.sm }}>{c.status}</AppText>
-              </View>
-              <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-              <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: 4 }}>
-                <Button
-                  title="Withdraw funds"
-                  icon="credit-card"
-                  small
-                  variant="outline"
-                  onPress={() => router.push({ pathname: "/payouts/[id]", params: { id: c.id } } as any)}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="View page"
-                  small
-                  onPress={() => router.push(`/campaign/${c.id}`)}
-                  style={{ flex: 1, backgroundColor: colors.brandPrimary }}
-                />
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
     </View>
   );
 }
@@ -164,17 +166,18 @@ function Builder() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.surface }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={back} testID="builder-back"><Feather name={step === 0 ? "x" : "arrow-left"} size={24} color={colors.onSurface} /></Pressable>
-        <AppText variant="title">Start a campaign</AppText>
-        <View style={{ width: 24 }} />
-      </View>
-      <View style={styles.progressWrap}>
-        <ProgressBar percent={((step + 1) / STEPS.length) * 100} />
-        <AppText variant="caption" style={{ marginTop: 6 }}>Step {step + 1} of {STEPS.length} · {STEPS[step]}</AppText>
-      </View>
+      <View style={{ alignSelf: "center", width: "100%", maxWidth: 680, flex: 1 }}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={back} testID="builder-back"><Feather name={step === 0 ? "x" : "arrow-left"} size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">Start a campaign</AppText>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.progressWrap}>
+          <ProgressBar percent={((step + 1) / STEPS.length) * 100} />
+          <AppText variant="caption" style={{ marginTop: 6 }}>Step {step + 1} of {STEPS.length} · {STEPS[step]}</AppText>
+        </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {step === 0 && (
           <StepWrap title="What's the cause?" subtitle="Give it a clear, honest title people can rally behind.">
             <Label text="Category" />
@@ -333,12 +336,13 @@ function Builder() {
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-        {step < STEPS.length - 1 ? (
-          <Button title="Continue" onPress={next} testID="builder-next" />
-        ) : (
-          <Button title="Submit for verification" loading={saving} onPress={submit} testID="builder-submit" />
-        )}
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          {step < STEPS.length - 1 ? (
+            <Button title="Continue" onPress={next} testID="builder-next" />
+          ) : (
+            <Button title="Submit for verification" loading={saving} onPress={submit} testID="builder-submit" />
+          )}
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

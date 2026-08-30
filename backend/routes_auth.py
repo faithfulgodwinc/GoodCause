@@ -9,9 +9,13 @@ from datetime import timedelta
 from core import (db, uid, now, now_iso, hash_password, verify_password, create_jwt,
                   get_current_user, clean, track, SESSION_DAYS, aware, resolve_token, _extract)
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+import os
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
-EMERGENT_SESSION_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 class RegisterIn(BaseModel):
@@ -26,7 +30,7 @@ class LoginIn(BaseModel):
 
 
 class SessionIn(BaseModel):
-    session_id: str
+    id_token: str
 
 
 ADMIN_EMAILS = {"admin@goodcause.ng", "faithfulgodwinc@gmail.com"}
@@ -75,48 +79,53 @@ async def login(body: LoginIn):
 
 @router.post("/session")
 async def google_session(body: SessionIn):
-    async with httpx.AsyncClient(timeout=15) as http:
-        try:
-            resp = await http.get(EMERGENT_SESSION_URL, headers={"X-Session-ID": body.session_id})
-        except Exception:
-            raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
-    if resp.status_code != 200:
-        raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
-    data = resp.json()
-    email = (data.get("email") or "").lower().strip()
-    if not email:
-        raise HTTPException(status_code=401, detail="Could not complete Google sign-in.")
-
-    is_admin = email in ADMIN_EMAILS
-    existing = await db.users.find_one({"email": email}, {"_id": 0})
-    if existing:
-        user = existing
-        update_fields = {"picture": data.get("picture") or user.get("picture")}
-        if is_admin and user.get("role") != "admin":
-            update_fields["role"] = "admin"
-            update_fields["verified_organizer"] = True
-            user["role"] = "admin"
-            user["verified_organizer"] = True
-        await db.users.update_one({"id": user["id"]}, {"$set": update_fields})
-    else:
-        user = {
-            "id": uid("usr_"), "email": email, "name": data.get("name") or email.split("@")[0],
-            "password_hash": None, "picture": data.get("picture"),
-            "role": "admin" if is_admin else "donor", "bio": None,
-            "verified_organizer": is_admin,
-            "auth_provider": "google", "created_at": now_iso(),
-        }
-        await db.users.insert_one(user)
-        await track("signup", user["id"], {"provider": "google"})
-
-    session_token = data.get("session_token") or uid("st_")
-    await db.user_sessions.insert_one({
-        "session_token": session_token, "user_id": user["id"],
-        "expires_at": (now() + timedelta(days=SESSION_DAYS)).isoformat(),
-        "created_at": now_iso(),
-    })
-    jwt_token = create_jwt(user["id"])
-    return {"session_token": session_token, "token": jwt_token, "user": _user_out(user)}
+    if not GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID == "your_google_web_client_id_here":
+        raise HTTPException(status_code=501, detail="Google SSO requires production configuration.")
+        
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            body.id_token, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+        
+        email = idinfo.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Google token missing email.")
+            
+        email = email.lower().strip()
+        name = idinfo.get("name", email.split("@")[0])
+        picture = idinfo.get("picture")
+        
+        user = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if not user:
+            # Register new user
+            is_admin = email in ADMIN_EMAILS
+            user = {
+                "id": uid("usr_"), "email": email, "name": name,
+                "password_hash": None, "picture": picture,
+                "role": "admin" if is_admin else "donor", "bio": None,
+                "verified_organizer": is_admin,
+                "auth_provider": "google", "created_at": now_iso(),
+            }
+            await db.users.insert_one(user)
+            await track("signup", user["id"], {"provider": "google"})
+        else:
+            # Update picture if missing or different, but not strictly necessary
+            if picture and user.get("picture") != picture:
+                await db.users.update_one({"id": user["id"]}, {"$set": {"picture": picture}})
+                user["picture"] = picture
+                
+            if email in ADMIN_EMAILS and user.get("role") != "admin":
+                await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+                user["role"] = "admin"
+                user["verified_organizer"] = True
+                
+            await track("login", user["id"], {"provider": "google"})
+            
+        return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
 
 
 @router.get("/me")

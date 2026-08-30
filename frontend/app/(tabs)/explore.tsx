@@ -53,45 +53,47 @@ export default function Explore() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <AppText variant="h1" style={{ marginBottom: spacing.md }}>Explore</AppText>
-        <View style={styles.search}>
-          <Feather name="search" size={18} color={colors.muted} />
-          <TextInput
-            testID="explore-search-input"
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search causes"
-            placeholderTextColor={colors.muted}
-            style={styles.input}
-            returnKeyType="search"
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
+          <AppText variant="h1" style={{ marginBottom: spacing.md }}>Explore</AppText>
+          <View style={styles.search}>
+            <Feather name="search" size={18} color={colors.muted} />
+            <TextInput
+              testID="explore-search-input"
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search causes"
+              placeholderTextColor={colors.muted}
+              style={[styles.input, { outlineStyle: "none" } as any]}
+              returnKeyType="search"
+            />
+            {search ? (
+              <Pressable onPress={() => setSearch("")}><Feather name="x" size={18} color={colors.muted} /></Pressable>
+            ) : null}
+          </View>
+          <FlatList
+            horizontal
+            data={[{ id: "__all", name: "All", slug: "all" }, ...(cats || [])]}
+            keyExtractor={(c) => c.id}
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: spacing.md }}
+            contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }}
+            renderItem={({ item }) => {
+              const isSelected = item.id === "__all" ? !category : (category === item.id || category === item.slug);
+              return (
+                <Chip
+                  testID={`explore-chip-${item.slug}`}
+                  label={item.name}
+                  active={isSelected}
+                  onPress={() => {
+                    const nextCat = item.id === "__all" ? null : item.id;
+                    setCategory(nextCat);
+                    router.setParams({ category: nextCat || "" });
+                  }}
+                />
+              );
+            }}
           />
-          {search ? (
-            <Pressable onPress={() => setSearch("")}><Feather name="x" size={18} color={colors.muted} /></Pressable>
-          ) : null}
         </View>
-        <FlatList
-          horizontal
-          data={[{ id: "__all", name: "All", slug: "all" }, ...(cats || [])]}
-          keyExtractor={(c) => c.id}
-          showsHorizontalScrollIndicator={false}
-          style={{ marginTop: spacing.md }}
-          contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }}
-          renderItem={({ item }) => {
-            const isSelected = item.id === "__all" ? !category : (category === item.id || category === item.slug);
-            return (
-              <Chip
-                testID={`explore-chip-${item.slug}`}
-                label={item.name}
-                active={isSelected}
-                onPress={() => {
-                  const nextCat = item.id === "__all" ? null : item.id;
-                  setCategory(nextCat);
-                  router.setParams({ category: nextCat || "" });
-                }}
-              />
-            );
-          }}
-        />
       </View>
 
       {items.length === 0 && !isLoading ? (

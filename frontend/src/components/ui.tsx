@@ -257,35 +257,70 @@ export function BrandLogo({
   );
 }
 
-/* ---------------- Loading / Error ---------------- */
+/* ---------------- Loading / Error / Preloader ---------------- */
 export function LoadingView({ label }: { label?: string }) {
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
-  const opacityAnim = React.useRef(new Animated.Value(0.7)).current;
+  return (
+    <View style={styles.center}>
+      <ActivityIndicator size="small" color={colors.brandPrimary} />
+      {label ? (
+        <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.sm }}>
+          {label}
+        </AppText>
+      ) : null}
+    </View>
+  );
+}
+
+export function FirstTimePreloader({ message = "Setting up your GoodCause account..." }: { message?: string }) {
+  const pulseAnim = React.useRef(new Animated.Value(0.92)).current;
+  const opacityAnim = React.useRef(new Animated.Value(0.4)).current;
+  const ringScale = React.useRef(new Animated.Value(0.8)).current;
+  const ringOpacity = React.useRef(new Animated.Value(0.6)).current;
 
   React.useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.parallel([
           Animated.timing(pulseAnim, {
-            toValue: 1.08,
-            duration: 800,
+            toValue: 1.05,
+            duration: 900,
             useNativeDriver: true,
           }),
           Animated.timing(opacityAnim, {
             toValue: 1,
-            duration: 800,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(ringScale, {
+            toValue: 1.25,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(ringOpacity, {
+            toValue: 0.15,
+            duration: 900,
             useNativeDriver: true,
           }),
         ]),
         Animated.parallel([
           Animated.timing(pulseAnim, {
-            toValue: 0.95,
-            duration: 800,
+            toValue: 0.92,
+            duration: 900,
             useNativeDriver: true,
           }),
           Animated.timing(opacityAnim, {
+            toValue: 0.7,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(ringScale, {
+            toValue: 0.8,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+          Animated.timing(ringOpacity, {
             toValue: 0.6,
-            duration: 800,
+            duration: 900,
             useNativeDriver: true,
           }),
         ]),
@@ -293,20 +328,43 @@ export function LoadingView({ label }: { label?: string }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [pulseAnim, opacityAnim]);
+  }, [pulseAnim, opacityAnim, ringScale, ringOpacity]);
 
   return (
-    <View style={styles.center}>
-      <Animated.View
-        style={{
-          transform: [{ scale: pulseAnim }],
-          opacity: opacityAnim,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <BrandLogo size={32} />
-      </Animated.View>
+    <View style={styles.preloaderContainer}>
+      <View style={styles.preloaderContent}>
+        <View style={styles.preloaderBadgeWrapper}>
+          <Animated.View
+            style={[
+              styles.preloaderRing,
+              {
+                transform: [{ scale: ringScale }],
+                opacity: ringOpacity,
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.preloaderBadge,
+              {
+                transform: [{ scale: pulseAnim }],
+                opacity: opacityAnim,
+              },
+            ]}
+          >
+            <Feather name="heart" size={24} color="#FFFFFF" />
+          </Animated.View>
+        </View>
+
+        <BrandLogo size={32} style={{ marginTop: spacing.lg }} />
+        <AppText
+          variant="subtitle"
+          color={colors.onSurfaceSecondary}
+          style={{ marginTop: spacing.md, textAlign: "center" }}
+        >
+          {message}
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -382,4 +440,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl },
+  preloaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+  },
+  preloaderContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.xl,
+  },
+  preloaderBadgeWrapper: {
+    width: 96,
+    height: 96,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  preloaderRing: {
+    position: "absolute",
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.brandTertiary,
+  },
+  preloaderBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: colors.brandPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.brandPrimary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
 });

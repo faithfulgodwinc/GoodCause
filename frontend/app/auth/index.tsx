@@ -1,50 +1,66 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View, StyleSheet, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform,
+  View, StyleSheet, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Image
 } from "react-native";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/src/context/auth";
-import { AppText, Button, BrandLogo } from "@/src/components/ui";
+import { AppText, BrandLogo, FirstTimePreloader } from "@/src/components/ui";
 import { colors, radius, spacing, font } from "@/src/theme";
 import { ApiError } from "@/src/lib/api";
+import { storage } from "@/src/utils/storage";
+import { useResponsive } from "@/src/lib/responsive";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const HERO = "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxjb21tdW5pdHklMjBoYW5kcyUyMHRvZ2V0aGVyfGVufDB8fHx8MTc4NzQ4MDMyMnww&ixlib=rb-4.1.0&q=85";
-
-function extractSessionId(url: string): string | null {
-  if (!url) return null;
-  const m = url.match(/[?#&]session_id=([^&#]+)/) || url.match(/session_id=([^&#]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
 
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isMobile } = useResponsive();
   const { login, register, completeGoogleSession } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(false);
   const [error, setError] = useState("");
-  const handled = useRef<Set<string>>(new Set());
 
-  const handleSession = async (sessionId: string) => {
-    if (handled.current.has(sessionId)) return;
-    handled.current.add(sessionId);
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "your_google_web_client_id_here",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "your_google_ios_client_id_here",
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "your_google_android_client_id_here",
+  });
+
+  const onAuthSuccess = async () => {
+    try {
+      const done = await storage.getItem("gc_first_signin_done", false);
+      if (!done) {
+        setShowPreloader(true);
+        await storage.setItem("gc_first_signin_done", true);
+        setTimeout(() => {
+          router.replace("/(tabs)");
+        }, 1800);
+        return;
+      }
+    } catch {
+      // fallback if storage errors
+    }
+    router.replace("/(tabs)");
+  };
+
+  const handleSession = async (idToken: string) => {
     try {
       setGoogleLoading(true);
-      await completeGoogleSession(sessionId);
-      router.replace("/(tabs)");
+      await completeGoogleSession(idToken);
+      await onAuthSuccess();
     } catch (e) {
       console.warn("Google session error:", e);
       setError(e instanceof ApiError ? e.message : "Could not complete Google sign-in.");
@@ -54,18 +70,19 @@ export default function AuthScreen() {
   };
 
   useEffect(() => {
-    const sub = Linking.addEventListener("url", ({ url }) => {
-      const sid = extractSessionId(url);
-      if (sid) handleSession(sid);
-    });
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        const sid = extractSessionId(url);
-        if (sid) handleSession(sid);
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      if (id_token) {
+        handleSession(id_token);
+      } else if (response.authentication?.idToken) {
+        handleSession(response.authentication.idToken);
+      } else {
+        setError("Could not retrieve ID token from Google.");
       }
-    });
-    return () => sub.remove();
-  }, []);
+    } else if (response?.type === "error") {
+      setError("Google sign-in failed.");
+    }
+  }, [response]);
 
   const submit = async () => {
     setError("");
@@ -74,14 +91,18 @@ export default function AuthScreen() {
       return;
     }
     if (mode === "signup" && !name.trim()) {
-      setError("Please tell us your name.");
+      setError("Please tell us your full name.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
     setLoading(true);
     try {
       if (mode === "signin") await login(email.trim(), password);
       else await register(email.trim(), password, name.trim());
-      router.replace("/(tabs)");
+      await onAuthSuccess();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
     } finally {
@@ -91,140 +112,281 @@ export default function AuthScreen() {
 
   const googleSignIn = async () => {
     setError("");
+    if (!request) return;
+    
     try {
       setGoogleLoading(true);
-      const redirectUrl = Platform.OS === "web" ? window.location.origin + "/" : Linking.createURL("");
-      const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-      if (Platform.OS === "web") {
-        window.location.href = authUrl;
-        return;
-      }
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
-      if (result.type === "success" && result.url) {
-        const sid = extractSessionId(result.url);
-        if (sid) await handleSession(sid);
-      }
-    } catch (e) {
-      setError("Could not open Google sign-in.");
-    } finally {
+      await promptAsync();
+    } catch (e: any) {
+      setError(e.message || "Could not open Google sign-in.");
       setGoogleLoading(false);
     }
   };
 
+  if (showPreloader) {
+    return (
+      <FirstTimePreloader
+        message={mode === "signup" ? "Setting up your GoodCause account..." : "Welcome to GoodCause..."}
+      />
+    );
+  }
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={[styles.scrollContainer, { paddingTop: Math.max(insets.top, 40) }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
-          <Image source={{ uri: HERO }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
-          <LinearGradient colors={["rgba(35,33,31,0.2)", "rgba(35,33,31,0.55)", colors.surface]} style={StyleSheet.absoluteFill} />
-          <View style={[styles.heroContent, { paddingTop: insets.top + spacing.xxl }]}>
-            <View style={styles.logoRow}>
-              <View style={styles.logoMark}><Feather name="heart" size={18} color="#fff" /></View>
-              <BrandLogo size={24} color="#FFFFFF" style={{ marginLeft: spacing.sm }} />
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <View style={styles.logoMark}>
+              <Feather name="heart" size={24} color="#FFFFFF" />
+            </View>
+            <AppText variant="display" style={styles.title}>
+              {mode === "signup" ? "Create an account" : "Sign in to GoodCause"}
+            </AppText>
+            <AppText variant="body" color={colors.onSurfaceSecondary} style={styles.subtitle}>
+              {mode === "signup"
+                ? "Enter your details to get started."
+                : "Welcome back! Please enter your details."}
+            </AppText>
+          </View>
+
+          <View style={styles.formContainer}>
+            {mode === "signup" && (
+              <View style={styles.fieldWrapper}>
+                <AppText variant="label" style={styles.fieldLabel}>Full Name</AppText>
+                <View style={styles.fieldInputBox}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Faithful Godwin"
+                    placeholderTextColor={colors.muted}
+                    value={name}
+                    onChangeText={setName}
+                    testID="auth-name-input"
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={styles.fieldWrapper}>
+              <AppText variant="label" style={styles.fieldLabel}>Email</AppText>
+              <View style={styles.fieldInputBox}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="name@example.com"
+                  placeholderTextColor={colors.muted}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  testID="auth-email-input"
+                />
+              </View>
+            </View>
+
+            <View style={styles.fieldWrapper}>
+              <AppText variant="label" style={styles.fieldLabel}>Password</AppText>
+              <View style={styles.fieldInputBox}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Minimum 6 characters"
+                  placeholderTextColor={colors.muted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  testID="auth-password-input"
+                />
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  hitSlop={8}
+                  style={styles.showPasswordBtn}
+                >
+                  <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontFamily: font.medium }}>
+                    {showPassword ? "Hide" : "Show"}
+                  </AppText>
+                </Pressable>
+              </View>
+            </View>
+
+            {error ? (
+              <View style={styles.errorBox}>
+                <AppText variant="caption" color={colors.error}>{error}</AppText>
+              </View>
+            ) : null}
+
+            <Pressable
+              onPress={submit}
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.primarySubmitBtn,
+                pressed && { opacity: 0.8 },
+                loading && { opacity: 0.6 },
+              ]}
+              testID="auth-submit-button"
+            >
+              <AppText variant="button" color="#FFFFFF" style={styles.submitBtnText}>
+                {loading
+                  ? "Please wait..."
+                  : mode === "signup"
+                  ? "Continue"
+                  : "Sign In"}
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              onPress={googleSignIn}
+              disabled={googleLoading}
+              style={({ pressed }) => [
+                styles.ssoBtn,
+                pressed && { opacity: 0.7 },
+              ]}
+              testID="auth-google-button"
+            >
+              <Image
+                source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
+                style={{ width: 20, height: 20, marginRight: 10 }}
+              />
+              <AppText variant="button" color={colors.onSurface} style={styles.ssoBtnText}>
+                {googleLoading ? "Connecting..." : "Continue with Google"}
+              </AppText>
+            </Pressable>
+
+            <View style={styles.toggleModeContainer}>
+              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ fontSize: 14 }}>
+                {mode === "signup" ? "Already have an account? " : "Don't have an account? "}
+              </AppText>
+              <Pressable
+                onPress={() => {
+                  setError("");
+                  setMode(mode === "signup" ? "signin" : "signup");
+                }}
+                hitSlop={8}
+              >
+                <AppText variant="body" color={colors.brandPrimary} style={{ fontFamily: font.medium, fontSize: 14 }}>
+                  {mode === "signup" ? "Sign In" : "Sign Up"}
+                </AppText>
+              </Pressable>
             </View>
           </View>
-        </View>
-
-        <View style={styles.body}>
-          <AppText variant="display">Trust makes generosity go further.</AppText>
-          <AppText variant="body" style={{ marginTop: spacing.sm }}>
-            Support verified causes, or raise funds for the people and communities you care about.
-          </AppText>
-
-          <View style={styles.switchRow}>
-            <SwitchTab label="Sign in" active={mode === "signin"} onPress={() => setMode("signin")} />
-            <SwitchTab label="Create account" active={mode === "signup"} onPress={() => setMode("signup")} />
-          </View>
-
-          {mode === "signup" ? (
-            <Field icon="user" placeholder="Your name" value={name} onChangeText={setName} testID="auth-name-input" />
-          ) : null}
-          <Field icon="mail" placeholder="Email address" value={email} onChangeText={setEmail}
-            keyboardType="email-address" autoCapitalize="none" testID="auth-email-input" />
-          <Field icon="lock" placeholder="Password" value={password} onChangeText={setPassword}
-            secureTextEntry testID="auth-password-input" />
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Feather name="alert-circle" size={14} color={colors.error} />
-              <AppText variant="caption" color={colors.error} style={{ marginLeft: 6, flex: 1 }}>{error}</AppText>
-            </View>
-          ) : null}
-
-          <Button
-            title={mode === "signin" ? "Sign in" : "Create account"}
-            onPress={submit}
-            loading={loading}
-            testID="auth-submit-button"
-            style={{ marginTop: spacing.lg }}
-          />
-
-          <View style={styles.dividerRow}>
-            <View style={styles.line} />
-            <AppText variant="caption" style={{ marginHorizontal: spacing.md }}>or</AppText>
-            <View style={styles.line} />
-          </View>
-
-          <Button
-            title="Continue with Google"
-            icon="chrome"
-            variant="outline"
-            onPress={googleSignIn}
-            loading={googleLoading}
-            testID="auth-google-button"
-          />
-
-          <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl, marginBottom: spacing.xxl }}>
-            Donation-based fundraising. GoodCause reviews campaigns but does not guarantee them.
-          </AppText>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-function SwitchTab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={[styles.switchTab, active && styles.switchTabActive]}>
-      <AppText variant="label" color={active ? colors.onSurface : colors.onSurfaceTertiary}>{label}</AppText>
-    </Pressable>
-  );
-}
-
-function Field(props: any) {
-  const { icon, ...rest } = props;
-  return (
-    <View style={styles.field}>
-      <Feather name={icon} size={18} color={colors.onSurfaceTertiary} />
-      <TextInput
-        style={styles.input}
-        placeholderTextColor={colors.muted}
-        {...rest}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  hero: { height: 220 },
-  heroContent: { flex: 1, paddingHorizontal: spacing.lg },
-  logoRow: { flexDirection: "row", alignItems: "center" },
-  logoMark: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center" },
-  body: { paddingHorizontal: spacing.lg, marginTop: -spacing.xl },
-  switchRow: { flexDirection: "row", backgroundColor: colors.surfaceTertiary, borderRadius: radius.md, padding: 4, marginTop: spacing.xl, marginBottom: spacing.md },
-  switchTab: { flex: 1, height: 40, alignItems: "center", justifyContent: "center", borderRadius: radius.sm },
-  switchTabActive: { backgroundColor: colors.surfaceSecondary },
-  field: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md,
-    height: 52, marginTop: spacing.md,
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
-  input: { flex: 1, marginLeft: spacing.sm, fontFamily: font.medium, fontSize: 15, color: colors.onSurface },
-  errorBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#FBEBEB", padding: spacing.md, borderRadius: radius.md, marginTop: spacing.md },
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: spacing.lg },
-  line: { flex: 1, height: 1, backgroundColor: colors.divider },
+  scrollContainer: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: spacing.xxxl,
+    paddingHorizontal: spacing.lg,
+  },
+  contentWrapper: {
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: spacing.xxl,
+  },
+  logoMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: colors.brandPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xl,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: font.bold,
+    color: colors.onSurface,
+    textAlign: "center",
+    letterSpacing: -0.5,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    fontSize: 15,
+    textAlign: "center",
+    color: colors.onSurfaceSecondary,
+  },
+  formContainer: {
+    width: "100%",
+    gap: spacing.lg,
+  },
+  fieldWrapper: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontFamily: font.medium,
+    color: colors.onSurface,
+  },
+  fieldInputBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F7",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
+    paddingHorizontal: spacing.md,
+    height: 52,
+  },
+  input: {
+    flex: 1,
+    fontFamily: font.regular,
+    fontSize: 16,
+    color: colors.onSurface,
+  },
+  showPasswordBtn: {
+    paddingLeft: spacing.sm,
+    paddingVertical: 8,
+  },
+  errorBox: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: "#FFF0F0",
+    borderRadius: 8,
+  },
+  primarySubmitBtn: {
+    backgroundColor: colors.brandPrimary,
+    height: 52,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
+  submitBtnText: {
+    fontSize: 16,
+    fontFamily: font.semibold,
+  },
+  ssoBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+  },
+  ssoBtnText: {
+    fontSize: 16,
+    fontFamily: font.semibold,
+  },
+  toggleModeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.xl,
+  },
 });

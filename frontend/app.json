@@ -10,18 +10,19 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.emergent.goodcausetrust.dsfw4f",
+      "bundleIdentifier": "com.goodcause.app",
       "infoPlist": {
+        "UIBackgroundModes": ["audio"],
         "NSPhotoLibraryUsageDescription": "Add photos to tell your campaign story"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#FAF8F5"
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.emergent.goodcausetrust.dsfw4f",
+      "package": "com.goodcause.app",
       "permissions": [
         "READ_MEDIA_IMAGES"
       ]

@@ -11,6 +11,7 @@ import { useSubscription } from "@/src/lib/revenuecat";
 import { AppText, Avatar, Card } from "@/src/components/ui";
 import { colors, spacing, radius, shadow } from "@/src/theme";
 import { formatNaira } from "@/src/format";
+import { useResponsive } from "@/src/lib/responsive";
 
 type Impact = {
   total_contributed_kobo: number;
@@ -25,43 +26,46 @@ export default function Profile() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { isSubscribed } = useSubscription();
+  const { feedMaxWidth } = useResponsive();
   const { data: impact } = useQuery({ queryKey: ["impact"], queryFn: () => api<Impact>("/impact") });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <View style={styles.profileRow}>
-          <Avatar name={user?.name} uri={user?.picture} size={58} />
-          <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <AppText variant="h2">{user?.name}</AppText>
-            <AppText variant="caption" style={{ marginTop: 2 }}>{user?.email}</AppText>
-            {isSubscribed ? (
-              <View style={styles.proTag}><Feather name="star" size={11} color={colors.onBrandTertiary} /><AppText variant="caption" color={colors.onBrandTertiary} style={{ marginLeft: 4 }}>GoodCause Pro</AppText></View>
-            ) : null}
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: feedMaxWidth }}>
+          <View style={styles.profileRow}>
+            <Avatar name={user?.name} uri={user?.picture} size={58} />
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <AppText variant="h2">{user?.name}</AppText>
+              <AppText variant="caption" style={{ marginTop: 2 }}>{user?.email}</AppText>
+              {isSubscribed ? (
+                <View style={styles.proTag}><Feather name="star" size={11} color={colors.onBrandTertiary} /><AppText variant="caption" color={colors.onBrandTertiary} style={{ marginLeft: 4 }}>GoodCause Pro</AppText></View>
+              ) : null}
+            </View>
           </View>
         </View>
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-
-      {/* Impact */}
-      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-        <AppText variant="h2" style={{ marginBottom: spacing.md }}>Your impact</AppText>
-        <Card style={{ padding: spacing.xl }}>
-          <AppText variant="body">You have contributed</AppText>
-          <AppText variant="display" color={colors.brandPrimary} style={{ marginTop: 2 }}>
-            {formatNaira(impact?.total_contributed_kobo || 0)}
-          </AppText>
-          <AppText variant="body" style={{ marginTop: spacing.xs }}>
-            across {impact?.causes_supported || 0} {impact?.causes_supported === 1 ? "cause" : "causes"} — thank you for your generosity.
-          </AppText>
-          <View style={styles.statsRow}>
-            <Stat value={String(impact?.donations_count || 0)} label="Donations" />
-            <Stat value={String(impact?.campaigns_completed || 0)} label="Completed" />
-            <Stat value={String(impact?.following_count || 0)} label="Following" />
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: feedMaxWidth }}>
+          {/* Impact */}
+          <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+            <AppText variant="h2" style={{ marginBottom: spacing.md }}>Your impact</AppText>
+            <Card style={{ padding: spacing.xl }}>
+              <AppText variant="body">You have contributed</AppText>
+              <AppText variant="display" color={colors.brandPrimary} style={{ marginTop: 2 }}>
+                {formatNaira(impact?.total_contributed_kobo || 0)}
+              </AppText>
+              <AppText variant="body" style={{ marginTop: spacing.xs }}>
+                across {impact?.causes_supported || 0} {impact?.causes_supported === 1 ? "cause" : "causes"} — thank you for your generosity.
+              </AppText>
+              <View style={styles.statsRow}>
+                <Stat value={String(impact?.donations_count || 0)} label="Donations" />
+                <Stat value={String(impact?.campaigns_completed || 0)} label="Completed" />
+                <Stat value={String(impact?.following_count || 0)} label="Following" />
+              </View>
+            </Card>
           </View>
-        </Card>
-      </View>
 
       {/* Pro */}
       {!isSubscribed ? (
@@ -91,6 +95,7 @@ export default function Profile() {
       <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl }}>
         GoodCause · Trust makes generosity go further.
       </AppText>
+        </View>
       </ScrollView>
     </View>
   );

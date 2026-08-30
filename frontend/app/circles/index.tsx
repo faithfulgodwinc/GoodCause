@@ -35,14 +35,15 @@ export default function Circles() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
-        <AppText variant="title">Circles</AppText>
-        <Pressable testID="join-circle-btn" onPress={() => { setErr(""); setJoinOpen(true); }}><Feather name="log-in" size={22} color={colors.brandPrimary} /></Pressable>
-      </View>
+      <View style={{ alignSelf: "center", width: "100%", maxWidth: 680, flex: 1 }}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">Circles</AppText>
+          <Pressable testID="join-circle-btn" onPress={() => { setErr(""); setJoinOpen(true); }}><Feather name="log-in" size={22} color={colors.brandPrimary} /></Pressable>
+        </View>
 
-      {isLoading ? <LoadingView /> : (
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
+        {isLoading ? <LoadingView /> : (
+          <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
           <View style={styles.introCard}>
             <AppText variant="h2" color="#fff">Give together</AppText>
             <AppText variant="body" color="rgba(255,255,255,0.85)" style={{ marginTop: 4 }}>
@@ -80,6 +81,7 @@ export default function Circles() {
         {err ? <AppText variant="caption" color={colors.error} style={{ marginTop: spacing.sm }}>{err}</AppText> : null}
         <Button title="Join" loading={joinMut.isPending} disabled={!code} onPress={() => joinMut.mutate()} style={{ marginTop: spacing.lg }} testID="circle-join-submit" />
       </SheetModal>
+      </View>
     </View>
   );
 }
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
   circleRow: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.sm },
   circleIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" },
   backdrop: { flex: 1, backgroundColor: "rgba(35,33,31,0.5)" },
-  sheet: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
+  sheet: { position: "absolute", left: "auto", right: "auto", alignSelf: "center", bottom: 0, maxWidth: 540, width: "100%", backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
   grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong, marginBottom: spacing.md },
   input: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 52, fontFamily: font.medium, fontSize: 15, color: colors.onSurface },
 });

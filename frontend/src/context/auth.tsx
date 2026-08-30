@@ -19,7 +19,7 @@ type AuthContextValue = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  completeGoogleSession: (sessionId: string) => Promise<void>;
+  completeGoogleSession: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   updateUser: (u: Partial<User>) => void;
@@ -95,10 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     track("signup");
   }, []);
 
-  const completeGoogleSession = useCallback(async (sessionId: string) => {
+  const completeGoogleSession = useCallback(async (idToken: string) => {
     const res = await api<{ token: string; user: User }>("/auth/session", {
       method: "POST",
-      body: { session_id: sessionId },
+      body: { id_token: idToken },
       auth: false,
     });
     await setToken(res.token);

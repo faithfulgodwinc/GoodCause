@@ -5,18 +5,32 @@ import { storage } from "@/src/utils/storage";
 
 export function getBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
-  if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
-    return `${envUrl}/api`;
-  }
-  // If on mobile native and host is localhost, resolve dynamically from expo hostUri
-  if (Platform.OS !== "web") {
-    const hostUri = Constants.expoConfig?.hostUri;
-    if (hostUri) {
-      const ip = hostUri.split(":")[0];
-      if (ip) return `http://${ip}:8000/api`;
+
+  // On Web:
+  if (Platform.OS === "web") {
+    // If an explicit remote production URL is configured (e.g. https://api.goodcause.ng), use it
+    if (envUrl && envUrl.startsWith("https://")) {
+      return `${envUrl.replace(/\/+$/, "")}/api`;
     }
+    // Otherwise use current browser host (e.g. localhost or 127.0.0.1) on port 8000
+    if (typeof window !== "undefined" && window.location) {
+      const host = window.location.hostname || "localhost";
+      return `http://${host}:8000/api`;
+    }
+    return "http://localhost:8000/api";
   }
-  return `${envUrl || "http://192.168.1.22:8000"}/api`;
+
+  // On Native Mobile:
+  if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
+    return `${envUrl.replace(/\/+$/, "")}/api`;
+  }
+  // If host is localhost or missing, resolve dynamically from expo hostUri
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(":")[0];
+    if (ip) return `http://${ip}:8000/api`;
+  }
+  return `${(envUrl || "http://127.0.0.1:8000").replace(/\/+$/, "")}/api`;
 }
 
 export const TOKEN_KEY = "gc_auth_token";

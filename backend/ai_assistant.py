@@ -10,7 +10,7 @@ from core import get_current_user, track
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
-EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 SYSTEM = (
     "You are the GoodCause Campaign Assistant, helping people in Nigeria draft honest, clear "
@@ -38,12 +38,14 @@ def _extract_json(text: str) -> dict:
 
 @router.post("/campaign-assistant")
 async def campaign_assistant(body: AssistIn, user: dict = Depends(get_current_user)):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(status_code=503, detail="The AI assistant is not available right now.")
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="The AI assistant is not available right now. Please configure GEMINI_API_KEY.")
+    
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-    except Exception:
-        raise HTTPException(status_code=503, detail="The AI assistant is not available right now.")
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        raise HTTPException(status_code=503, detail="google-genai SDK not installed.")
 
     prompt = (
         "A fundraiser described their situation below. Draft campaign content strictly based on "
@@ -59,14 +61,22 @@ async def campaign_assistant(body: AssistIn, user: dict = Depends(get_current_us
         "Do not fabricate specific amounts unless the user gave them. Keep expense_categories to 3-5 items.\n\n"
         f"Fundraiser wrote:\n{body.raw_text}"
     )
-    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"assist_{user['id']}",
-                   system_message=SYSTEM).with_model("gemini", "gemini-3-flash-preview")
+    
     try:
-        response = await chat.send_message(UserMessage(text=prompt))
-    except Exception:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        # Using the standard SDK asynchronous interface
+        response = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM,
+                response_mime_type="application/json"
+            )
+        )
+        text = response.text
+    except Exception as e:
+        print(f"GenAI Error: {e}")
         raise HTTPException(status_code=502, detail="The assistant couldn’t respond. Please try again.")
-
-    text = response if isinstance(response, str) else str(response)
     try:
         data = _extract_json(text)
     except Exception:

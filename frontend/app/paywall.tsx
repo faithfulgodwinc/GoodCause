@@ -59,11 +59,12 @@ export default function Paywall() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surfaceInverse }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-          <Pressable testID="paywall-close" onPress={() => router.back()} style={styles.closeBtn}>
-            <Feather name="x" size={22} color="#fff" />
-          </Pressable>
-        </View>
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: 580 }}>
+          <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+            <Pressable testID="paywall-close" onPress={() => router.back()} style={styles.closeBtn}>
+              <Feather name="x" size={22} color="#fff" />
+            </Pressable>
+          </View>
 
         <View style={{ paddingHorizontal: spacing.lg, alignItems: "center" }}>
           <View style={styles.badge}>
@@ -165,6 +166,7 @@ export default function Paywall() {
             </AppText>
           </View>
         )}
+        </View>
       </ScrollView>
 
       {/* Confirmation Modal */}
