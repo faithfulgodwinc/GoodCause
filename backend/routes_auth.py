@@ -79,13 +79,29 @@ async def login(body: LoginIn):
 
 @router.post("/session")
 async def google_session(body: SessionIn):
-    if not GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID == "your_google_web_client_id_here":
+    valid_client_ids = [c for c in [
+        os.environ.get("GOOGLE_CLIENT_ID"),
+        os.environ.get("GOOGLE_ANDROID_CLIENT_ID"),
+        os.environ.get("GOOGLE_IOS_CLIENT_ID")
+    ] if c and "your_" not in c]
+    
+    if not valid_client_ids:
         raise HTTPException(status_code=501, detail="Google SSO requires production configuration.")
-        
+
     try:
-        idinfo = id_token.verify_oauth2_token(
-            body.id_token, google_requests.Request(), GOOGLE_CLIENT_ID
-        )
+        idinfo = None
+        last_error = None
+        for client_id in valid_client_ids:
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    body.id_token, google_requests.Request(), client_id
+                )
+                break
+            except ValueError as e:
+                last_error = str(e)
+                
+        if not idinfo:
+            raise ValueError(f"Token invalid or audience mismatch. {last_error}")
         
         email = idinfo.get("email")
         if not email:
