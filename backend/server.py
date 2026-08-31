@@ -10,8 +10,33 @@ from seed import seed
 from payments import provider_mode
 from storage import init_storage
 
-app = FastAPI(title="GoodCause API")
+import os
+from urllib.parse import urlparse
+from contextlib import asynccontextmanager
 
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("goodcause")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    import supabase_db
+    try:
+        await supabase_db.get_pool()
+        logger.info("Supabase PostgreSQL pool connected successfully.")
+    except Exception as e:
+        logger.exception("Supabase pool connection failed: %s", e)
+    try:
+        init_storage()
+        logger.info("Object storage ready.")
+    except Exception as e:
+        logger.warning("Object storage init deferred: %s", e)
+    
+    yield
+    
+    await supabase_db.close_pool()
+
+app = FastAPI(title="GoodCause API", lifespan=lifespan)
 meta = APIRouter(prefix="/api", tags=["meta"])
 
 
@@ -57,35 +82,21 @@ app.include_router(ai_assistant.router)
 app.include_router(routes_media.router)
 app.include_router(routes_payouts.router)
 
+# Compute allowed origins for CORS
+allowed_origins = [
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "exp://localhost:8081"
+]
+frontend_url = os.environ.get("FRONTEND_RETURN_URL", "")
+if frontend_url.startswith("http"):
+    parsed = urlparse(frontend_url)
+    allowed_origins.append(f"{parsed.scheme}://{parsed.netloc}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("goodcause")
-
-
-@app.on_event("startup")
-async def startup():
-    import supabase_db
-    try:
-        await supabase_db.get_pool()
-        logger.info("Supabase PostgreSQL pool connected successfully.")
-    except Exception as e:
-        logger.exception("Supabase pool connection failed: %s", e)
-    try:
-        init_storage()
-        logger.info("Object storage ready.")
-    except Exception as e:
-        logger.warning("Object storage init deferred: %s", e)
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    import supabase_db
-    await supabase_db.close_pool()

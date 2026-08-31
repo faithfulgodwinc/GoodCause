@@ -2,11 +2,11 @@
 import os
 import uuid
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from fastapi.responses import Response
+from fastapi.responses import Response, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
 from core import db, now_iso, get_current_user, uid
-from storage import put_object, get_object, APP_NAME
+from storage import put_object, get_public_url, APP_NAME
 
 router = APIRouter(prefix="/api", tags=["media"])
 
@@ -37,23 +37,22 @@ async def upload(file: UploadFile = File(...), user: dict = Depends(get_current_
         await run_in_threadpool(put_object, path, content, ctype)
     except Exception as e:
         msg = str(e)
-        if "402" in msg:
+        if "402" in msg or "limit" in msg.lower():
             raise HTTPException(status_code=402, detail="Storage limit reached. Please try again later.")
-        raise HTTPException(status_code=502, detail="We couldn't upload that file. Please try again.")
+        raise HTTPException(status_code=502, detail=f"We couldn't upload that file. ({msg})")
+    
+    public_url = get_public_url(path)
+    
     await db.media.insert_one({
         "id": uid("med_"), "owner_id": user["id"], "storage_path": path,
         "content_type": ctype, "kind": "video" if is_video else "image",
         "created_at": now_iso(),
     })
-    return {"url": f"/api/files/{path}", "path": path, "content_type": ctype,
+    return {"url": public_url, "path": path, "content_type": ctype,
             "kind": "video" if is_video else "image"}
 
 
 @router.get("/files/{path:path}")
 async def serve(path: str):
-    try:
-        content, ctype = await run_in_threadpool(get_object, path)
-    except Exception:
-        raise HTTPException(status_code=404, detail="File not found.")
-    return Response(content=content, media_type=ctype,
-                    headers={"Cache-Control": "public, max-age=31536000, immutable"})
+    """Redirects old proxy requests to the direct Supabase URL."""
+    return RedirectResponse(url=get_public_url(path))

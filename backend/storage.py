@@ -1,44 +1,33 @@
-"""Direct file storage with persistent local filesystem and MIME handling."""
+"""Supabase Object Storage implementation."""
 import os
-import mimetypes
+import httpx
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
-os.makedirs(UPLOADS_DIR, exist_ok=True)
 APP_NAME = "goodcause"
-
+BUCKET_NAME = "goodcause"
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 def init_storage():
-    os.makedirs(UPLOADS_DIR, exist_ok=True)
-    return "local_storage"
-
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        raise ValueError("Missing Supabase credentials for storage")
+    return "supabase_storage"
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    file_path = os.path.join(UPLOADS_DIR, path)
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, "wb") as f:
-        f.write(data)
+    url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{path}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "Content-Type": content_type,
+        "x-upsert": "true",
+    }
+    
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.post(url, content=data, headers=headers)
+        
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Storage upload failed: {resp.status_code} - {resp.text}")
+        
     return {"status": "ok", "path": path, "size": len(data)}
 
-
-def get_object(path: str) -> tuple[bytes, str]:
-    file_path = os.path.join(UPLOADS_DIR, path)
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {path}")
-    ctype, _ = mimetypes.guess_type(file_path)
-    if not ctype:
-        if path.endswith(".jpg") or path.endswith(".jpeg"):
-            ctype = "image/jpeg"
-        elif path.endswith(".png"):
-            ctype = "image/png"
-        elif path.endswith(".webp"):
-            ctype = "image/webp"
-        elif path.endswith(".mp4"):
-            ctype = "video/mp4"
-        elif path.endswith(".mov"):
-            ctype = "video/quicktime"
-        else:
-            ctype = "application/octet-stream"
-    with open(file_path, "rb") as f:
-        content = f.read()
-    return content, ctype
+def get_public_url(path: str) -> str:
+    """Returns the direct CDN URL for the object."""
+    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{path}"
