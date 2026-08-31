@@ -34,6 +34,7 @@ export default function AuthScreen() {
   const [error, setError] = useState("");
 
   const [request, response, promptAsync] = Google.useAuthRequest({
+    responseType: "id_token",
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "your_google_web_client_id_here",
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "your_google_ios_client_id_here",
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "your_google_android_client_id_here",
