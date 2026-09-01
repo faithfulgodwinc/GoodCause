@@ -12,6 +12,8 @@ from core import (db, uid, now, now_iso, hash_password, verify_password, create_
 import os
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import jwt
+from jwt import PyJWKClient
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 
@@ -31,6 +33,10 @@ class LoginIn(BaseModel):
 
 class SessionIn(BaseModel):
     id_token: str
+
+class AppleSessionIn(BaseModel):
+    id_token: str
+    name: Optional[str] = None
 
 
 ADMIN_EMAILS = {"admin@goodcause.ng", "faithfulgodwinc@gmail.com"}
@@ -143,6 +149,58 @@ async def google_session(body: SessionIn):
     except ValueError as e:
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
 
+@router.post("/session/apple")
+async def apple_session(body: AppleSessionIn):
+    apple_client_id = os.environ.get("APPLE_CLIENT_ID")
+    if not apple_client_id or "your_" in apple_client_id:
+        raise HTTPException(status_code=501, detail="Apple SSO requires production configuration.")
+    
+    try:
+        url = "https://appleid.apple.com/auth/keys"
+        jwks_client = PyJWKClient(url)
+        signing_key = jwks_client.get_signing_key_from_jwt(body.id_token)
+        
+        data = jwt.decode(
+            body.id_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=apple_client_id,
+            issuer="https://appleid.apple.com"
+        )
+        
+        email = data.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Apple token missing email.")
+            
+        email = email.lower().strip()
+        
+        user = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if not user:
+            # Register new user
+            is_admin = email in ADMIN_EMAILS
+            display_name = body.name or email.split("@")[0]
+            user = {
+                "id": uid("usr_"), "email": email, "name": display_name,
+                "password_hash": None, "picture": None,
+                "role": "admin" if is_admin else "donor", "bio": None,
+                "verified_organizer": is_admin,
+                "auth_provider": "apple", "created_at": now_iso(),
+            }
+            await db.users.insert_one(user)
+            await track("signup", user["id"], {"provider": "apple"})
+        else:
+            if email in ADMIN_EMAILS and user.get("role") != "admin":
+                await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+                user["role"] = "admin"
+                user["verified_organizer"] = True
+                
+            await track("login", user["id"], {"provider": "apple"})
+            
+        return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+        
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(e)}")
 
 @router.get("/me")
 async def me(user: dict = Depends(get_current_user)):

@@ -20,6 +20,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   completeGoogleSession: (idToken: string) => Promise<void>;
+  completeAppleSession: (idToken: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   updateUser: (u: Partial<User>) => void;
@@ -105,6 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   }, []);
 
+  const completeAppleSession = useCallback(async (idToken: string, name?: string) => {
+    const res = await api<{ token: string; user: User }>("/auth/session/apple", {
+      method: "POST",
+      body: { id_token: idToken, name },
+      auth: false,
+    });
+    await setToken(res.token);
+    setUser(res.user);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api("/auth/logout", { method: "POST" });
@@ -119,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, completeGoogleSession, logout, refresh: bootstrap, updateUser }}
+      value={{ user, loading, login, register, completeGoogleSession, completeAppleSession, logout, refresh: bootstrap, updateUser }}
     >
       {children}
     </AuthContext.Provider>

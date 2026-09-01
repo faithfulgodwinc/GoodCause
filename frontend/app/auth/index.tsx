@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import * as Google from "expo-auth-session/providers/google";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -22,7 +23,7 @@ export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsive();
-  const { login, register, completeGoogleSession } = useAuth();
+  const { login, register, completeGoogleSession, completeAppleSession } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,6 +31,7 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [showPreloader, setShowPreloader] = useState(false);
   const [error, setError] = useState("");
 
@@ -121,6 +123,41 @@ export default function AuthScreen() {
     } catch (e: any) {
       setError(e.message || "Could not open Google sign-in.");
       setGoogleLoading(false);
+    }
+  };
+
+  const appleSignIn = async () => {
+    try {
+      setAppleLoading(true);
+      setError("");
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      
+      const { identityToken, fullName } = credential;
+      if (!identityToken) {
+        throw new Error("No identity token provided by Apple.");
+      }
+      
+      let name = undefined;
+      if (fullName?.givenName || fullName?.familyName) {
+        name = `${fullName.givenName || ""} ${fullName.familyName || ""}`.trim();
+      }
+
+      await completeAppleSession(identityToken, name);
+      await onAuthSuccess();
+    } catch (e: any) {
+      if (e.code === 'ERR_REQUEST_CANCELED') {
+        // User cancelled the sign-in flow
+      } else {
+        setError(e instanceof ApiError ? e.message : "Could not complete Apple sign-in.");
+        console.warn("Apple session error:", e);
+      }
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -253,6 +290,24 @@ export default function AuthScreen() {
                 {googleLoading ? "Connecting..." : "Continue with Google"}
               </AppText>
             </Pressable>
+
+            {Platform.OS === 'ios' && (
+              <Pressable
+                onPress={appleSignIn}
+                disabled={appleLoading}
+                style={({ pressed }) => [
+                  styles.ssoBtn,
+                  { backgroundColor: "#000000", borderColor: "#000000" },
+                  pressed && { opacity: 0.7 },
+                ]}
+                testID="auth-apple-button"
+              >
+                <Feather name="apple" size={20} color="#FFFFFF" style={{ marginRight: 10 }} />
+                <AppText variant="button" color="#FFFFFF" style={styles.ssoBtnText}>
+                  {appleLoading ? "Connecting..." : "Continue with Apple"}
+                </AppText>
+              </Pressable>
+            )}
 
             <View style={styles.toggleModeContainer}>
               <AppText variant="body" color={colors.onSurfaceSecondary} style={{ fontSize: 14 }}>
