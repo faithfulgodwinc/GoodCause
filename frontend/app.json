@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.goodcause.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
+        "UIBackgroundModes": [
+          "audio"
+        ],
         "NSPhotoLibraryUsageDescription": "Add photos to tell your campaign story"
       }
     },
@@ -24,7 +26,8 @@
       "edgeToEdgeEnabled": true,
       "package": "com.goodcause.app",
       "permissions": [
-        "READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -53,6 +56,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d6f9b828-643f-4192-8ade-e943b6657da3"
+      }
     }
   }
 }
