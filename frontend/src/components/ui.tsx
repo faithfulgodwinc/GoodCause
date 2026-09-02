@@ -333,30 +333,14 @@ export function FirstTimePreloader({ message = "Setting up your GoodCause accoun
   return (
     <View style={styles.preloaderContainer}>
       <View style={styles.preloaderContent}>
-        <View style={styles.preloaderBadgeWrapper}>
           <Animated.View
-            style={[
-              styles.preloaderRing,
-              {
-                transform: [{ scale: ringScale }],
-                opacity: ringOpacity,
-              },
-            ]}
-          />
-          <Animated.View
-            style={[
-              styles.preloaderBadge,
-              {
-                transform: [{ scale: pulseAnim }],
-                opacity: opacityAnim,
-              },
-            ]}
+            style={{
+              transform: [{ scale: pulseAnim }],
+              opacity: opacityAnim,
+            }}
           >
-            <Feather name="heart" size={24} color="#FFFFFF" />
+            <BrandLogo size={42} />
           </Animated.View>
-        </View>
-
-        <BrandLogo size={32} style={{ marginTop: spacing.lg }} />
         <AppText
           variant="subtitle"
           color={colors.onSurfaceSecondary}
@@ -451,31 +435,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
-  },
-  preloaderBadgeWrapper: {
-    width: 96,
-    height: 96,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  preloaderRing: {
-    position: "absolute",
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.brandTertiary,
-  },
-  preloaderBadge: {
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    backgroundColor: colors.brandPrimary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: colors.brandPrimary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
   },
 });

@@ -107,7 +107,7 @@ export default function Paywall() {
               {packages.map((pkg) => {
                 const active = selected?.identifier === pkg.identifier;
                 const isAnnual = pkg.packageType === "ANNUAL";
-                const priceLabel = pkg.product.priceString || (isAnnual ? "₦25,000 / yr" : "₦2,500 / mo");
+                const priceLabel = pkg.product.priceString || (isAnnual ? "$4.99 / yr" : "$0.99 / mo");
                 return (
                   <Pressable
                     key={pkg.identifier}

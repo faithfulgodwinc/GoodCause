@@ -178,9 +178,7 @@ export default function AuthScreen() {
       >
         <View style={styles.contentWrapper}>
           <View style={styles.header}>
-            <View style={styles.logoMark}>
-              <Feather name="heart" size={24} color="#FFFFFF" />
-            </View>
+            <BrandLogo size={36} style={{ marginBottom: spacing.xl }} />
             <AppText variant="display" style={styles.title}>
               {mode === "signup" ? "Create an account" : "Sign in to GoodCause"}
             </AppText>
@@ -292,21 +290,13 @@ export default function AuthScreen() {
             </Pressable>
 
             {Platform.OS === 'ios' && (
-              <Pressable
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={12}
+                style={{ width: '100%', height: 52 }}
                 onPress={appleSignIn}
-                disabled={appleLoading}
-                style={({ pressed }) => [
-                  styles.ssoBtn,
-                  { backgroundColor: "#000000", borderColor: "#000000" },
-                  pressed && { opacity: 0.7 },
-                ]}
-                testID="auth-apple-button"
-              >
-                <Feather name="apple" size={20} color="#FFFFFF" style={{ marginRight: 10 }} />
-                <AppText variant="button" color="#FFFFFF" style={styles.ssoBtnText}>
-                  {appleLoading ? "Connecting..." : "Continue with Apple"}
-                </AppText>
-              </Pressable>
+              />
             )}
 
             <View style={styles.toggleModeContainer}>
@@ -353,14 +343,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.xxl,
   },
-  logoMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.brandPrimary,
+  header: {
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
   },
   title: {
     fontSize: 28,

@@ -14,6 +14,8 @@ import { SubscriptionProvider, initializeRevenueCat } from "@/src/lib/revenuecat
 import { colors } from "@/src/theme";
 import { GlobalHeader } from "@/src/components/GlobalHeader";
 import { injectWebGlobalStyles } from "@/src/lib/WebGlobalStyles";
+import { CustomSplashScreen } from "@/src/components/CustomSplashScreen";
+import { useState } from "react";
 
 LogBox.ignoreAllLogs(true);
 SplashScreen.preventAutoHideAsync();
@@ -50,6 +52,8 @@ export default function RootLayout() {
 
   const ready = (iconsLoaded || iconsError) && (fontsLoaded || fontsError);
 
+  const [splashFinished, setSplashFinished] = useState(false);
+
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
@@ -64,9 +68,12 @@ export default function RootLayout() {
             <SubscriptionProvider>
               <StatusBar style="dark" />
               <View style={{ flex: 1, backgroundColor: colors.surface }}>
-                <GlobalHeader />
-                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
-                  <Stack.Screen name="index" />
+                {!splashFinished && <CustomSplashScreen onFinish={() => setSplashFinished(true)} />}
+                {splashFinished && (
+                  <>
+                    <GlobalHeader />
+                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
+                      <Stack.Screen name="index" />
                   <Stack.Screen name="auth/index" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="campaign/[id]" options={{ animation: "slide_from_right" }} />
@@ -78,6 +85,8 @@ export default function RootLayout() {
                   <Stack.Screen name="update/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
                   <Stack.Screen name="admin/index" />
                 </Stack>
+                  </>
+                )}
               </View>
             </SubscriptionProvider>
           </AuthProvider>
