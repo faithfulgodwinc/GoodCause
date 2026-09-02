@@ -127,5 +127,5 @@ export async function uploadMedia(uri: string, name: string, type: string): Prom
   if (!resp.ok) {
     throw new ApiError(resp.status, (data && data.detail) || "We couldn't upload that file. Please try again.");
   }
-  return { url: `${base.replace(/\/api$/, '')}${data.url}`, kind: data.kind };
+  return { url: data.url.startsWith('http') ? data.url : `${base.replace(/\/api$/, '')}${data.url}`, kind: data.kind };
 }
