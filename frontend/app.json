@@ -52,7 +52,8 @@
           "photosPermission": "Add photos to tell your campaign story"
         }
       ],
-      "expo-video"
+      "expo-video",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true
