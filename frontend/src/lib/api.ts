@@ -70,12 +70,14 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
   const base = getBaseUrl();
   let resp: Response;
   try {
+    console.log("Fetching:", `${base}${path}`, "method:", method);
     resp = await fetch(`${base}${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-  } catch (e) {
+  } catch (e: any) {
+    console.error("Fetch failed:", e.message, "URL:", `${base}${path}`);
     throw new ApiError(0, "You appear to be offline. Please check your connection.");
   }
 
