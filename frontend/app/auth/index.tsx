@@ -5,6 +5,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import * as Google from "expo-auth-session/providers/google";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
@@ -17,10 +18,15 @@ import { ApiError } from "@/src/lib/api";
 import { storage } from "@/src/utils/storage";
 import { useResponsive } from "@/src/lib/responsive";
 
-GoogleSignin.configure({
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "",
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
-});
+WebBrowser.maybeCompleteAuthSession();
+
+if (Platform.OS !== "web") {
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
+  });
+}
+
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -37,7 +43,24 @@ export default function AuthScreen() {
   const [showPreloader, setShowPreloader] = useState(false);
   const [error, setError] = useState("");
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    responseType: "id_token",
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "your_google_web_client_id_here",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "your_google_ios_client_id_here",
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "your_google_android_client_id_here",
+  });
 
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, []);
 
   const onAuthSuccess = async () => {
     try {
@@ -69,7 +92,20 @@ export default function AuthScreen() {
     }
   };
 
-
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token } = response.params;
+      if (id_token) {
+        handleSession(id_token);
+      } else if (response.authentication?.idToken) {
+        handleSession(response.authentication.idToken);
+      } else {
+        setError("Could not retrieve ID token from Google.");
+      }
+    } else if (response?.type === "error") {
+      setError("Google sign-in failed.");
+    }
+  }, [response]);
 
   const submit = async () => {
     setError("");
@@ -102,15 +138,21 @@ export default function AuthScreen() {
     
     try {
       setGoogleLoading(true);
-      if (Platform.OS !== "web") {
-        await GoogleSignin.hasPlayServices();
-      }
-      const response = await GoogleSignin.signIn();
-      const idToken = response.data?.idToken;
-      if (idToken) {
-        await handleSession(idToken);
+      if (Platform.OS === "web") {
+        if (!request) {
+          setError("Google sign-in is not ready yet.");
+          return;
+        }
+        await promptAsync();
       } else {
-        setError("Could not retrieve ID token from Google.");
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        const idToken = response.data?.idToken;
+        if (idToken) {
+          await handleSession(idToken);
+        } else {
+          setError("Could not retrieve ID token from Google.");
+        }
       }
     } catch (e: any) {
       if (e.code === 'SIGN_IN_CANCELLED') {
@@ -119,12 +161,14 @@ export default function AuthScreen() {
         // operation (e.g. sign in) is in progress already
       } else if (e.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
         // play services not available or outdated
-        setError("Google Play Services not available.");
+        setError(`Google Services unavailable: ${e.message}`);
       } else {
         setError(e.message || "Could not open Google sign-in.");
       }
     } finally {
-      setGoogleLoading(false);
+      if (Platform.OS !== "web") {
+        setGoogleLoading(false);
+      }
     }
   };
 
