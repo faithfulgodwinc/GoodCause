@@ -102,7 +102,9 @@ export default function AuthScreen() {
     
     try {
       setGoogleLoading(true);
-      await GoogleSignin.hasPlayServices();
+      if (Platform.OS !== "web") {
+        await GoogleSignin.hasPlayServices();
+      }
       const response = await GoogleSignin.signIn();
       const idToken = response.data?.idToken;
       if (idToken) {
