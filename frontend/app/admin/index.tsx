@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, RefreshControl, Alert } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -35,7 +35,11 @@ export default function Admin() {
         await api(`/admin/campaigns/${id}/suspend`, { method: "POST" });
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["adminReview"] }); qc.invalidateQueries({ queryKey: ["adminStats"] }); },
+    onSuccess: () => { 
+      qc.invalidateQueries({ queryKey: ["adminReview"] }); 
+      qc.invalidateQueries({ queryKey: ["adminStats"] }); 
+      qc.invalidateQueries({ queryKey: ["campaigns"] });
+    },
   });
 
   const resolveReport = useMutation({
@@ -83,7 +87,22 @@ export default function Admin() {
                 </View>
               </View>
               <View style={styles.actionRow}>
-                <Button title="Verify & publish" small onPress={() => act.mutate({ id: c.id, action: "verify" })} style={{ flex: 1 }} testID={`verify-${c.id}`} />
+                <Button 
+                  title="Verify & publish" 
+                  small 
+                  onPress={() => {
+                    Alert.alert(
+                      "Publish Campaign",
+                      "Are you sure you want to verify and publish this campaign? It will be live on the home feed immediately.",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        { text: "Publish", style: "default", onPress: () => act.mutate({ id: c.id, action: "verify" }) }
+                      ]
+                    );
+                  }} 
+                  style={{ flex: 1 }} 
+                  testID={`verify-${c.id}`} 
+                />
                 <Button title="Reject" small variant="outline" onPress={() => act.mutate({ id: c.id, action: "reject" })} style={{ flex: 1 }} testID={`reject-${c.id}`} />
               </View>
             </View>

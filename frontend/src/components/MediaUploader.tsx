@@ -57,8 +57,6 @@ export function MediaUploader({ media, onChange }: { media: Media[]; onChange: (
         }
       }
       const uploaded = await uploadMedia(uri, name, type);
-      console.log("=== UPLOAD SUCCESS ===");
-      console.log("Uploaded URL:", uploaded.url);
       onChange([...media, { url: uploaded.url, kind: uploaded.kind as "image" | "video" }]);
     } catch (e: any) {
       setError(e?.message || "Upload failed. Please try again.");
@@ -80,14 +78,7 @@ export function MediaUploader({ media, onChange }: { media: Media[]; onChange: (
                 <AppText variant="caption" color="#fff" style={{ marginTop: 4 }}>Video</AppText>
               </Pressable>
             ) : (
-              <Image 
-                source={{ uri: m.url }} 
-                style={{ width: "100%", height: "100%" }} 
-                contentFit="cover" 
-                transition={150} 
-                onLoad={() => console.log("Image loaded:", m.url)}
-                onError={(e) => console.log("Image load error:", m.url, e)}
-              />
+              <Image source={{ uri: m.url }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={150} />
             )}
             <Pressable testID={`remove-media`} onPress={() => remove(m.url)} style={styles.remove}>
               <Feather name="x" size={14} color="#fff" />
