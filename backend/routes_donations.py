@@ -30,12 +30,14 @@ async def _apply_paid(reference: str) -> Optional[dict]:
     if donation["status"] == "paid":
         return {"already": True, "campaign_id": donation["campaign_id"]}
 
-    changed = await db.donations.find_one_and_update(
-        {"reference": reference, "status": {"$ne": "paid"}},
-        {"$set": {"status": "paid", "paid_at": now_iso()}},
-    )
-    if not changed:
+    donation_to_update = await db.donations.find_one({"reference": reference, "status": {"$ne": "paid"}})
+    if not donation_to_update:
         return {"already": True, "campaign_id": donation["campaign_id"]}
+
+    await db.donations.update_one(
+        {"reference": reference},
+        {"$set": {"status": "paid", "paid_at": now_iso()}}
+    )
 
     campaign = await db.campaigns.find_one({"id": donation["campaign_id"]}, {"_id": 0})
     if not campaign:
