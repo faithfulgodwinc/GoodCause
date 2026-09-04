@@ -105,7 +105,6 @@ async def initialize_donation(campaign_id: str, body: DonateIn,
     donation = {
         "id": uid("dnt_"), "reference": reference, "campaign_id": campaign_id,
         "donor_id": None if body.anonymous else (user["id"] if user else None),
-        "donor_name": None if body.anonymous else (user["name"] if user else "Guest"),
         "anonymous": body.anonymous, "message": body.message or "",
         "amount_kobo": body.amount_kobo, "currency": "NGN",
         "status": "pending", "provider": provider.name,
