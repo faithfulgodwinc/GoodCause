@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -17,7 +17,7 @@ import { useResponsive } from "@/src/lib/responsive";
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
 export default function Donate() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, reference } = useLocalSearchParams<{ id: string; reference?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
@@ -35,6 +35,25 @@ export default function Donate() {
   const campaign = useQuery({ queryKey: ["campaign", id], queryFn: () => api<any>(`/campaigns/${id}`) });
   const c = campaign.data;
 
+  useEffect(() => {
+    if (reference && c && !success && !processing) {
+      setProcessing(true);
+      api<any>("/payments/verify", { method: "POST", body: { reference } })
+        .then((verify) => {
+          if (verify.status === "paid") {
+            setSuccess({ prev: c.percent, next: c.percent, test: false });
+            qc.invalidateQueries({ queryKey: ["campaign", id] });
+            qc.invalidateQueries({ queryKey: ["impact"] });
+            qc.invalidateQueries({ queryKey: ["myDonations"] });
+          } else {
+            setError("We couldn't confirm your payment yet. If you completed it, it may take a moment.");
+          }
+        })
+        .catch((e) => setError(e?.message || "Failed to verify payment."))
+        .finally(() => setProcessing(false));
+    }
+  }, [reference, c]);
+
   const finalAmount = custom ? Math.round(parseFloat(custom || "0") * 100) : amount;
 
   const donate = async () => {
@@ -48,7 +67,7 @@ export default function Donate() {
     try {
       const payload: any = { amount_kobo: finalAmount, anonymous, message };
       if (typeof window !== "undefined" && window.location) {
-        payload.return_url = window.location.origin + "/payment-result";
+        payload.return_url = window.location.origin + "/donate/" + id;
       }
       const init = await api<any>(`/campaigns/${id}/donate`, {
         method: "POST",
@@ -62,13 +81,19 @@ export default function Donate() {
         qc.invalidateQueries({ queryKey: ["impact"] });
         qc.invalidateQueries({ queryKey: ["myDonations"] });
       } else if (init.authorization_url) {
-        await WebBrowser.openBrowserAsync(init.authorization_url);
-        const verify = await api<any>("/payments/verify", { method: "POST", body: { reference: init.reference } });
-        if (verify.status === "paid") {
-          setSuccess({ prev: c?.percent || 0, next: c?.percent || 0, test: false });
-          qc.invalidateQueries({ queryKey: ["campaign", id] });
+        if (typeof window !== "undefined" && window.location) {
+          window.location.href = init.authorization_url;
         } else {
-          setError("We couldn't confirm your payment yet. If you completed it, it may take a moment.");
+          await WebBrowser.openBrowserAsync(init.authorization_url);
+          const verify = await api<any>("/payments/verify", { method: "POST", body: { reference: init.reference } });
+          if (verify.status === "paid") {
+            setSuccess({ prev: c?.percent || 0, next: c?.percent || 0, test: false });
+            qc.invalidateQueries({ queryKey: ["campaign", id] });
+            qc.invalidateQueries({ queryKey: ["impact"] });
+            qc.invalidateQueries({ queryKey: ["myDonations"] });
+          } else {
+            setError("We couldn't confirm your payment yet. If you completed it, it may take a moment.");
+          }
         }
       } else {
         setError("Payments are being set up. Please try again shortly.");
