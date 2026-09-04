@@ -106,9 +106,9 @@ async def initialize_donation(campaign_id: str, body: DonateIn,
         "id": uid("dnt_"), "reference": reference, "campaign_id": campaign_id,
         "donor_id": None if body.anonymous else (user["id"] if user else None),
         "anonymous": body.anonymous, "message": body.message or "",
-        "amount_kobo": body.amount_kobo, "currency": "NGN",
+        "amount_kobo": body.amount_kobo, 
         "status": "pending", "provider": provider.name,
-        "test": provider.name == "sandbox", "email": email,
+        "is_test": provider.name == "sandbox", 
         "created_at": now_iso(), "paid_at": None,
     }
     await db.donations.insert_one(donation)
