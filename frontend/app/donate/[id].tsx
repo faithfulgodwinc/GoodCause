@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -66,7 +66,7 @@ export default function Donate() {
     track("donation_started", { campaign_id: id });
     try {
       const payload: any = { amount_kobo: finalAmount, anonymous, message };
-      if (typeof window !== "undefined" && window.location) {
+      if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
         payload.return_url = window.location.origin + "/donate/" + id;
       }
       const init = await api<any>(`/campaigns/${id}/donate`, {
@@ -81,7 +81,7 @@ export default function Donate() {
         qc.invalidateQueries({ queryKey: ["impact"] });
         qc.invalidateQueries({ queryKey: ["myDonations"] });
       } else if (init.authorization_url) {
-        if (typeof window !== "undefined" && window.location) {
+        if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
           window.location.href = init.authorization_url;
         } else {
           await WebBrowser.openBrowserAsync(init.authorization_url);
