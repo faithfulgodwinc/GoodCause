@@ -19,6 +19,7 @@ class DonateIn(BaseModel):
     anonymous: bool = False
     message: Optional[str] = Field(default="", max_length=280)
     email: Optional[EmailStr] = None
+    return_url: Optional[str] = None
 
 
 async def _apply_paid(reference: str) -> Optional[dict]:
@@ -118,7 +119,7 @@ async def initialize_donation(campaign_id: str, body: DonateIn,
     try:
         init = await provider.initialize(
             reference=reference, amount_kobo=body.amount_kobo, email=email,
-            callback_url=FRONTEND_RETURN_URL,
+            callback_url=body.return_url or FRONTEND_RETURN_URL,
             metadata={"campaign_id": campaign_id, "reference": reference})
     except Exception:
         await db.donations.update_one({"reference": reference}, {"$set": {"status": "failed"}})

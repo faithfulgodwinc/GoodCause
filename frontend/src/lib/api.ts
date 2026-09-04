@@ -6,13 +6,13 @@ import { storage } from "@/src/utils/storage";
 export function getBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-  // On Web:
+  // If we have an explicit env URL, always use it.
+  if (envUrl) {
+    return `${envUrl.replace(/\/+$/, "")}/api`;
+  }
+
+  // Fallbacks if env is missing
   if (Platform.OS === "web") {
-    // If an explicit remote production URL is configured (e.g. https://api.goodcause.ng), use it
-    if (envUrl && envUrl.startsWith("https://")) {
-      return `${envUrl.replace(/\/+$/, "")}/api`;
-    }
-    // Otherwise use current browser host (e.g. localhost or 127.0.0.1) on port 8000
     if (typeof window !== "undefined" && window.location) {
       const host = window.location.hostname || "localhost";
       return `http://${host}:8000/api`;
@@ -20,17 +20,14 @@ export function getBaseUrl(): string {
     return "http://localhost:8000/api";
   }
 
-  // On Native Mobile:
-  if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
-    return `${envUrl.replace(/\/+$/, "")}/api`;
-  }
-  // If host is localhost or missing, resolve dynamically from expo hostUri
+  // On Native Mobile without env, use hostUri
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     if (ip) return `http://${ip}:8000/api`;
   }
-  return `${(envUrl || "http://127.0.0.1:8000").replace(/\/+$/, "")}/api`;
+  
+  return "http://127.0.0.1:8000/api";
 }
 
 export const TOKEN_KEY = "gc_auth_token";

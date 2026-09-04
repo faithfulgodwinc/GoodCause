@@ -46,9 +46,13 @@ export default function Donate() {
     setProcessing(true);
     track("donation_started", { campaign_id: id });
     try {
+      const payload: any = { amount_kobo: finalAmount, anonymous, message };
+      if (typeof window !== "undefined" && window.location) {
+        payload.return_url = window.location.origin + "/payment-result";
+      }
       const init = await api<any>(`/campaigns/${id}/donate`, {
         method: "POST",
-        body: { amount_kobo: finalAmount, anonymous, message },
+        body: payload,
       });
       if (init.sandbox) {
         const res = await api<any>("/donations/sandbox-complete", { method: "POST", body: { reference: init.reference } });
