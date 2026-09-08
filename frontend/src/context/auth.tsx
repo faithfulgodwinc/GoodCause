@@ -17,10 +17,12 @@ export type User = {
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  completeGoogleSession: (idToken: string) => Promise<void>;
-  completeAppleSession: (idToken: string, name?: string) => Promise<void>;
+  /** Step 1 of email OTP flow — request a 6-digit code */
+  sendOtp: (email: string) => Promise<void>;
+  /** Step 2 of email OTP flow — verify the code, optionally provide a name for new users */
+  verifyOtp: (email: string, code: string, name?: string) => Promise<{ isNewUser: boolean }>;
+  completeGoogleSession: (idToken: string) => Promise<{ isNewUser: boolean }>;
+  completeAppleSession: (idToken: string, name?: string) => Promise<{ isNewUser: boolean }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   updateUser: (u: Partial<User>) => void;
@@ -68,52 +70,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           rcRef.current = null;
         }
       } catch (e) {
-        // surfaced where purchases are attempted; never crash auth
         console.warn("RevenueCat identity error", e);
       }
     })();
   }, [user?.id]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await api<{ token: string; user: User }>("/auth/login", {
+  /** Request a 6-digit OTP be sent to the email address. */
+  const sendOtp = useCallback(async (email: string) => {
+    await api("/auth/otp/send", {
       method: "POST",
-      body: { email, password },
+      body: { email },
       auth: false,
     });
-    await setToken(res.token);
-    setUser(res.user);
-    track("login");
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string) => {
-    const res = await api<{ token: string; user: User }>("/auth/register", {
-      method: "POST",
-      body: { email, password, name },
-      auth: false,
-    });
+  /** Verify OTP code. Returns `{ isNewUser }`. Sets auth state on success. */
+  const verifyOtp = useCallback(async (email: string, code: string, name?: string) => {
+    const res = await api<{ token: string; user: User; is_new_user: boolean }>(
+      "/auth/otp/verify",
+      {
+        method: "POST",
+        body: { email, code, name: name?.trim() || undefined },
+        auth: false,
+      }
+    );
     await setToken(res.token);
     setUser(res.user);
-    track("signup");
+    track("login", { provider: "email_otp" });
+    return { isNewUser: res.is_new_user };
   }, []);
 
   const completeGoogleSession = useCallback(async (idToken: string) => {
-    const res = await api<{ token: string; user: User }>("/auth/session", {
-      method: "POST",
-      body: { id_token: idToken },
-      auth: false,
-    });
+    const res = await api<{ token: string; user: User; is_new_user: boolean }>(
+      "/auth/session",
+      {
+        method: "POST",
+        body: { id_token: idToken },
+        auth: false,
+      }
+    );
     await setToken(res.token);
     setUser(res.user);
+    return { isNewUser: res.is_new_user ?? true };
   }, []);
 
   const completeAppleSession = useCallback(async (idToken: string, name?: string) => {
-    const res = await api<{ token: string; user: User }>("/auth/session/apple", {
-      method: "POST",
-      body: { id_token: idToken, name },
-      auth: false,
-    });
+    const res = await api<{ token: string; user: User; is_new_user: boolean }>(
+      "/auth/session/apple",
+      {
+        method: "POST",
+        body: { id_token: idToken, name },
+        auth: false,
+      }
+    );
     await setToken(res.token);
     setUser(res.user);
+    return { isNewUser: res.is_new_user ?? true };
   }, []);
 
   const logout = useCallback(async () => {
@@ -130,7 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, completeGoogleSession, completeAppleSession, logout, refresh: bootstrap, updateUser }}
+      value={{
+        user, loading,
+        sendOtp, verifyOtp,
+        completeGoogleSession, completeAppleSession,
+        logout, refresh: bootstrap, updateUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "121930938754",
+    "project_id": "goodcause-ed7e4",
+    "storage_bucket": "goodcause-ed7e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121930938754:android:eeb4473d634c0a76adf79b",
+        "android_client_info": {
+          "package_name": "com.goodcause.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4XwMMLB_b2c8JZzpuFduawRPzc7YSM3o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

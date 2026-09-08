@@ -75,6 +75,7 @@ export default function RootLayout() {
                     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
                       <Stack.Screen name="index" />
                   <Stack.Screen name="auth/index" />
+                  <Stack.Screen name="onboarding/index" options={{ animation: "fade", gestureEnabled: false }} />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="campaign/[id]" options={{ animation: "slide_from_right" }} />
                   <Stack.Screen name="campaign/new" options={{ animation: "slide_from_bottom" }} />

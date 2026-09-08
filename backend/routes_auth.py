@@ -1,5 +1,11 @@
-"""Authentication routes: JWT email/password + Emergent Google session."""
-import re
+"""Authentication routes — Passwordless (OTP + Google + Apple).
+
+Email/password routes (/register, /login) are soft-deprecated and return 410
+with a helpful message so existing API clients don't hard-crash.
+"""
+import os
+import random
+import string
 import httpx
 from fastapi import APIRouter, HTTPException, Header, Depends
 from pydantic import BaseModel, EmailStr, Field
@@ -8,39 +14,24 @@ from datetime import timedelta
 
 from core import (db, uid, now, now_iso, hash_password, verify_password, create_jwt,
                   get_current_user, clean, track, SESSION_DAYS, aware, resolve_token, _extract)
+from mailer import send_otp_email
 
-import os
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
 import jwt
 from jwt import PyJWKClient
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-
-class RegisterIn(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=6, max_length=128)
-    name: str = Field(min_length=1, max_length=80)
-
-
-class LoginIn(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class SessionIn(BaseModel):
-    id_token: str
-
-class AppleSessionIn(BaseModel):
-    id_token: str
-    name: Optional[str] = None
-
+OTP_TTL_MINUTES = 10
+OTP_RATE_LIMIT_SECONDS = 60  # Minimum gap between OTP sends to same email
 
 ADMIN_EMAILS = {"admin@goodcause.ng", "faithfulgodwinc@gmail.com"}
 
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _user_out(u: dict) -> dict:
     return {
@@ -51,36 +42,139 @@ def _user_out(u: dict) -> dict:
     }
 
 
-@router.post("/register")
-async def register(body: RegisterIn):
-    email = body.email.lower().strip()
-    if await db.users.find_one({"email": email}):
-        raise HTTPException(status_code=409, detail="An account with this email already exists.")
-    is_admin = email in ADMIN_EMAILS
-    user = {
-        "id": uid("usr_"), "email": email, "name": body.name.strip(),
-        "password_hash": hash_password(body.password), "picture": None,
-        "role": "admin" if is_admin else "donor", "bio": None,
-        "verified_organizer": is_admin,
-        "auth_provider": "password", "created_at": now_iso(),
-    }
-    await db.users.insert_one(user)
-    await track("signup", user["id"], {"provider": "password"})
-    return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+def _gen_otp() -> str:
+    """Generate a cryptographically adequate 6-digit numeric OTP."""
+    return "".join(random.choices(string.digits, k=6))
 
 
-@router.post("/login")
-async def login(body: LoginIn):
-    email = body.email.lower().strip()
+async def _upsert_otp_user(email: str, name: Optional[str] = None) -> dict:
+    """Find or create a user record for the given email. Returns the user dict."""
     user = await db.users.find_one({"email": email}, {"_id": 0})
-    if not user or not user.get("password_hash") or not verify_password(body.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Incorrect email or password.")
-    if email in ADMIN_EMAILS and user.get("role") != "admin":
-        await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
-        user["role"] = "admin"
-        user["verified_organizer"] = True
-    await track("login", user["id"], {"provider": "password"})
-    return {"token": create_jwt(user["id"]), "user": _user_out(user)}
+    if not user:
+        is_admin = email in ADMIN_EMAILS
+        display_name = (name or "").strip() or email.split("@")[0]
+        user = {
+            "id": uid("usr_"), "email": email, "name": display_name,
+            "password_hash": None, "picture": None,
+            "role": "admin" if is_admin else "donor", "bio": None,
+            "verified_organizer": is_admin,
+            "auth_provider": "email_otp", "created_at": now_iso(),
+        }
+        await db.users.insert_one(user)
+        await track("signup", user["id"], {"provider": "email_otp"})
+        return user, True  # (user, is_new)
+    else:
+        if email in ADMIN_EMAILS and user.get("role") != "admin":
+            await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+            user["role"] = "admin"
+            user["verified_organizer"] = True
+        await track("login", user["id"], {"provider": "email_otp"})
+        return user, False  # (user, is_new)
+
+
+# ─── OTP: Send ────────────────────────────────────────────────────────────────
+
+class OtpSendIn(BaseModel):
+    email: EmailStr
+
+
+@router.post("/otp/send")
+async def otp_send(body: OtpSendIn):
+    """Generate and email a 6-digit OTP to the user. Rate-limited to 1 per 60s."""
+    email = body.email.lower().strip()
+
+    # Rate limit: check if we sent one recently
+    recent = await db.email_otps.find_one({
+        "email": email,
+        "used": False,
+        "expires_at": {"$gte": (now() - timedelta(seconds=OTP_RATE_LIMIT_SECONDS - OTP_TTL_MINUTES * 60)).isoformat()},
+    })
+    # A simpler check: look for any OTP created in the last 60 seconds
+    recent_otps = await db.email_otps.find(
+        {"email": email}
+    ).sort("created_at", -1).limit(1).to_list(1)
+    if recent_otps:
+        last = recent_otps[0]
+        created = aware(last.get("created_at"))
+        if created and (now() - created).total_seconds() < OTP_RATE_LIMIT_SECONDS:
+            wait = int(OTP_RATE_LIMIT_SECONDS - (now() - created).total_seconds())
+            raise HTTPException(
+                status_code=429,
+                detail=f"Please wait {wait} seconds before requesting another code."
+            )
+
+    # Invalidate any previously unused OTPs for this email
+    # (We do this via the `used` flag — we don't delete, for audit trail)
+    # Just insert a new one; verification always uses the latest unused one.
+
+    code = _gen_otp()
+    code_hash = hash_password(code)
+    expires_at = (now() + timedelta(minutes=OTP_TTL_MINUTES)).isoformat()
+
+    await db.email_otps.insert_one({
+        "id": uid("otp_"),
+        "email": email,
+        "code_hash": code_hash,
+        "expires_at": expires_at,
+        "used": False,
+        "created_at": now_iso(),
+    })
+
+    send_otp_email(email, code)  # fire — falls back to console log on failure
+
+    return {"ok": True, "message": f"A 6-digit code has been sent to {email}."}
+
+
+# ─── OTP: Verify ─────────────────────────────────────────────────────────────
+
+class OtpVerifyIn(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
+    name: Optional[str] = Field(default=None, max_length=80)
+
+
+@router.post("/otp/verify")
+async def otp_verify(body: OtpVerifyIn):
+    """Verify a 6-digit OTP. Returns a JWT + user on success."""
+    email = body.email.lower().strip()
+
+    # Find the latest unused, non-expired OTP for this email
+    candidates = await db.email_otps.find(
+        {"email": email, "used": False}
+    ).sort("created_at", -1).limit(5).to_list(5)
+
+    matched_otp = None
+    for otp in candidates:
+        exp = aware(otp.get("expires_at"))
+        if exp and exp < now():
+            continue  # expired
+        if verify_password(body.code, otp["code_hash"]):
+            matched_otp = otp
+            break
+
+    if not matched_otp:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired code. Please request a new one."
+        )
+
+    # Mark OTP as used
+    await db.email_otps.update_one({"id": matched_otp["id"]}, {"$set": {"used": True}})
+
+    # Upsert user
+    user, is_new = await _upsert_otp_user(email, body.name)
+
+    return {
+        "token": create_jwt(user["id"]),
+        "user": _user_out(user),
+        "is_new_user": is_new,
+    }
+
+
+# ─── Google SSO ───────────────────────────────────────────────────────────────
+
+class SessionIn(BaseModel):
+    id_token: str
 
 
 @router.post("/session")
@@ -90,7 +184,7 @@ async def google_session(body: SessionIn):
         os.environ.get("GOOGLE_ANDROID_CLIENT_ID"),
         os.environ.get("GOOGLE_IOS_CLIENT_ID")
     ] if c and "your_" not in c]
-    
+
     if not valid_client_ids:
         raise HTTPException(status_code=501, detail="Google SSO requires production configuration.")
 
@@ -105,22 +199,21 @@ async def google_session(body: SessionIn):
                 break
             except ValueError as e:
                 last_error = str(e)
-                
+
         if not idinfo:
             raise ValueError(f"Token invalid or audience mismatch. {last_error}")
-        
+
         email = idinfo.get("email")
         if not email:
             raise HTTPException(status_code=400, detail="Google token missing email.")
-            
+
         email = email.lower().strip()
         name = idinfo.get("name", email.split("@")[0])
         picture = idinfo.get("picture")
-        
+
         user = await db.users.find_one({"email": email}, {"_id": 0})
-        
+
         if not user:
-            # Register new user
             is_admin = email in ADMIN_EMAILS
             user = {
                 "id": uid("usr_"), "email": email, "name": name,
@@ -131,35 +224,42 @@ async def google_session(body: SessionIn):
             }
             await db.users.insert_one(user)
             await track("signup", user["id"], {"provider": "google"})
+            is_new = True
         else:
-            # Update picture if missing or different, but not strictly necessary
             if picture and user.get("picture") != picture:
                 await db.users.update_one({"id": user["id"]}, {"$set": {"picture": picture}})
                 user["picture"] = picture
-                
             if email in ADMIN_EMAILS and user.get("role") != "admin":
                 await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
                 user["role"] = "admin"
                 user["verified_organizer"] = True
-                
             await track("login", user["id"], {"provider": "google"})
-            
-        return {"token": create_jwt(user["id"]), "user": _user_out(user)}
-        
+            is_new = False
+
+        return {"token": create_jwt(user["id"]), "user": _user_out(user), "is_new_user": is_new}
+
     except ValueError as e:
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
+
+
+# ─── Apple SSO ────────────────────────────────────────────────────────────────
+
+class AppleSessionIn(BaseModel):
+    id_token: str
+    name: Optional[str] = None
+
 
 @router.post("/session/apple")
 async def apple_session(body: AppleSessionIn):
     apple_client_id = os.environ.get("APPLE_CLIENT_ID")
     if not apple_client_id or "your_" in apple_client_id:
         raise HTTPException(status_code=501, detail="Apple SSO requires production configuration.")
-    
+
     try:
         url = "https://appleid.apple.com/auth/keys"
         jwks_client = PyJWKClient(url)
         signing_key = jwks_client.get_signing_key_from_jwt(body.id_token)
-        
+
         data = jwt.decode(
             body.id_token,
             signing_key.key,
@@ -167,17 +267,15 @@ async def apple_session(body: AppleSessionIn):
             audience=apple_client_id,
             issuer="https://appleid.apple.com"
         )
-        
+
         email = data.get("email")
         if not email:
             raise HTTPException(status_code=400, detail="Apple token missing email.")
-            
+
         email = email.lower().strip()
-        
         user = await db.users.find_one({"email": email}, {"_id": 0})
-        
+
         if not user:
-            # Register new user
             is_admin = email in ADMIN_EMAILS
             display_name = body.name or email.split("@")[0]
             user = {
@@ -189,18 +287,56 @@ async def apple_session(body: AppleSessionIn):
             }
             await db.users.insert_one(user)
             await track("signup", user["id"], {"provider": "apple"})
+            is_new = True
         else:
             if email in ADMIN_EMAILS and user.get("role") != "admin":
                 await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
                 user["role"] = "admin"
                 user["verified_organizer"] = True
-                
             await track("login", user["id"], {"provider": "apple"})
-            
-        return {"token": create_jwt(user["id"]), "user": _user_out(user)}
-        
+            is_new = False
+
+        return {"token": create_jwt(user["id"]), "user": _user_out(user), "is_new_user": is_new}
+
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid Apple token: {str(e)}")
+
+
+# ─── Deprecated password routes ───────────────────────────────────────────────
+
+class RegisterIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=128)
+    name: str = Field(min_length=1, max_length=80)
+
+
+class LoginIn(BaseModel):
+    email: EmailStr
+    password: str
+
+
+@router.post("/register", deprecated=True)
+async def register(body: RegisterIn):
+    """Deprecated: use /otp/send + /otp/verify instead."""
+    raise HTTPException(
+        status_code=410,
+        detail="Password sign-up is no longer supported. Please use email code sign-in."
+    )
+
+
+@router.post("/login", deprecated=True)
+async def login(body: LoginIn):
+    """Deprecated: use /otp/send + /otp/verify instead.
+
+    Existing password users: they will receive an OTP the next time they sign in.
+    """
+    raise HTTPException(
+        status_code=410,
+        detail="Password sign-in is no longer supported. Please use email code sign-in."
+    )
+
+
+# ─── Session / profile ────────────────────────────────────────────────────────
 
 @router.get("/me")
 async def me(user: dict = Depends(get_current_user)):

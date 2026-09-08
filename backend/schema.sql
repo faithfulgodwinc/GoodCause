@@ -207,6 +207,19 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON user_sessions(user_id);
 
+-- 12b. EMAIL OTPs (PASSWORDLESS AUTH)
+CREATE TABLE IF NOT EXISTS email_otps (
+    id VARCHAR(64) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,  -- bcrypt hash of the 6-digit code
+    expires_at TIMESTAMPTZ NOT NULL,  -- 10-minute TTL
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
+CREATE INDEX IF NOT EXISTS idx_email_otps_expires ON email_otps(expires_at);
+
 -- 13. ANALYTICS EVENTS
 CREATE TABLE IF NOT EXISTS analytics_events (
     id VARCHAR(64) PRIMARY KEY,
