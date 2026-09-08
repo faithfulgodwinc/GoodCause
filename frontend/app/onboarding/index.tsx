@@ -219,14 +219,14 @@ export default function OnboardingScreen() {
 
   const skipToTabs = useCallback(async () => {
     await markDone();
-    router.replace("/(tabs)");
+    router.replace("/");
   }, [markDone, router]);
 
   const goToPaywall = useCallback(async () => {
     await markDone();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    router.replace("/(tabs)");
-    // Small delay to ensure tabs mount before pushing modal
+    router.replace("/");
+    // Small delay to ensure root mounts before pushing modal
     setTimeout(() => {
       router.push("/paywall");
     }, 200);

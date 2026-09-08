@@ -18,10 +18,13 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    // Check if this user has already completed onboarding.
-    storage.getItem(ONBOARDING_DONE_KEY, false).then((done) => {
-      setOnboardingDone(!!done);
-      setOnboardingChecked(true);
+    // Force clear for testing
+    storage.removeItem(ONBOARDING_DONE_KEY).then(() => {
+      // Check if this user has already completed onboarding.
+      storage.getItem(ONBOARDING_DONE_KEY, false).then((done) => {
+        setOnboardingDone(!!done);
+        setOnboardingChecked(true);
+      });
     });
   }, []);
 
