@@ -10,226 +10,108 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { AppText, BrandLogo } from "@/src/components/ui";
-import { font, spacing, colors } from "@/src/theme";
+import { font, colors } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const { width: SCREEN_W } = Dimensions.get("window");
 const ONBOARDING_DONE_KEY = "gc_onboarding_done";
 
-// ─── Slide Data ───────────────────────────────────────────────────────────────
+// ─── Emotional & Cinematic Content ────────────────────────────────────────────
 
-type Slide = {
-  id: string;
-  title: string;
-  subtitle: string;
-};
-
-const SLIDES: Slide[] = [
+const SLIDES = [
   {
     id: "welcome",
-    title: "Fundraise for\nwhat matters.",
-    subtitle: "Create campaigns for causes close to your heart. Every cause counts.",
+    title: "Every life has\na story.",
+    subtitle: "What will you help them write? Community-powered fundraising for what matters most.",
+    image: require("../../assets/images/onboarding/slide1.jpg"),
   },
   {
     id: "trust",
-    title: "Verified\ncauses only.",
-    subtitle: "We verify organizer identity and fund usage. Transparency is our core.",
+    title: "Trust is\neverything.",
+    subtitle: "We protect your giving. Every organizer is verified, so you can support causes with absolute confidence.",
+    image: require("../../assets/images/onboarding/slide2.jpg"),
   },
   {
     id: "impact",
-    title: "Real-time\nimpact.",
-    subtitle: "Track donations, donor reach, and growth with live analytics.",
+    title: "See your\nimpact.",
+    subtitle: "Watch the difference you make instantly with real-time analytics, donor insights, and transparent updates.",
+    image: require("../../assets/images/onboarding/slide3.jpg"),
   },
   {
     id: "pro",
-    title: "GoodCause\nPro.",
-    subtitle: "Unlock AI storytelling, advanced analytics, and QR kits.",
+    title: "Amplify\nyour voice.",
+    subtitle: "Unlock powerful storytelling tools and change the world faster with a GoodCause Pro membership.",
+    image: require("../../assets/images/onboarding/slide4.jpg"),
   },
 ];
 
-// ─── Scrollytelling Graphics Layer ────────────────────────────────────────────
+// ─── Cinematic Ken Burns Background ───────────────────────────────────────────
 
-function GraphicsLayer({ scrollX }: { scrollX: Animated.Value }) {
-  // Core morphing
-  const coreSize = scrollX.interpolate({
-    inputRange: [0, SCREEN_W, 2 * SCREEN_W, 3 * SCREEN_W],
-    outputRange: [180, 220, 190, 240],
-    extrapolate: "clamp",
-  });
-  
-  const coreRadius = scrollX.interpolate({
-    inputRange: [0, SCREEN_W, 2 * SCREEN_W, 3 * SCREEN_W],
-    outputRange: [90, 50, 80, 30],
-    extrapolate: "clamp",
-  });
-  
-  const coreRotate = scrollX.interpolate({
-    inputRange: [0, SCREEN_W, 2 * SCREEN_W, 3 * SCREEN_W],
-    outputRange: ["0deg", "45deg", "-15deg", "90deg"],
-    extrapolate: "clamp",
-  });
-
-  // Icon Opacities
-  const op0 = scrollX.interpolate({ inputRange: [0, SCREEN_W/2], outputRange: [1, 0], extrapolate: "clamp" });
-  const op1 = scrollX.interpolate({ inputRange: [SCREEN_W/2, SCREEN_W, SCREEN_W*1.5], outputRange: [0, 1, 0], extrapolate: "clamp" });
-  const op2 = scrollX.interpolate({ inputRange: [SCREEN_W*1.5, SCREEN_W*2, SCREEN_W*2.5], outputRange: [0, 1, 0], extrapolate: "clamp" });
-  const op3 = scrollX.interpolate({ inputRange: [SCREEN_W*2.5, SCREEN_W*3], outputRange: [0, 1], extrapolate: "clamp" });
-
-  // Icon Scales for bounce
-  const sc0 = scrollX.interpolate({ inputRange: [0, SCREEN_W/2], outputRange: [1, 0.5], extrapolate: "clamp" });
-  const sc1 = scrollX.interpolate({ inputRange: [SCREEN_W/2, SCREEN_W, SCREEN_W*1.5], outputRange: [0.5, 1, 0.5], extrapolate: "clamp" });
-  const sc2 = scrollX.interpolate({ inputRange: [SCREEN_W*1.5, SCREEN_W*2, SCREEN_W*2.5], outputRange: [0.5, 1, 0.5], extrapolate: "clamp" });
-  const sc3 = scrollX.interpolate({ inputRange: [SCREEN_W*2.5, SCREEN_W*3], outputRange: [0.5, 1], extrapolate: "clamp" });
-
-  // Core icon counter-rotation (so icons stay upright)
-  const iconRotate0 = scrollX.interpolate({ inputRange: [0, SCREEN_W], outputRange: ["0deg", "-45deg"], extrapolate: "clamp" });
-  const iconRotate1 = scrollX.interpolate({ inputRange: [SCREEN_W, 2*SCREEN_W], outputRange: ["-45deg", "15deg"], extrapolate: "clamp" });
-  const iconRotate2 = scrollX.interpolate({ inputRange: [2*SCREEN_W, 3*SCREEN_W], outputRange: ["15deg", "-90deg"], extrapolate: "clamp" });
-  const iconRotate3 = scrollX.interpolate({ inputRange: [3*SCREEN_W, 4*SCREEN_W], outputRange: ["-90deg", "0deg"], extrapolate: "clamp" });
-
+function CinematicBackground({ scrollX }: { scrollX: Animated.Value }) {
   return (
-    <View style={styles.graphicsContainer} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill}>
+      {SLIDES.map((slide, index) => {
+        const inputRange = [
+          (index - 1) * SCREEN_W,
+          index * SCREEN_W,
+          (index + 1) * SCREEN_W,
+        ];
+        
+        // Buttery crossfade
+        const opacity = scrollX.interpolate({
+          inputRange,
+          outputRange: [0, 1, 0],
+          extrapolate: "clamp",
+        });
+
+        // Framer Motion style continuous slow zoom (Ken Burns effect)
+        const scale = scrollX.interpolate({
+          inputRange: [
+            (index - 1) * SCREEN_W,
+            (index + 1) * SCREEN_W,
+          ],
+          outputRange: [1, 1.15],
+          extrapolate: "clamp",
+        });
+
+        return (
+          <Animated.View key={slide.id} style={[StyleSheet.absoluteFill, { opacity }]}>
+            <Animated.Image 
+              source={slide.image} 
+              style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]} 
+              resizeMode="cover"
+            />
+          </Animated.View>
+        );
+      })}
       
-      {/* Dynamic Core */}
-      <Animated.View style={[styles.core, { 
-        width: coreSize, height: coreSize, borderRadius: coreRadius,
-        transform: [{ rotate: coreRotate }] 
-      }]}>
-        <Animated.View style={[styles.coreIcon, { opacity: op0, transform: [{ scale: sc0 }, { rotate: iconRotate0 }] }]}>
-          <Feather name="heart" size={64} color="#FFF" />
-        </Animated.View>
-        <Animated.View style={[styles.coreIcon, { opacity: op1, transform: [{ scale: sc1 }, { rotate: iconRotate1 }] }]}>
-          <Feather name="shield" size={64} color="#FFF" />
-        </Animated.View>
-        <Animated.View style={[styles.coreIcon, { opacity: op2, transform: [{ scale: sc2 }, { rotate: iconRotate2 }] }]}>
-          <Feather name="activity" size={64} color="#FFF" />
-        </Animated.View>
-        <Animated.View style={[styles.coreIcon, { opacity: op3, transform: [{ scale: sc3 }, { rotate: iconRotate3 }] }]}>
-          <Feather name="zap" size={64} color="#FFF" />
-        </Animated.View>
-      </Animated.View>
-
-      {/* Parallax Floating Widgets */}
-      
-      {/* Slide 0: Donation Pill */}
-      <Animated.View style={[styles.widgetPill, {
-        opacity: scrollX.interpolate({ inputRange: [0, SCREEN_W/2], outputRange: [1, 0] }),
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [0, SCREEN_W], outputRange: [90, 160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [0, SCREEN_W], outputRange: [-80, -140] }) },
-          { scale: sc0 }
-        ]
-      }]}>
-        <Feather name="heart" size={14} color={colors.brandPrimary} style={{ marginRight: 6 }}/>
-        <AppText style={styles.widgetText}>+$50</AppText>
-      </Animated.View>
-
-      {/* Slide 0: User Avatar Circle */}
-      <Animated.View style={[styles.widgetCircle, {
-        opacity: scrollX.interpolate({ inputRange: [0, SCREEN_W/2], outputRange: [1, 0] }),
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [0, SCREEN_W], outputRange: [-90, -160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [0, SCREEN_W], outputRange: [70, 120] }) },
-          { scale: sc0 }
-        ]
-      }]}>
-        <Feather name="user" size={20} color={colors.brandPrimary} />
-      </Animated.View>
-
-      {/* Slide 1: Verified Badge */}
-      <Animated.View style={[styles.widgetBadge, {
-        opacity: op1,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [0, SCREEN_W, 2*SCREEN_W], outputRange: [100, -80, -160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [0, SCREEN_W, 2*SCREEN_W], outputRange: [0, -100, -160] }) },
-          { scale: sc1 }
-        ]
-      }]}>
-        <Feather name="check" size={24} color="#FFF" />
-      </Animated.View>
-
-      {/* Slide 1: Lock Circle */}
-      <Animated.View style={[styles.widgetCircle, {
-        opacity: op1,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [0, SCREEN_W, 2*SCREEN_W], outputRange: [-100, 90, 160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [0, SCREEN_W, 2*SCREEN_W], outputRange: [0, 80, 140] }) },
-          { scale: sc1 }
-        ]
-      }]}>
-        <Feather name="lock" size={20} color={colors.brandPrimary} />
-      </Animated.View>
-
-      {/* Slide 2: Growth Arrow */}
-      <Animated.View style={[styles.widgetPill, {
-        opacity: op2,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [SCREEN_W, 2*SCREEN_W, 3*SCREEN_W], outputRange: [100, 90, 160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [SCREEN_W, 2*SCREEN_W, 3*SCREEN_W], outputRange: [0, -100, -150] }) },
-          { scale: sc2 }
-        ]
-      }]}>
-        <Feather name="trending-up" size={16} color={colors.brandPrimary} style={{ marginRight: 6 }}/>
-        <AppText style={styles.widgetText}>24%</AppText>
-      </Animated.View>
-
-      {/* Slide 2: Target Circle */}
-      <Animated.View style={[styles.widgetCircle, {
-        opacity: op2,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [SCREEN_W, 2*SCREEN_W, 3*SCREEN_W], outputRange: [-100, -90, -160] }) },
-          { translateY: scrollX.interpolate({ inputRange: [SCREEN_W, 2*SCREEN_W, 3*SCREEN_W], outputRange: [0, 80, 140] }) },
-          { scale: sc2 }
-        ]
-      }]}>
-        <Feather name="target" size={20} color={colors.brandPrimary} />
-      </Animated.View>
-
-      {/* Slide 3: Pro Pill */}
-      <Animated.View style={[styles.widgetPill, {
-        opacity: op3,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [2*SCREEN_W, 3*SCREEN_W], outputRange: [100, 0] }) },
-          { translateY: scrollX.interpolate({ inputRange: [2*SCREEN_W, 3*SCREEN_W], outputRange: [100, -160] }) },
-          { scale: sc3 }
-        ]
-      }]}>
-        <Feather name="award" size={16} color={colors.brandPrimary} style={{ marginRight: 6 }}/>
-        <AppText style={styles.widgetText}>Pro Features</AppText>
-      </Animated.View>
-
-      {/* Slide 3: AI Sparkle */}
-      <Animated.View style={[styles.widgetCircle, {
-        opacity: op3,
-        transform: [
-          { translateX: scrollX.interpolate({ inputRange: [2*SCREEN_W, 3*SCREEN_W], outputRange: [-100, -110] }) },
-          { translateY: scrollX.interpolate({ inputRange: [2*SCREEN_W, 3*SCREEN_W], outputRange: [-100, 40] }) },
-          { scale: sc3 }
-        ]
-      }]}>
-        <Feather name="cpu" size={20} color={colors.brandPrimary} />
-      </Animated.View>
-
+      {/* Dark vignette gradient overlay to make white text pop emotionally */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.85)']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
 
-// ─── Individual Text Slide ─────────────────────────────────────────────────────
+// ─── Text Slide ───────────────────────────────────────────────────────────────
 
-function SlideText({ slide, index, scrollX }: { slide: Slide; index: number; scrollX: Animated.Value }) {
+function SlideText({ slide, index, scrollX }: { slide: any; index: number; scrollX: Animated.Value }) {
   const inputRange = [
     (index - 1) * SCREEN_W,
     index * SCREEN_W,
     (index + 1) * SCREEN_W,
   ];
 
+  // Dramatic swoop-up effect typical in premium framer motion sites
   const translateY = scrollX.interpolate({
     inputRange,
-    outputRange: [60, 0, -60],
+    outputRange: [120, 0, -60],
     extrapolate: "clamp",
   });
 
@@ -279,7 +161,7 @@ export default function OnboardingScreen() {
 
   const isLast = activeIndex === SLIDES.length - 1;
 
-  // Calculate indicator position
+  // Indicator line
   const indicatorPosition = scrollX.interpolate({
     inputRange: [0, SCREEN_W * (SLIDES.length - 1)],
     outputRange: [0, (SCREEN_W - 48) * ((SLIDES.length - 1) / SLIDES.length)],
@@ -288,14 +170,14 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
-      {/* Scrollytelling Graphics Background */}
-      <GraphicsLayer scrollX={scrollX} />
+      {/* Cinematic Imagery */}
+      <CinematicBackground scrollX={scrollX} />
 
       {/* Top Bar */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
-        <BrandLogo size={24} color={colors.brandPrimary} />
+        <BrandLogo size={24} color="#FFFFFF" />
         <Pressable onPress={skipToTabs} hitSlop={20} style={styles.skipBtn}>
           <AppText style={styles.skipText}>Skip</AppText>
         </Pressable>
@@ -313,7 +195,7 @@ export default function OnboardingScreen() {
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: false } // Required for layout interpolations in some cases
         )}
         onMomentumScrollEnd={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
@@ -333,7 +215,7 @@ export default function OnboardingScreen() {
       {/* Bottom Controls */}
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 32) }]}>
         
-        {/* Progress Line Indicator */}
+        {/* Progress Line */}
         <View style={styles.progressBarBg}>
           <Animated.View
             style={[
@@ -368,74 +250,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
-  },
-  graphicsContainer: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 200, // Pushes graphics into the upper half of the screen
-    zIndex: 0,
-  },
-  core: {
-    backgroundColor: colors.brandPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.brandPrimary,
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.3,
-    shadowRadius: 30,
-    elevation: 10,
-  },
-  coreIcon: {
-    position: 'absolute',
-  },
-  widgetPill: {
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  widgetText: {
-    color: colors.brandPrimary,
-    fontSize: 16,
-    fontFamily: font.semibold,
-  },
-  widgetCircle: {
-    position: 'absolute',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  widgetBadge: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#0284C7', // Blue trust badge
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 4,
+    backgroundColor: "#000",
   },
   topBar: {
     flexDirection: "row",
@@ -448,14 +263,14 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   skipText: {
-    color: colors.onSurfaceSecondary,
+    color: "rgba(255,255,255,0.7)",
     fontSize: 15,
     fontFamily: font.medium,
     letterSpacing: 0.3,
   },
   slide: {
     flex: 1,
-    justifyContent: "flex-end", // Push text to bottom
+    justifyContent: "flex-end", // Push text to bottom over the gradient
     paddingHorizontal: 32,
     paddingBottom: 40,
     zIndex: 1,
@@ -467,16 +282,22 @@ const styles = StyleSheet.create({
     fontSize: 48,
     lineHeight: 54,
     fontFamily: font.bold,
-    color: colors.onSurface,
+    color: "#FFFFFF",
     letterSpacing: -1.5,
     marginBottom: 20,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 12,
   },
   subtitle: {
     fontSize: 18,
     lineHeight: 28,
-    color: colors.onSurfaceSecondary,
-    fontFamily: font.regular,
-    maxWidth: "90%",
+    color: "rgba(255,255,255,0.85)",
+    fontFamily: font.medium,
+    maxWidth: "95%",
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   bottom: {
     paddingHorizontal: 24,
@@ -486,7 +307,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     width: "100%",
     height: 4,
-    backgroundColor: colors.border,
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 2,
     marginBottom: 40,
     overflow: "hidden",
