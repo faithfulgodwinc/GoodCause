@@ -15,71 +15,49 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { AppText, BrandLogo } from "@/src/components/ui";
-import { colors, spacing, radius, font } from "@/src/theme";
+import { font, spacing } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
 
-const { width: SCREEN_W } = Dimensions.get("window");
-
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const ONBOARDING_DONE_KEY = "gc_onboarding_done";
 
-// ─── Slide data ───────────────────────────────────────────────────────────────
+// ─── Pro Designer Slide Data ──────────────────────────────────────────────────
 
 type Slide = {
   id: string;
-  icon: keyof typeof Feather.glyphMap;
-  iconBg: string;
-  accent: string;
-  tag: string;
   title: string;
   subtitle: string;
-  isLast?: boolean;
+  icon: keyof typeof Feather.glyphMap;
 };
 
 const SLIDES: Slide[] = [
   {
     id: "welcome",
-    icon: "heart",
-    iconBg: "rgba(192, 92, 61, 0.12)",
-    accent: colors.brandPrimary,
-    tag: "Welcome to GoodCause",
-    title: "Fundraise for\nwhat matters",
-    subtitle:
-      "Create campaigns for causes close to your heart — from medical care and education to community projects. Every cause counts.",
+    title: "Fundraise for\nwhat matters.",
+    subtitle: "Create campaigns for causes close to your heart. Every cause counts.",
+    icon: "globe",
   },
   {
     id: "trust",
+    title: "Verified\ncauses only.",
+    subtitle: "We verify organizer identity and fund usage. Transparency is our core.",
     icon: "shield",
-    iconBg: "rgba(45, 122, 93, 0.12)",
-    accent: "#2D7A5D",
-    tag: "Built on trust",
-    title: "Every cause\nis verified",
-    subtitle:
-      "We verify organizer identity and fund usage so donors give with confidence. Transparency is at the core of everything we do.",
   },
   {
     id: "impact",
-    icon: "bar-chart-2",
-    iconBg: "rgba(74, 110, 130, 0.12)",
-    accent: "#4A6E82",
-    tag: "Real-time insights",
-    title: "See your impact\nin real time",
-    subtitle:
-      "Track donations, donor reach, and growth with live analytics. Know exactly how your campaign is performing at every moment.",
+    title: "Real-time\nimpact.",
+    subtitle: "Track donations, donor reach, and growth with live analytics.",
+    icon: "activity",
   },
   {
     id: "pro",
-    icon: "star",
-    iconBg: "rgba(192, 92, 61, 0.15)",
-    accent: colors.brandPrimary,
-    tag: "GoodCause Pro",
-    title: "Unlock powerful\nfundraising tools",
-    subtitle:
-      "Run multiple campaigns, access AI-assisted storytelling, advanced analytics, and QR kits — all with a Pro membership.",
-    isLast: true,
+    title: "GoodCause\nPro.",
+    subtitle: "Unlock AI storytelling, advanced analytics, and QR kits.",
+    icon: "zap",
   },
 ];
 
-// ─── Individual slide ─────────────────────────────────────────────────────────
+// ─── Individual Slide ─────────────────────────────────────────────────────────
 
 function OnboardingSlide({
   slide,
@@ -96,115 +74,32 @@ function OnboardingSlide({
     (index + 1) * SCREEN_W,
   ];
 
+  const translateY = scrollX.interpolate({
+    inputRange,
+    outputRange: [40, 0, 40],
+    extrapolate: "clamp",
+  });
+
   const opacity = scrollX.interpolate({
     inputRange,
     outputRange: [0, 1, 0],
     extrapolate: "clamp",
   });
 
-  const translateY = scrollX.interpolate({
-    inputRange,
-    outputRange: [32, 0, 32],
-    extrapolate: "clamp",
-  });
-
-  const scale = scrollX.interpolate({
-    inputRange,
-    outputRange: [0.85, 1, 0.85],
-    extrapolate: "clamp",
-  });
-
   return (
     <View style={[styles.slide, { width: SCREEN_W }]}>
-      <Animated.View style={[styles.slideContent, { opacity, transform: [{ translateY }, { scale }] }]}>
-        {/* Decorative blobs */}
-        <View
-          style={[
-            styles.blob1,
-            { backgroundColor: slide.iconBg, borderColor: slide.accent + "22" },
-          ]}
-        />
-        <View
-          style={[
-            styles.blob2,
-            { backgroundColor: slide.iconBg },
-          ]}
-        />
-
-        {/* Icon container */}
-        <View style={[styles.iconRing, { backgroundColor: slide.iconBg, borderColor: slide.accent + "33" }]}>
-          <View style={[styles.iconInner, { backgroundColor: slide.accent + "18" }]}>
-            <Feather name={slide.icon} size={36} color={slide.accent} />
-          </View>
+      <Animated.View style={[styles.slideContent, { opacity, transform: [{ translateY }] }]}>
+        <View style={styles.iconContainer}>
+          <Feather name={slide.icon} size={32} color="#FFFFFF" />
         </View>
-
-        {/* Tag */}
-        <View style={[styles.tag, { backgroundColor: slide.accent + "14", borderColor: slide.accent + "30" }]}>
-          <AppText
-            variant="caption"
-            style={{ color: slide.accent, fontFamily: font.semibold, fontSize: 11, letterSpacing: 0.6 }}
-          >
-            {slide.tag.toUpperCase()}
-          </AppText>
-        </View>
-
-        {/* Title */}
-        <AppText variant="display" style={styles.title}>
-          {slide.title}
-        </AppText>
-
-        {/* Subtitle */}
-        <AppText variant="body" style={styles.subtitle}>
-          {slide.subtitle}
-        </AppText>
-
-        {/* Pro feature pills (last slide only) */}
-        {slide.isLast && (
-          <View style={styles.pills}>
-            {["AI Assistant", "Analytics", "QR Kit", "Multi-campaign"].map((pill) => (
-              <View key={pill} style={styles.pill}>
-                <Feather name="check" size={11} color={colors.brandPrimary} style={{ marginRight: 4 }} />
-                <AppText variant="caption" style={{ color: colors.brandPrimary, fontFamily: font.semibold, fontSize: 11 }}>
-                  {pill}
-                </AppText>
-              </View>
-            ))}
-          </View>
-        )}
+        <AppText style={styles.title}>{slide.title}</AppText>
+        <AppText style={styles.subtitle}>{slide.subtitle}</AppText>
       </Animated.View>
     </View>
   );
 }
 
-// ─── Dot indicator ────────────────────────────────────────────────────────────
-
-function Dots({ count, scrollX }: { count: number; scrollX: Animated.Value }) {
-  return (
-    <View style={styles.dotsRow}>
-      {Array.from({ length: count }).map((_, i) => {
-        const inputRange = [(i - 1) * SCREEN_W, i * SCREEN_W, (i + 1) * SCREEN_W];
-        const width = scrollX.interpolate({
-          inputRange,
-          outputRange: [6, 22, 6],
-          extrapolate: "clamp",
-        });
-        const opacity = scrollX.interpolate({
-          inputRange,
-          outputRange: [0.3, 1, 0.3],
-          extrapolate: "clamp",
-        });
-        return (
-          <Animated.View
-            key={i}
-            style={[styles.dot, { width, opacity }]}
-          />
-        );
-      })}
-    </View>
-  );
-}
-
-// ─── Main screen ──────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -222,42 +117,34 @@ export default function OnboardingScreen() {
     router.replace("/");
   }, [markDone, router]);
 
-  const goToPaywall = useCallback(async () => {
-    await markDone();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-    router.replace("/");
-    // Small delay to ensure root mounts before pushing modal
-    setTimeout(() => {
-      router.push("/paywall");
-    }, 200);
-  }, [markDone, router]);
-
   const goNext = useCallback(() => {
     const next = activeIndex + 1;
     if (next < SLIDES.length) {
       flatRef.current?.scrollToIndex({ index: next, animated: true });
-      Haptics.selectionAsync().catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } else {
+      skipToTabs();
     }
-  }, [activeIndex]);
+  }, [activeIndex, skipToTabs]);
 
   const isLast = activeIndex === SLIDES.length - 1;
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
+  // Calculate indicator position
+  const indicatorPosition = scrollX.interpolate({
+    inputRange: [0, SCREEN_W * (SLIDES.length - 1)],
+    outputRange: [0, (SCREEN_W - 48) * ((SLIDES.length - 1) / SLIDES.length)],
+    extrapolate: "clamp",
+  });
 
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <BrandLogo size={20} />
-        <Pressable
-          onPress={skipToTabs}
-          hitSlop={12}
-          style={styles.skipBtn}
-          testID="onboarding-skip"
-        >
-          <AppText variant="label" color={colors.onSurfaceSecondary}>
-            Skip
-          </AppText>
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Top Bar */}
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
+        <BrandLogo size={24} color="#FFFFFF" />
+        <Pressable onPress={skipToTabs} hitSlop={20} style={styles.skipBtn}>
+          <AppText style={styles.skipText}>Skip</AppText>
         </Pressable>
       </View>
 
@@ -278,6 +165,7 @@ export default function OnboardingScreen() {
         onMomentumScrollEnd={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
           setActiveIndex(idx);
+          Haptics.selectionAsync().catch(() => {});
         }}
         renderItem={({ item, index }) => (
           <OnboardingSlide slide={item} index={index} scrollX={scrollX} />
@@ -289,40 +177,34 @@ export default function OnboardingScreen() {
         })}
       />
 
-      {/* Bottom controls */}
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, spacing.xl) }]}>
-        <Dots count={SLIDES.length} scrollX={scrollX} />
+      {/* Bottom Controls */}
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 32) }]}>
+        
+        {/* Progress Line Indicator */}
+        <View style={styles.progressBarBg}>
+          <Animated.View
+            style={[
+              styles.progressBarFill,
+              {
+                width: `${100 / SLIDES.length}%`,
+                transform: [{ translateX: indicatorPosition }],
+              },
+            ]}
+          />
+        </View>
 
-        {isLast ? (
-          <View style={styles.lastActions}>
-            <Pressable
-              onPress={goToPaywall}
-              style={styles.primaryBtn}
-              testID="onboarding-explore-pro"
-            >
-              <Feather name="star" size={16} color="#fff" style={{ marginRight: spacing.sm }} />
-              <AppText variant="button" color="#fff" style={{ fontSize: 15, fontFamily: font.semibold }}>
-                Explore Pro
-              </AppText>
-            </Pressable>
-            <Pressable onPress={skipToTabs} style={styles.ghostBtn} testID="onboarding-maybe-later">
-              <AppText variant="label" color={colors.onSurfaceSecondary}>
-                Maybe later
-              </AppText>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            onPress={goNext}
-            style={styles.nextBtn}
-            testID="onboarding-next"
-          >
-            <AppText variant="button" color="#fff" style={{ fontSize: 15, fontFamily: font.semibold }}>
-              Next
-            </AppText>
-            <Feather name="arrow-right" size={16} color="#fff" style={{ marginLeft: spacing.sm }} />
-          </Pressable>
-        )}
+        {/* Action Button */}
+        <Pressable
+          onPress={goNext}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+          ]}
+        >
+          <AppText style={styles.actionBtnText}>
+            {isLast ? "Get Started" : "Continue"}
+          </AppText>
+        </Pressable>
       </View>
     </View>
   );
@@ -333,152 +215,87 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FDFCFA",
+    backgroundColor: "#000000",
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: 24,
+    zIndex: 10,
   },
   skipBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    padding: 8,
+  },
+  skipText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 15,
+    fontFamily: font.medium,
+    letterSpacing: 0.3,
   },
   slide: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 32,
   },
   slideContent: {
     width: "100%",
-    maxWidth: 380,
-    alignItems: "center",
   },
-  blob1: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    top: -80,
-    right: -60,
-    borderWidth: 1,
-    opacity: 0.5,
-  },
-  blob2: {
-    position: "absolute",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    bottom: -40,
-    left: -30,
-    opacity: 0.3,
-  },
-  iconRing: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 1.5,
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.xl,
-  },
-  iconInner: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tag: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
+    marginBottom: 40,
     borderWidth: 1,
-    marginBottom: spacing.lg,
+    borderColor: "rgba(255,255,255,0.15)",
   },
   title: {
-    fontSize: 30,
-    lineHeight: 38,
+    fontSize: 48,
+    lineHeight: 54,
     fontFamily: font.bold,
-    color: "#2C2926",
-    textAlign: "center",
-    letterSpacing: -0.8,
-    marginBottom: spacing.md,
+    color: "#FFFFFF",
+    letterSpacing: -1.5,
+    marginBottom: 20,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 23,
-    textAlign: "center",
-    color: "#5C5954",
-    maxWidth: 320,
-  },
-  pills: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginTop: spacing.xl,
-    justifyContent: "center",
-  },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(192, 92, 61, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(192, 92, 61, 0.2)",
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-  },
-  dotsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  dot: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.brandPrimary,
+    fontSize: 18,
+    lineHeight: 28,
+    color: "rgba(255,255,255,0.6)",
+    fontFamily: font.regular,
+    maxWidth: "90%",
   },
   bottom: {
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingHorizontal: 24,
+    width: "100%",
   },
-  nextBtn: {
-    flexDirection: "row",
+  progressBarBg: {
+    width: "100%",
+    height: 3,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 1.5,
+    marginBottom: 40,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 1.5,
+  },
+  actionBtn: {
+    width: "100%",
+    height: 56,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 100, // Pill shape
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.brandPrimary,
-    height: 52,
-    borderRadius: radius.md,
-    width: "100%",
-    maxWidth: 380,
-    paddingHorizontal: spacing.lg,
   },
-  lastActions: {
-    width: "100%",
-    maxWidth: 380,
-    gap: spacing.sm,
-    alignItems: "center",
-  },
-  primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.brandPrimary,
-    height: 52,
-    borderRadius: radius.md,
-    width: "100%",
-    paddingHorizontal: spacing.lg,
-  },
-  ghostBtn: {
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
+  actionBtnText: {
+    color: "#000000",
+    fontSize: 17,
+    fontFamily: font.semibold,
+    letterSpacing: -0.3,
   },
 });
