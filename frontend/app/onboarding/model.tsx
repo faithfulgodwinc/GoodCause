@@ -1,27 +1,117 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Platform, ImageBackground } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, TypeWriterText } from "@/src/components/ui";
+import { formatCurrency } from "@/src/format";
 import { colors, font } from "@/src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming, 
+  useAnimatedReaction, 
+  runOnJS 
+} from "react-native-reanimated";
 
-const TIER_AMOUNTS: Record<string, string> = {
-  tier_1k: "₦1,000",
-  tier_2k5: "₦2,500",
-  tier_5k: "₦5,000",
-  tier_10k: "₦10,000",
+const IMPACT_MAP: Record<string, string> = {
+  tier_1k: "provides warm, nutritious meals for a family in need this month.",
+  tier_2k5: "funds urgent medical supplies for a local community clinic.",
+  tier_5k: "provides critical anti-malaria medicine for two children this month.",
+  tier_10k: "covers life-saving hospital bills for an emergency patient.",
 };
+
+const TIER_RAW: Record<string, number> = {
+  tier_1k: 1000,
+  tier_2k5: 2500,
+  tier_5k: 5000,
+  tier_10k: 10000,
+};
+
+function HeartbeatButton({ onComplete }: { onComplete: () => void }) {
+  const [isPressing, setIsPressing] = useState(false);
+  const progress = useSharedValue(0);
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    setIsPressing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    scale.value = withSpring(0.95, { stiffness: 400, damping: 20 });
+    progress.value = withTiming(1, { duration: 1500 });
+  };
+
+  const handlePressOut = () => {
+    setIsPressing(false);
+    scale.value = withSpring(1, { stiffness: 400, damping: 20 });
+    if (progress.value < 1) {
+      progress.value = withTiming(0, { duration: 300 });
+    }
+  };
+
+  useAnimatedReaction(
+    () => progress.value,
+    (v, prev) => {
+      if (v === 1 && prev !== 1) {
+        runOnJS(onComplete)();
+      }
+    }
+  );
+
+  useEffect(() => {
+    if (!isPressing) return;
+    const interval = setInterval(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, 450);
+    return () => clearInterval(interval);
+  }, [isPressing]);
+
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progress.value * 100}%`,
+    };
+  });
+
+  const animatedScaleStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  return (
+    <Pressable 
+      onPressIn={handlePressIn} 
+      onPressOut={handlePressOut}
+      style={{ marginTop: 24, marginBottom: 8 }}
+    >
+      <Animated.View style={[styles.heartbeatOuter, animatedScaleStyle]}>
+        {/* Progress Fill Background */}
+        <Animated.View style={[styles.heartbeatProgress, animatedProgressStyle]} />
+        
+        <View style={styles.heartbeatInner}>
+          <Ionicons name="finger-print-outline" size={24} color={colors.surface} />
+          <AppText style={styles.heartbeatText}>Press & hold to pledge</AppText>
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function ModelScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tier } = useLocalSearchParams();
   
-  const tierString = typeof tier === "string" && TIER_AMOUNTS[tier] ? TIER_AMOUNTS[tier] : "₦5,000";
+  const tierKey = typeof tier === "string" ? tier : "tier_5k";
+  const amountNum = TIER_RAW[tierKey] || 5000;
+  const tierString = formatCurrency(amountNum, "NGN");
+  const impactString = IMPACT_MAP[tierKey] || IMPACT_MAP.tier_5k;
 
-  const handleContinue = () => {
+  const handlePledgeComplete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.push({ pathname: "/onboarding/payment", params: { tier } });
   };
 
@@ -33,8 +123,8 @@ export default function ModelScreen() {
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["rgba(8,10,12,0.0)", "rgba(8,10,12,0.4)", "#080a0c", "#080a0c"]}
-        locations={[0, 0.3, 0.5, 1]}
+        colors={["rgba(8,10,12,0.0)", "rgba(8,10,12,0.5)", "#080a0c", "#080a0c"]}
+        locations={[0, 0.4, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -45,63 +135,37 @@ export default function ModelScreen() {
       </View>
 
       <View style={[styles.contentWrapper, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-        <AppText style={styles.titleGreen}>{tierString}</AppText>
-        <AppText style={styles.titleWhite}>creates a lifeline.</AppText>
         
-        <TypeWriterText 
-          style={styles.subtitle}
-          text="Your monthly giving pools together with thousands of others to fund verified medical and food campaigns. Every ₦1,000 has a home."
-        />
-
-        <View style={styles.card}>
-          <View style={styles.cardIcon}>
-            <Ionicons name="calendar-outline" size={20} color={colors.brandPrimary} />
-          </View>
-          <View style={styles.cardText}>
-            <AppText style={styles.cardLabel}>Your monthly promise</AppText>
-            <View style={styles.cardAmountRow}>
-              <AppText style={styles.cardAmount}>{tierString}</AppText>
-              <AppText style={styles.cardSub}> /month</AppText>
-            </View>
-            <AppText style={styles.cardFooter}>You are always in control. Pause or cancel your giving whenever you need.</AppText>
-          </View>
+        <View style={styles.textWrap}>
+          <AppText style={styles.titleWhite}>You are becoming a</AppText>
+          <AppText style={styles.titleGreen}>lifeline.</AppText>
         </View>
 
-        <AppText style={styles.howItWorksTitle}>How it works</AppText>
-        
-        <View style={styles.stepsRow}>
-          <View style={styles.stepCol}>
-            <View style={styles.stepIconBox}>
-              <Ionicons name="heart-outline" size={16} color={colors.brandPrimary} />
-            </View>
-            <AppText style={styles.stepNum}>01</AppText>
-            <AppText style={styles.stepTitle}>You care</AppText>
-            <AppText style={styles.stepDesc}>You step forward with a gift from the heart.</AppText>
-          </View>
-          
-          <View style={styles.stepCol}>
-            <View style={styles.stepIconBox}>
-              <Ionicons name="git-merge-outline" size={16} color={colors.brandPrimary} />
-            </View>
-            <AppText style={styles.stepNum}>02</AppText>
-            <AppText style={styles.stepTitle}>We combine</AppText>
-            <AppText style={styles.stepDesc}>It joins thousands of others in the pool.</AppText>
-          </View>
-          
-          <View style={styles.stepCol}>
-            <View style={styles.stepIconBox}>
-              <Ionicons name="shield-checkmark-outline" size={16} color={colors.brandPrimary} />
-            </View>
-            <AppText style={styles.stepNum}>03</AppText>
-            <AppText style={styles.stepTitle}>We uplift</AppText>
-            <AppText style={styles.stepDesc}>Together, we fund urgent, verified needs.</AppText>
-          </View>
+        <View style={{ height: 80, justifyContent: "center" }}>
+          <TypeWriterText 
+            style={styles.storyText}
+            text={`Your ${tierString} doesn't just sit in a bank. It ${impactString} You are literally changing lives.`}
+          />
         </View>
 
-        <Pressable style={styles.continueBtn} onPress={handleContinue}>
-          <AppText style={styles.continueText}>Become a GoodCause</AppText>
-          <Ionicons name="arrow-forward" size={20} color={colors.surface} style={{ marginLeft: 8 }} />
-        </Pressable>
+        {/* Glassmorphic Pledge Card */}
+        <View style={styles.glassContainer}>
+          <BlurView intensity={40} tint="dark" style={styles.glassBlur}>
+            <View style={styles.glassContent}>
+              <View style={styles.glassIcon}>
+                <Ionicons name="heart" size={24} color={colors.brandPrimary} />
+              </View>
+              <View style={styles.glassTextCol}>
+                <AppText style={styles.glassTitle}>Your Monthly Pledge</AppText>
+                <AppText style={styles.glassAmount}>{tierString}</AppText>
+                <AppText style={styles.glassDesc}>You are always in control. Pause or cancel your giving anytime.</AppText>
+              </View>
+            </View>
+          </BlurView>
+        </View>
+
+        <HeartbeatButton onComplete={handlePledgeComplete} />
+        
       </View>
     </View>
   );
@@ -123,57 +187,74 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   
-  titleGreen: { fontSize: 32, fontFamily: font.bold, color: colors.brandPrimary, letterSpacing: -1, lineHeight: 36 },
-  titleWhite: { fontSize: 32, fontFamily: font.bold, color: colors.surface, marginBottom: 8, letterSpacing: -1, lineHeight: 36 },
-  subtitle: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 20, lineHeight: 20 },
+  textWrap: { marginBottom: 16 },
+  titleWhite: { fontSize: 36, fontFamily: font.bold, color: colors.surface, letterSpacing: -1, lineHeight: 40 },
+  titleGreen: { fontSize: 36, fontFamily: font.bold, color: colors.brandPrimary, letterSpacing: -1, lineHeight: 40 },
   
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 24,
+  storyText: { 
+    fontSize: 16, 
+    color: "rgba(255,255,255,0.9)", 
+    lineHeight: 24, 
+    fontFamily: font.medium 
   },
-  cardIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.brandTertiary,
+  
+  /* Glassmorphic Card */
+  glassContainer: {
+    borderRadius: 24,
+    overflow: "hidden",
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  glassBlur: {
+    padding: 20,
+  },
+  glassContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  glassIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0,0,0,0.4)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  cardText: { flex: 1 },
-  cardLabel: { fontSize: 12, color: colors.onSurfaceSecondary, fontFamily: font.medium, marginBottom: 2 },
-  cardAmountRow: { flexDirection: "row", alignItems: "baseline", marginBottom: 4 },
-  cardAmount: { fontSize: 20, fontFamily: font.bold, color: colors.onSurface },
-  cardSub: { fontSize: 12, color: colors.onSurfaceSecondary, fontFamily: font.medium },
-  cardFooter: { fontSize: 11, color: colors.onSurfaceSecondary, lineHeight: 16 },
-  
-  howItWorksTitle: { fontSize: 14, fontFamily: font.bold, color: colors.surface, marginBottom: 12 },
-  stepsRow: { flexDirection: "row", justifyContent: "space-between", gap: 12, marginBottom: 24 },
-  stepCol: { flex: 1 },
-  stepIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
+  },
+  glassTextCol: {
+    flex: 1,
+  },
+  glassTitle: { fontSize: 13, color: "rgba(255,255,255,0.6)", fontFamily: font.bold, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
+  glassAmount: { fontSize: 28, fontFamily: font.bold, color: colors.surface, marginBottom: 8 },
+  glassDesc: { fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 16 },
+
+  /* Heartbeat Button */
+  heartbeatOuter: {
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    overflow: "hidden",
+    justifyContent: "center",
+  },
+  heartbeatProgress: {
+    position: "absolute",
+    top: 0, bottom: 0, left: 0,
+    backgroundColor: colors.brandPrimary,
+  },
+  heartbeatInner: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    gap: 12,
   },
-  stepNum: { fontSize: 10, color: "rgba(255,255,255,0.4)", fontFamily: font.bold, marginBottom: 2 },
-  stepTitle: { fontSize: 12, color: colors.surface, fontFamily: font.bold, marginBottom: 4 },
-  stepDesc: { fontSize: 10, color: "rgba(255,255,255,0.6)", lineHeight: 14 },
-  
-  continueBtn: { 
-    backgroundColor: colors.brandPrimary, 
-    height: 56, 
-    borderRadius: 28, 
-    flexDirection: "row",
-    alignItems: "center", 
-    justifyContent: "center" 
+  heartbeatText: {
+    color: colors.surface,
+    fontSize: 18,
+    fontFamily: font.bold,
   },
-  continueText: { color: colors.surface, fontSize: 16, fontFamily: font.bold },
 });

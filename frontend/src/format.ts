@@ -16,19 +16,18 @@ export function formatNaira(kobo: number, opts: { compact?: boolean } = {}): str
 export function formatCurrency(amount: number, currencyCode: string = "NGN"): string {
   const isNaira = currencyCode.toUpperCase() === "NGN";
   const fractionDigits = isNaira ? 0 : 2;
-  try {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: currencyCode,
-      minimumFractionDigits: fractionDigits,
-      maximumFractionDigits: fractionDigits,
-    }).format(amount);
-  } catch {
-    return `${currencyCode} ${amount.toLocaleString("en-NG", { 
-      minimumFractionDigits: fractionDigits, 
-      maximumFractionDigits: fractionDigits 
-    })}`;
-  }
+  
+  // React Native's Hermes engine sometimes lacks full ICU data and formats "en-NG" 
+  // with dots instead of commas for thousands. 
+  // To guarantee a comma separator, we use "en-US" for the numbers and manually prepend the symbol.
+  const symbol = isNaira ? "₦" : (currencyCode === "USD" ? "$" : `${currencyCode} `);
+  
+  const formattedNumber = amount.toLocaleString("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+
+  return `${symbol}${formattedNumber}`;
 }
 
 function trim(n: number): string {
