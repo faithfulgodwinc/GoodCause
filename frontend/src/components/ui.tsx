@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text as RNText,
   TextProps,
@@ -423,6 +423,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  progressFill: { height: "100%", borderRadius: 2 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl },
   preloaderContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -437,3 +438,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
 });
+
+// ─── TypeWriterText ─────────────────────────────────────────────────────────────
+
+export function TypeWriterText({ 
+  text, 
+  delay = 70, 
+  start = true, 
+  style, 
+  ...props 
+}: { 
+  text: string, 
+  delay?: number, 
+  start?: boolean, 
+  style?: any, 
+  [key: string]: any 
+}) {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    if (!start) {
+      setDisplayedText("");
+      return;
+    }
+    
+    let isCancelled = false;
+    let timeoutId: NodeJS.Timeout;
+    let i = 0;
+    
+    setDisplayedText("");
+
+    const typeNext = () => {
+      if (isCancelled || i >= text.length) return;
+      
+      setDisplayedText(text.substring(0, i + 1));
+      const char = text[i];
+      i++;
+
+      let nextDelay = delay;
+      // Add emotional pauses for punctuation
+      if (char === "." || char === "!" || char === "?" || char === "❤️") {
+        nextDelay = delay * 6; // Deep pause
+      } else if (char === ",") {
+        nextDelay = delay * 4; // Slight pause
+      } else {
+        nextDelay = delay + (Math.random() * 20); // Organic jitter
+      }
+
+      timeoutId = setTimeout(typeNext, nextDelay);
+    };
+
+    timeoutId = setTimeout(typeNext, delay);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [text, delay, start]);
+
+  return (
+    <AppText style={style} {...props}>
+      {displayedText}
+    </AppText>
+  );
+}

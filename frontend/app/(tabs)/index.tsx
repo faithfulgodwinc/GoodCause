@@ -1,33 +1,25 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   ScrollView,
   StyleSheet,
   Pressable,
   RefreshControl,
-  FlatList,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  Platform,
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
-import {
-  AppText,
-  Chip,
-  LoadingView,
-  ErrorView,
-  Avatar,
-  BrandLogo,
-} from "@/src/components/ui";
-import { FeaturedCard, CampaignCard, Campaign } from "@/src/components/CampaignCard";
+import { AppText, Avatar } from "@/src/components/ui";
+import { CampaignCard, Campaign } from "@/src/components/CampaignCard";
 import { useResponsive } from "@/src/lib/responsive";
-import { colors, spacing, radius, shadow } from "@/src/theme";
+import { colors, spacing, radius, shadow, font } from "@/src/theme";
+import { useSubscription } from "@/src/lib/revenuecat";
 
 type HomeData = {
   featured: Campaign[];
@@ -43,257 +35,139 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { maxContentWidth, columns, isMobile, isDesktop } = useResponsive();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [showNavSearch, setShowNavSearch] = useState(false);
-  const searchOpacity = useRef(new Animated.Value(0)).current;
+  const { maxContentWidth } = useResponsive();
+  const { currentPackage } = useSubscription();
 
-  const { data, isError, refetch, isRefetching } = useQuery({
+  const { data, isRefetching, refetch } = useQuery({
     queryKey: ["home"],
     queryFn: () => api<HomeData>("/home"),
   });
 
-  const {
-    featured = [],
-    urgent = [],
-    almost_funded = [],
-    recently_updated = [],
-    recommended = [],
-    categories = [],
-    greeting_name,
-  } = data || {};
+  const { urgent = [], recommended = [], greeting_name } = data || {};
+  const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : "Faithful");
 
-  const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : null);
+  const hour = new Date().getHours();
+  let timeGreeting = "Good evening";
+  if (hour < 12) timeGreeting = "Good morning";
+  else if (hour < 17) timeGreeting = "Good afternoon";
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = e.nativeEvent.contentOffset.y;
-    // Border elevation triggers slightly on initial scroll
-    if (y > 20 && !isScrolled) setIsScrolled(true);
-    else if (y <= 20 && isScrolled) setIsScrolled(false);
+  const committedAmount = currentPackage ? currentPackage.product.priceString : "₦5,000";
+  const directCauses = [...urgent, ...recommended].slice(0, 5);
 
-    // Nav search icon appears ONLY when the main in-feed search bar is scrolled out of view (~110px)
-    if (y > 110 && !showNavSearch) {
-      setShowNavSearch(true);
-      Animated.timing(searchOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    } else if (y <= 110 && showNavSearch) {
-      setShowNavSearch(false);
-      Animated.timing(searchOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }).start();
-    }
-  };
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(heartScale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
+        Animated.timing(heartScale, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [heartScale]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* On mobile, show local sticky nav. On desktop, GlobalHeader handles this. */}
-      {!isDesktop && (
-        <View
-          style={[
-            styles.stickyNav,
-            { paddingTop: insets.top + spacing.xs },
-            isScrolled && styles.stickyNavScrolled,
-          ]}
-        >
-          <View style={styles.navRow}>
-            {/* Brand Logo */}
-            <Pressable onPress={() => {}} hitSlop={8}>
-              <BrandLogo size={24} />
-            </Pressable>
-
-            {/* Right Actions: Quick Search & Profile Avatar */}
-            <View style={styles.navRight}>
-              {showNavSearch ? (
-                <Animated.View style={{ opacity: searchOpacity }}>
-                  <Pressable
-                    testID="nav-search-btn"
-                    onPress={() => router.push("/explore")}
-                    style={styles.navIconBtn}
-                    hitSlop={8}
-                  >
-                    <Feather name="search" size={19} color={colors.onSurface} />
-                  </Pressable>
-                </Animated.View>
-              ) : null}
-              <Pressable
-                testID="nav-profile-btn"
-                onPress={() => router.push("/profile")}
-                style={{ marginLeft: spacing.sm }}
-              >
-                <Avatar name={user?.name} uri={user?.picture} size={32} />
-              </Pressable>
-            </View>
+      {/* Header */}
+      <View
+        style={[
+          styles.header,
+          { paddingTop: Platform.OS === "android" ? insets.top + spacing.md : insets.top },
+        ]}
+      >
+        <View style={styles.headerLeft}>
+          <Pressable onPress={() => router.push("/profile")}>
+            <Avatar name={user?.name} uri={user?.picture} size={44} />
+          </Pressable>
+          <View style={{ marginLeft: spacing.sm }}>
+            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontSize: 13 }}>
+              {timeGreeting},
+            </AppText>
+            <AppText variant="h2" style={{ fontSize: 18, marginTop: -2 }}>
+              {displayName} 👋
+            </AppText>
           </View>
         </View>
-      )}
+        <Pressable hitSlop={12} style={styles.bellIcon}>
+          <Feather name="bell" size={22} color={colors.onSurface} />
+        </Pressable>
+      </View>
 
-      {/* Main Scrollable Feed */}
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: spacing.md }}
         showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
       >
         <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
-          {/* Hero Greeting Section */}
-          <View style={styles.heroSection}>
-            <AppText variant="display" style={styles.heroTitle}>
-              {displayName ? `Welcome back, ${displayName}` : "Fundraising for causes you care about"}
-            </AppText>
-            <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.xs }}>
-              Trust makes generosity go further. Verified causes with itemized budgets.
-            </AppText>
-
-            {/* GoFundMe In-Feed Large Search Bar */}
-            <Pressable
-              testID="home-search-bar"
-              onPress={() => router.push("/explore")}
-              style={styles.searchBar}
-            >
-              <Feather name="search" size={18} color={colors.onSurfaceSecondary} />
-              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginLeft: spacing.sm, flex: 1, fontSize: 14 }}>
-                Search by cause, name, or city
-              </AppText>
-            </Pressable>
-          </View>
-
-          {/* Category Chips Bar */}
-          <FlatList
-            horizontal
-            data={categories}
-            keyExtractor={(c) => c.id}
-            showsHorizontalScrollIndicator={false}
-            style={{ marginTop: spacing.md }}
-            contentContainerStyle={{ gap: spacing.xs, paddingHorizontal: spacing.lg }}
-            renderItem={({ item }) => (
-              <Chip
-                testID={`cat-chip-${item.slug}`}
-                label={item.name}
-                onPress={() => router.push(`/explore?category=${item.id}`)}
-              />
-            )}
-          />
-
-          {/* Featured Fundraisers Carousel */}
-          {featured.length > 0 ? (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <AppText variant="h2">Featured fundraisers</AppText>
-                <Pressable onPress={() => router.push("/explore")}>
-                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-                </Pressable>
+          
+          {/* Commitment Card */}
+          <View style={styles.commitmentCard}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <AppText style={styles.ccTitle}>Your GoodCause</AppText>
+              <View style={styles.ccAmountRow}>
+                <AppText style={styles.ccAmount}>{committedAmount}</AppText>
+                <AppText style={styles.ccSub}> /month</AppText>
               </View>
-              <FlatList
-                horizontal
-                data={featured}
-                keyExtractor={(c) => c.id}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.md }}
-                renderItem={({ item }) => (
-                  <FeaturedCard c={item} onPress={() => router.push(`/campaign/${item.id}`)} />
-                )}
-              />
-            </View>
-          ) : null}
-
-          {/* GoFundMe Giving Guarantee Trust Banner */}
-          <View style={styles.trustBanner}>
-            <View style={styles.trustIconWrap}>
-              <Feather name="shield" size={18} color={colors.brandPrimary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: spacing.md }}>
-              <AppText variant="label" style={{ color: colors.onSurface }}>GoodCause Giving Guarantee</AppText>
-              <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginTop: 2 }}>
-                100% verified causes with itemized budgets & milestone proof.
+              <AppText style={styles.ccDesc}>
+                You're part of a community helping people across Nigeria.
               </AppText>
+            </View>
+            <View style={styles.ccIconBox}>
+              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+                <Ionicons name="heart" size={20} color={colors.brandPrimary} />
+              </Animated.View>
             </View>
           </View>
 
-          {/* Urgent Fundraisers */}
-          {urgent.length > 0 ? (
+          {/* Impact Section */}
+          <View style={styles.section}>
+            <AppText variant="h2" style={styles.sectionTitle}>
+              This month's impact
+            </AppText>
+            <View style={styles.impactRow}>
+              <View style={styles.impactCard}>
+                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>1,284</AppText>
+                <AppText style={styles.impactLabel}>GoodCauses have contributed</AppText>
+              </View>
+              <View style={styles.impactCard}>
+                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>₦8,420,000</AppText>
+                <AppText style={styles.impactLabel}>committed this month</AppText>
+              </View>
+              <View style={styles.impactCard}>
+                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>145</AppText>
+                <AppText style={styles.impactLabel}>verified causes receiving support</AppText>
+              </View>
+            </View>
+          </View>
+
+          {/* Causes you can support directly */}
+          {directCauses.length > 0 && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={styles.rowCenter}>
-                  <Feather name="clock" size={16} color={colors.warning} />
-                  <AppText variant="h2" style={{ marginLeft: 6 }}>Urgent fundraisers</AppText>
-                </View>
+              <View style={styles.sectionHeaderRow}>
+                <AppText variant="h2" style={{ flex: 1 }}>Causes you can support directly</AppText>
                 <Pressable onPress={() => router.push("/explore")}>
                   <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
                 </Pressable>
               </View>
-              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
-                {urgent.slice(0, 6).map((c) => (
-                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
+              
+              <View style={styles.listWrap}>
+                {directCauses.map((c) => (
+                  <View key={c.id} style={styles.causeItemWrapper}>
                     <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
+                    <Pressable 
+                      style={styles.supportBtn}
+                      onPress={() => router.push(`/campaign/${c.id}`)}
+                    >
+                      <AppText style={styles.supportBtnText}>Support this cause →</AppText>
+                    </Pressable>
                   </View>
                 ))}
               </View>
             </View>
-          ) : null}
+          )}
 
-          {/* Almost Funded */}
-          {almost_funded.length > 0 ? (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <AppText variant="h2">Close to goal</AppText>
-                <Pressable onPress={() => router.push("/explore")}>
-                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-                </Pressable>
-              </View>
-              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
-                {almost_funded.slice(0, 6).map((c) => (
-                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
-                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-                  </View>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          {/* Discover Fundraisers */}
-          {recommended.length > 0 ? (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <AppText variant="h2">Top causes near you</AppText>
-                <Pressable onPress={() => router.push("/explore")}>
-                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
-                </Pressable>
-              </View>
-              <View style={[styles.listWrap, columns > 1 && styles.listWrapGrid]}>
-                {recommended.slice(0, 6).map((c) => (
-                  <View key={c.id} style={columns > 1 ? { width: columns === 3 ? "31.8%" : "48.5%" } : undefined}>
-                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-                  </View>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          {/* Clean Empty State when no fundraisers exist */}
-          {featured.length === 0 && urgent.length === 0 && recommended.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Feather name="heart" size={32} color={colors.brandPrimary} />
-              <AppText variant="h2" style={{ marginTop: spacing.md, textAlign: "center" }}>
-                Start the first fundraiser
-              </AppText>
-              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ marginTop: spacing.xs, textAlign: "center", maxWidth: 280 }}>
-                Rally support for medical emergencies, school tuition, or community relief.
-              </AppText>
-              <Pressable
-                onPress={() => router.push("/campaign/new")}
-                style={styles.startBtn}
-              >
-                <AppText variant="label" color="#FFFFFF">Start a campaign</AppText>
-              </Pressable>
-            </View>
-          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -305,120 +179,130 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  stickyNav: {
-    backgroundColor: colors.surface,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
-    zIndex: 100,
-    borderBottomWidth: 1,
-    borderBottomColor: "transparent",
+    backgroundColor: colors.surface,
   },
-  stickyNavScrolled: {
-    borderBottomColor: colors.border,
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  bellIcon: {
+    width: 40,
+    height: 40,
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  
+  commitmentCard: {
+    backgroundColor: colors.brandPrimary,
+    borderRadius: 20,
+    marginHorizontal: spacing.lg,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...shadow.card,
   },
-  navRow: {
+  ccTitle: {
+    color: colors.brandTertiary,
+    fontSize: 13,
+    fontFamily: font.bold,
+    marginBottom: 4,
+  },
+  ccAmountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 8,
+  },
+  ccAmount: {
+    color: colors.surface,
+    fontSize: 28,
+    fontFamily: font.bold,
+    letterSpacing: -0.5,
+  },
+  ccSub: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 14,
+    fontFamily: font.medium,
+  },
+  ccDesc: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  ccIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  section: {
+    marginTop: 32,
+  },
+  sectionTitle: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: 16,
+  },
+  sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 40,
-    width: "100%",
-    maxWidth: 1160,
-    alignSelf: "center",
-  },
-  navRight: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  navIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceTertiary,
-  },
-  brandLogo: {
-    fontSize: 23,
-    fontWeight: "800",
-    letterSpacing: -0.6,
-  },
-  heroSection: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    marginBottom: 16,
   },
-  heroTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    lineHeight: 32,
-    color: colors.onSurface,
-  },
-  searchBar: {
+
+  impactRow: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surfaceTertiary,
-    borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
-    height: 48,
-    marginTop: spacing.lg,
+    gap: 12,
+  },
+  impactCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadow.soft,
   },
-  section: {
-    marginTop: spacing.xl,
+  impactValue: {
+    fontSize: 16,
+    fontFamily: font.bold,
+    color: colors.brandPrimary,
+    marginBottom: 4,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
+  impactLabel: {
+    fontSize: 11,
+    color: colors.onSurfaceSecondary,
+    lineHeight: 14,
   },
-  rowCenter: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+
   listWrap: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.lg,
   },
-  listWrapGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
+  causeItemWrapper: {
+    backgroundColor: colors.surface,
   },
-  trustBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.brandTertiary,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: "#D1E7DD",
-  },
-  trustIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.xxxl,
-    paddingHorizontal: spacing.xl,
-    marginTop: spacing.lg,
-  },
-  startBtn: {
+  supportBtn: {
     backgroundColor: colors.brandPrimary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
     borderRadius: radius.pill,
-    marginTop: spacing.lg,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+  },
+  supportBtnText: {
+    color: colors.surface,
+    fontSize: 14,
+    fontFamily: font.bold,
   },
 });

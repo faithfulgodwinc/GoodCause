@@ -12,44 +12,73 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
 
-import { AppText, BrandLogo } from "@/src/components/ui";
+import { AppText, TypeWriterText } from "@/src/components/ui";
 import { font, colors } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const ONBOARDING_DONE_KEY = "gc_onboarding_done";
 
-// ─── Emotional & Cinematic Content ────────────────────────────────────────────
+// ─── Slide Data ───────────────────────────────────────────────────────────────
 
-const SLIDES = [
+type Slide = {
+  id: string;
+  titleWhite: string;
+  titleGreen: string;
+  paragraphs: { text: string; bold?: boolean }[];
+  image: any;
+  showButton?: boolean;
+};
+
+const SLIDES: Slide[] = [
   {
-    id: "welcome",
-    title: "Every life has\na story.",
-    subtitle: "What will you help them write? Community-powered fundraising for what matters most.",
+    id: "help",
+    titleWhite: "Someone",
+    titleGreen: "needs help.",
+    paragraphs: [
+      {
+        text: "There are people around us fighting heavy battles in silence. Parents worried about a child's medical bill, families just hoping for one good meal today.",
+        bold: true,
+      },
+      {
+        text: "We all want to help. But sometimes we hold back because we feel our small contribution won't make a difference.",
+      },
+    ],
     image: require("../../assets/images/onboarding/slide1.jpg"),
   },
   {
-    id: "trust",
-    title: "Trust is\neverything.",
-    subtitle: "We protect your giving. Every organizer is verified, so you can support causes with absolute confidence.",
+    id: "together",
+    titleWhite: "What if we all",
+    titleGreen: "helped a little?",
+    paragraphs: [
+      {
+        text: "But what if the little you have is exactly what someone else is praying for? When thousands of us come together to share what we can, miracles happen.",
+        bold: true,
+      },
+    ],
     image: require("../../assets/images/onboarding/slide2.jpg"),
   },
   {
-    id: "impact",
-    title: "See your\nimpact.",
-    subtitle: "Watch the difference you make instantly with real-time analytics, donor insights, and transparent updates.",
+    id: "cause",
+    titleWhite: "Be someone’s",
+    titleGreen: "GoodCause",
+    paragraphs: [
+      {
+        text: "Start with a small monthly commitment and watch it change lives in ways you never imagined.",
+        bold: true,
+      },
+      {
+        text: "And whenever a story deeply touches your heart, you can always reach out and support them directly. Welcome to a space where we take care of each other.",
+      },
+    ],
     image: require("../../assets/images/onboarding/slide3.jpg"),
-  },
-  {
-    id: "pro",
-    title: "Amplify\nyour voice.",
-    subtitle: "Unlock powerful storytelling tools and change the world faster with a GoodCause Pro membership.",
-    image: require("../../assets/images/onboarding/slide4.jpg"),
+    showButton: true,
   },
 ];
 
-// ─── Cinematic Ken Burns Background ───────────────────────────────────────────
+// ─── Cinematic Background ─────────────────────────────────────────────────────
 
 function CinematicBackground({ scrollX }: { scrollX: Animated.Value }) {
   return (
@@ -60,72 +89,97 @@ function CinematicBackground({ scrollX }: { scrollX: Animated.Value }) {
           index * SCREEN_W,
           (index + 1) * SCREEN_W,
         ];
-        
-        // Buttery crossfade
+
         const opacity = scrollX.interpolate({
           inputRange,
           outputRange: [0, 1, 0],
           extrapolate: "clamp",
         });
 
-        // Framer Motion style continuous slow zoom (Ken Burns effect)
+        // Subtle slow zoom effect for premium feel
         const scale = scrollX.interpolate({
           inputRange: [
             (index - 1) * SCREEN_W,
             (index + 1) * SCREEN_W,
           ],
-          outputRange: [1, 1.15],
+          outputRange: [1.02, 1.1],
           extrapolate: "clamp",
         });
 
         return (
           <Animated.View key={slide.id} style={[StyleSheet.absoluteFill, { opacity }]}>
-            <Animated.Image 
-              source={slide.image} 
-              style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]} 
+            <Animated.Image
+              source={slide.image}
+              style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]}
               resizeMode="cover"
             />
           </Animated.View>
         );
       })}
-      
-      {/* Dark vignette gradient overlay to make white text pop emotionally */}
+
+      {/* Heavy gradient at the bottom to blend with the text */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.85)']}
-        locations={[0, 0.4, 1]}
+        colors={["transparent", "rgba(8,10,12,0.8)", "rgba(8,10,12,1)", "rgba(8,10,12,1)"]}
+        locations={[0.3, 0.55, 0.7, 1]}
         style={StyleSheet.absoluteFill}
+        pointerEvents="none"
       />
     </View>
   );
 }
 
-// ─── Text Slide ───────────────────────────────────────────────────────────────
+// ─── Slide Text ───────────────────────────────────────────────────────────────
 
-function SlideText({ slide, index, scrollX }: { slide: any; index: number; scrollX: Animated.Value }) {
+function SlideText({
+  slide,
+  index,
+  scrollX,
+  isActive,
+}: {
+  slide: Slide;
+  index: number;
+  scrollX: Animated.Value;
+  isActive: boolean;
+}) {
   const inputRange = [
     (index - 1) * SCREEN_W,
     index * SCREEN_W,
     (index + 1) * SCREEN_W,
   ];
 
-  // Dramatic swoop-up effect typical in premium framer motion sites
-  const translateY = scrollX.interpolate({
-    inputRange,
-    outputRange: [120, 0, -60],
-    extrapolate: "clamp",
-  });
-
-  const opacity = scrollX.interpolate({
+  const slideOpacity = scrollX.interpolate({
     inputRange,
     outputRange: [0, 1, 0],
     extrapolate: "clamp",
   });
 
+  const slideY = scrollX.interpolate({
+    inputRange,
+    outputRange: [40, 0, -40],
+    extrapolate: "clamp",
+  });
+
+  const isLast = index === SLIDES.length - 1;
+
   return (
-    <View style={[styles.slide, { width: SCREEN_W }]}>
-      <Animated.View style={[styles.slideContent, { opacity, transform: [{ translateY }] }]}>
-        <AppText style={styles.title}>{slide.title}</AppText>
-        <AppText style={styles.subtitle}>{slide.subtitle}</AppText>
+    <View style={[styles.slide, { width: SCREEN_W, paddingBottom: isLast ? 200 : 130 }]}>
+      <Animated.View
+        style={[styles.slideContent, { opacity: slideOpacity, transform: [{ translateY: slideY }] }]}
+      >
+        <AppText style={styles.titleWhite}>{slide.titleWhite}</AppText>
+        <AppText style={styles.titleGreen}>{slide.titleGreen}</AppText>
+
+        <View style={styles.paragraphContainer}>
+          {slide.paragraphs.map((p, i) => (
+            <TypeWriterText
+              key={i}
+              style={[styles.paragraph, p.bold && styles.paragraphBold]}
+              text={p.text}
+              start={isActive}
+              delay={30}
+            />
+          ))}
+        </View>
       </Animated.View>
     </View>
   );
@@ -155,35 +209,57 @@ export default function OnboardingScreen() {
       flatRef.current?.scrollToIndex({ index: next, animated: true });
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } else {
-      skipToTabs();
+      router.push("/onboarding/commitment");
     }
-  }, [activeIndex, skipToTabs]);
+  }, [activeIndex, router]);
 
   const isLast = activeIndex === SLIDES.length - 1;
 
-  // Indicator line
-  const indicatorPosition = scrollX.interpolate({
-    inputRange: [0, SCREEN_W * (SLIDES.length - 1)],
-    outputRange: [0, (SCREEN_W - 48) * ((SLIDES.length - 1) / SLIDES.length)],
-    extrapolate: "clamp",
-  });
+  // Dot indicators
+  const renderDots = () => {
+    return (
+      <View style={styles.dotContainer}>
+        {SLIDES.map((_, i) => {
+          const inputRange = [(i - 1) * SCREEN_W, i * SCREEN_W, (i + 1) * SCREEN_W];
+          const opacity = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.3, 1, 0.3],
+            extrapolate: "clamp",
+          });
+          const bgColor = scrollX.interpolate({
+            inputRange,
+            outputRange: ["rgba(255,255,255,1)", colors.brandPrimary, "rgba(255,255,255,1)"],
+            extrapolate: "clamp",
+          });
+          return (
+            <Animated.View
+              key={i}
+              style={[styles.dot, { opacity, backgroundColor: bgColor }]}
+            />
+          );
+        })}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Cinematic Imagery */}
+      {/* Cinematic Background */}
       <CinematicBackground scrollX={scrollX} />
 
-      {/* Top Bar */}
-      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
-        <BrandLogo size={24} color="#FFFFFF" />
-        <Pressable onPress={skipToTabs} hitSlop={20} style={styles.skipBtn}>
-          <AppText style={styles.skipText}>Skip</AppText>
-        </Pressable>
-      </View>
+      {/* Top Bar for Skip */}
+      {!isLast && (
+        <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
+          <View style={{ flex: 1 }} />
+          <Pressable onPress={skipToTabs} hitSlop={20} style={styles.skipBtn}>
+            <AppText style={styles.skipText}>Skip</AppText>
+          </Pressable>
+        </View>
+      )}
 
-      {/* Text Slides */}
+      {/* Scrollable Slides */}
       <Animated.FlatList
         ref={flatRef as any}
         data={SLIDES}
@@ -195,7 +271,7 @@ export default function OnboardingScreen() {
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false } // Required for layout interpolations in some cases
+          { useNativeDriver: false }
         )}
         onMomentumScrollEnd={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
@@ -203,7 +279,7 @@ export default function OnboardingScreen() {
           Haptics.selectionAsync().catch(() => {});
         }}
         renderItem={({ item, index }) => (
-          <SlideText slide={item} index={index} scrollX={scrollX} />
+          <SlideText slide={item} index={index} scrollX={scrollX} isActive={activeIndex === index} />
         )}
         getItemLayout={(_, index) => ({
           length: SCREEN_W,
@@ -212,34 +288,31 @@ export default function OnboardingScreen() {
         })}
       />
 
-      {/* Bottom Controls */}
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 32) }]}>
+      {/* Bottom Area (Button + Dots) */}
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         
-        {/* Progress Line */}
-        <View style={styles.progressBarBg}>
-          <Animated.View
-            style={[
-              styles.progressBarFill,
-              {
-                width: `${100 / SLIDES.length}%`,
-                transform: [{ translateX: indicatorPosition }],
-              },
-            ]}
-          />
-        </View>
+        {/* Animated Action Button (only shows clearly on last slide, or we can crossfade it) */}
+        {isLast && (
+          <Animated.View style={styles.buttonWrapper}>
+            <Pressable
+              onPress={goNext}
+              style={({ pressed }) => [
+                styles.actionBtn,
+                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+              ]}
+            >
+              <AppText style={styles.actionBtnText}>Start giving</AppText>
+              <Ionicons name="arrow-forward" size={20} color="#000" style={{ marginLeft: 6 }} />
+            </Pressable>
+            <AppText style={styles.priceNote}>
+              <AppText style={{ color: "rgba(255,255,255,0.6)" }}>From </AppText>
+              <AppText style={{ fontFamily: font.bold, color: "rgba(255,255,255,0.9)" }}>₦1,000</AppText>
+              <AppText style={{ color: "rgba(255,255,255,0.6)" }}>/month</AppText>
+            </AppText>
+          </Animated.View>
+        )}
 
-        {/* Action Button */}
-        <Pressable
-          onPress={goNext}
-          style={({ pressed }) => [
-            styles.actionBtn,
-            pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-          ]}
-        >
-          <AppText style={styles.actionBtnText}>
-            {isLast ? "Get Started" : "Continue"}
-          </AppText>
-        </Pressable>
+        {renderDots()}
       </View>
     </View>
   );
@@ -250,85 +323,103 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#080a0c", // Very dark color to blend perfectly
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 24,
+    position: "absolute",
+    width: "100%",
     zIndex: 10,
   },
-  skipBtn: {
-    padding: 8,
-  },
+  skipBtn: { padding: 8 },
   skipText: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.6)",
     fontSize: 15,
     fontFamily: font.medium,
     letterSpacing: 0.3,
   },
   slide: {
     flex: 1,
-    justifyContent: "flex-end", // Push text to bottom over the gradient
+    justifyContent: "flex-end", // Align text towards bottom
     paddingHorizontal: 32,
-    paddingBottom: 40,
     zIndex: 1,
   },
   slideContent: {
     width: "100%",
+    alignItems: "flex-start",
   },
-  title: {
-    fontSize: 48,
-    lineHeight: 54,
+  titleWhite: {
+    fontSize: 38,
+    lineHeight: 44,
     fontFamily: font.bold,
     color: "#FFFFFF",
-    letterSpacing: -1.5,
-    marginBottom: 20,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 12,
+    letterSpacing: -1,
   },
-  subtitle: {
-    fontSize: 18,
-    lineHeight: 28,
+  titleGreen: {
+    fontSize: 38,
+    lineHeight: 44,
+    fontFamily: font.bold,
+    color: colors.brandPrimary,
+    letterSpacing: -1,
+    marginBottom: 20,
+  },
+  paragraphContainer: {
+    gap: 20,
+  },
+  paragraph: {
+    fontSize: 16,
+    lineHeight: 24,
     color: "rgba(255,255,255,0.85)",
-    fontFamily: font.medium,
-    maxWidth: "95%",
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    fontFamily: font.regular,
+  },
+  paragraphBold: {
+    fontFamily: font.medium, // In standard React Native, use medium/semibold for this emphasis
+    color: "#FFFFFF",
   },
   bottom: {
-    paddingHorizontal: 24,
-    width: "100%",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 32,
     zIndex: 10,
+    alignItems: "center",
   },
-  progressBarBg: {
+  buttonWrapper: {
     width: "100%",
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 2,
-    marginBottom: 40,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: colors.brandPrimary,
-    borderRadius: 2,
+    alignItems: "center",
+    marginBottom: 32,
   },
   actionBtn: {
-    width: "100%",
-    height: 56,
+    width: "80%",
+    height: 52,
     backgroundColor: colors.brandPrimary,
-    borderRadius: 100, // Pill shape
+    borderRadius: 100,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 12,
   },
   actionBtnText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontFamily: font.semibold,
-    letterSpacing: -0.3,
+    color: "#080a0c",
+    fontSize: 16,
+    fontFamily: font.bold,
+  },
+  priceNote: {
+    fontSize: 13,
+  },
+  dotContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });
