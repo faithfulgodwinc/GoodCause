@@ -1,18 +1,80 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, ScrollView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Platform, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, BrandLogo } from "@/src/components/ui";
 import { colors, font } from "@/src/theme";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+
+const { width } = Dimensions.get("window");
+
+// A premium cool off-white/gray for Neumorphism
+const NEU_BG = "#E0E5EC";
+const LIGHT_SHADOW = "#FFFFFF";
+const DARK_SHADOW = "#A3B1C6";
 
 const TIERS = [
-  { id: "tier_1k", label: "₦1,000", sub: "/month", desc: "A small step. A real difference." },
-  { id: "tier_2k5", label: "₦2,500", sub: "/month", desc: "More support. More impact." },
-  { id: "tier_5k", label: "₦5,000", sub: "/month", desc: "A powerful way to give.", popular: true },
-  { id: "tier_10k", label: "₦10,000", sub: "/month", desc: "Greater reach. Bigger impact." },
+  { id: "tier_1k", label: "₦1,000", desc: "A small step." },
+  { id: "tier_2k5", label: "₦2,500", desc: "More support." },
+  { id: "tier_5k", label: "₦5,000", desc: "Powerful way." },
+  { id: "tier_10k", label: "₦10,000", desc: "Greater reach." },
 ];
+
+function NeuButton({ 
+  isSelected, 
+  onPress, 
+  label, 
+  desc 
+}: { 
+  isSelected: boolean; 
+  onPress: () => void; 
+  label: string; 
+  desc: string 
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95, { stiffness: 400, damping: 20 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { stiffness: 400, damping: 20 });
+  };
+
+  return (
+    <Pressable 
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={{ width: "47%", aspectRatio: 1, marginBottom: "6%" }}
+    >
+      <Animated.View style={[styles.neuOuter, animatedStyle]}>
+        <View style={[
+          styles.neuInner, 
+          isSelected && styles.neuInnerSelected
+        ]}>
+          <View style={styles.neuContent}>
+            {isSelected && (
+              <View style={styles.selectedDot} />
+            )}
+            <AppText style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}>
+              {label}
+            </AppText>
+            <AppText style={styles.tierDesc}>
+              {desc}
+            </AppText>
+          </View>
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function CommitmentScreen() {
   const router = useRouter();
@@ -38,98 +100,67 @@ export default function CommitmentScreen() {
           </Pressable>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <AppText style={styles.title}>How much would you like to give every month?</AppText>
-          <AppText style={styles.subtitle}>
-            Your contribution joins other GoodCauses to support verified people and causes across Nigeria.
-          </AppText>
+        <View style={[styles.body, { paddingBottom: insets.bottom + 20 }]}>
+          
+          <View style={styles.textWrap}>
+            <AppText style={styles.title}>How much would you like to give every month?</AppText>
+            <AppText style={styles.subtitle}>
+              Select a tier to join other GoodCauses.
+            </AppText>
+          </View>
 
-          {/* Ultra-Minimal iOS Inset Grouped List */}
-          <View style={styles.listContainer}>
-            {TIERS.map((tier, index) => {
-              const isSelected = selected === tier.id;
-              const isLast = index === TIERS.length - 1;
-              return (
-                <View key={tier.id}>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.listItem,
-                      pressed && { backgroundColor: "rgba(0,0,0,0.03)" }
-                    ]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setSelected(tier.id);
-                    }}
-                  >
-                    <View style={styles.listContent}>
-                      <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-                        <AppText style={styles.listLabel}>{tier.label}</AppText>
-                        <AppText style={styles.listSub}>{tier.sub}</AppText>
-                      </View>
-                      <AppText style={styles.listDesc}>{tier.desc}</AppText>
-                    </View>
+          {/* 2x2 Neumorphic Grid */}
+          <View style={styles.gridContainer}>
+            {TIERS.map((tier) => (
+              <NeuButton 
+                key={tier.id}
+                isSelected={selected === tier.id}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setSelected(tier.id);
+                }}
+                label={tier.label}
+                desc={tier.desc}
+              />
+            ))}
+          </View>
 
-                    <View style={styles.listRight}>
-                      {tier.popular && (
-                        <View style={styles.badge}>
-                          <AppText style={styles.badgeText}>Popular</AppText>
-                        </View>
-                      )}
-                      {isSelected ? (
-                        <Ionicons name="checkmark" size={24} color={colors.brandPrimary} />
-                      ) : (
-                        <View style={{ width: 24 }} /> 
-                      )}
-                    </View>
-                  </Pressable>
-                  {!isLast && <View style={styles.divider} />}
-                </View>
-              );
-            })}
-
-            <View style={styles.divider} />
-
-            <Pressable
+          <View style={styles.footer}>
+             <Pressable
               style={({ pressed }) => [
-                styles.listItem,
-                pressed && { backgroundColor: "rgba(0,0,0,0.03)" }
+                styles.customBtn,
+                pressed && { opacity: 0.7 }
               ]}
               onPress={() => {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                 alert("Custom amounts coming soon in production!");
               }}
             >
-              <View style={styles.listContent}>
-                <AppText style={styles.listLabel}>Custom amount</AppText>
-              </View>
-              <View style={styles.listRight}>
-                 <Ionicons name="chevron-forward" size={20} color={colors.borderStrong} />
+              <AppText style={styles.customText}>Enter custom amount</AppText>
+            </Pressable>
+
+            {/* Neumorphic Continue Button */}
+            <Pressable onPress={handleContinue}>
+              <View style={styles.continueOuter}>
+                 <View style={styles.continueInner}>
+                    <AppText style={styles.continueText}>Continue</AppText>
+                    <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+                 </View>
               </View>
             </Pressable>
           </View>
 
-          <View style={{ marginTop: 40 }}>
-            <Pressable 
-              style={({ pressed }) => [
-                styles.continueBtn,
-                pressed && { opacity: 0.85 }
-              ]} 
-              onPress={handleContinue}
-            >
-              <AppText style={styles.continueText}>Continue</AppText>
-            </Pressable>
-          </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface }, // Pure white
+  container: { 
+    flex: 1, 
+    backgroundColor: NEU_BG 
+  },
   header: { 
     flexDirection: "row", 
     alignItems: "center", 
@@ -140,58 +171,132 @@ const styles = StyleSheet.create({
   headerBtn: { padding: 8 },
   skipText: { fontSize: 16, fontFamily: font.medium, color: colors.onSurfaceSecondary },
   
-  scroll: { paddingHorizontal: 24, paddingTop: 16 },
-  
-  title: { fontSize: 32, fontFamily: font.bold, color: colors.onSurface, marginBottom: 8, letterSpacing: -1, lineHeight: 38 },
-  subtitle: { fontSize: 16, color: colors.onSurfaceSecondary, marginBottom: 40, lineHeight: 24, fontFamily: font.regular },
-  
-  listContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: "hidden", 
-  },
-  listItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    backgroundColor: colors.surface,
-  },
-  listContent: {
+  body: { 
     flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 24, 
+    paddingTop: 16,
+    justifyContent: "space-between" // Pushes elements apart for non-scrollable fit
   },
-  listRight: {
+  
+  textWrap: {
+    marginBottom: 20,
+  },
+  title: { 
+    fontSize: 32, 
+    fontFamily: font.bold, 
+    color: colors.onSurface, 
+    marginBottom: 8, 
+    letterSpacing: -1, 
+    lineHeight: 38 
+  },
+  subtitle: { 
+    fontSize: 16, 
+    color: colors.onSurfaceSecondary, 
+    lineHeight: 24, 
+    fontFamily: font.regular 
+  },
+  
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  /* Neumorphic Tier Button Styles */
+  neuOuter: {
+    flex: 1,
+    borderRadius: 24,
+    backgroundColor: NEU_BG,
+    // Dark bottom-right shadow
+    shadowColor: DARK_SHADOW,
+    shadowOffset: { width: 8, height: 8 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  neuInner: {
+    flex: 1,
+    borderRadius: 24,
+    backgroundColor: NEU_BG,
+    padding: 20,
+    justifyContent: "flex-end",
+    // Light top-left shadow
+    shadowColor: LIGHT_SHADOW,
+    shadowOffset: { width: -8, height: -8 },
+    shadowOpacity: 0.9,
+    shadowRadius: 15,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  neuInnerSelected: {
+    backgroundColor: "#D6DCE5", // slightly darker, mimicking being pressed in
+    borderColor: "rgba(0,0,0,0.05)",
+  },
+  neuContent: {
+    alignItems: "flex-start"
+  },
+  tierLabel: { 
+    fontSize: 28, 
+    fontFamily: font.bold, 
+    color: colors.onSurface,
+    marginBottom: 4,
+    letterSpacing: -1
+  },
+  tierDesc: { 
+    fontSize: 14, 
+    color: colors.onSurfaceSecondary, 
+    fontFamily: font.medium 
+  },
+  selectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.brandPrimary,
+    position: "absolute",
+    top: -24,
+    right: 0,
+  },
+
+  /* Footer Area */
+  footer: {
+    gap: 24,
+    marginTop: 20,
+  },
+  customBtn: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  customText: {
+    fontSize: 16,
+    fontFamily: font.semibold,
+    color: colors.onSurfaceSecondary,
+    textDecorationLine: "underline"
+  },
+
+  /* Neumorphic Continue Button */
+  continueOuter: {
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.brandPrimary,
+    // Soft glowing shadow matching brand color
+    shadowColor: colors.brandPrimary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  continueInner: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-  },
-  listLabel: { fontSize: 18, fontFamily: font.bold, color: colors.onSurface },
-  listSub: { fontSize: 15, color: colors.onSurfaceSecondary, marginLeft: 4, fontFamily: font.regular },
-  listDesc: { fontSize: 14, color: colors.onSurfaceSecondary, marginTop: 4, fontFamily: font.regular },
-  
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginLeft: 20, // Classic iOS left inset on dividers
-  },
-  
-  badge: {
-    backgroundColor: colors.surfaceSecondary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  badgeText: { color: colors.onSurface, fontSize: 12, fontFamily: font.semibold },
-  
-  continueBtn: { 
-    backgroundColor: colors.brandPrimary, 
-    height: 56, 
-    borderRadius: 28, 
-    alignItems: "center", 
     justifyContent: "center",
+    gap: 8,
   },
-  continueText: { color: colors.surface, fontSize: 18, fontFamily: font.bold },
+  continueText: { 
+    color: colors.surface, 
+    fontSize: 18, 
+    fontFamily: font.bold 
+  },
 });
