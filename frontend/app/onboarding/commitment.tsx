@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, Platform, Dimensions } from "react-native"
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, BrandLogo } from "@/src/components/ui";
+import { formatCurrency } from "@/src/format";
 import { colors, font } from "@/src/theme";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,10 +17,10 @@ const LIGHT_SHADOW = "#FFFFFF";
 const DARK_SHADOW = "#A3B1C6";
 
 const TIERS = [
-  { id: "tier_1k", label: "₦1,000", desc: "A small step." },
-  { id: "tier_2k5", label: "₦2,500", desc: "More support." },
-  { id: "tier_5k", label: "₦5,000", desc: "Powerful way." },
-  { id: "tier_10k", label: "₦10,000", desc: "Greater reach." },
+  { id: "tier_1k", amount: 1000, desc: "A small step." },
+  { id: "tier_2k5", amount: 2500, desc: "More support." },
+  { id: "tier_5k", amount: 5000, desc: "Powerful way." },
+  { id: "tier_10k", amount: 10000, desc: "Greater reach." },
 ];
 
 function NeuButton({ 
@@ -60,10 +61,11 @@ function NeuButton({
           isSelected && styles.neuInnerSelected
         ]}>
           <View style={styles.neuContent}>
-            {isSelected && (
-              <View style={styles.selectedDot} />
-            )}
-            <AppText style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}>
+            <AppText 
+              style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {label}
             </AppText>
             <AppText style={styles.tierDesc}>
@@ -119,7 +121,7 @@ export default function CommitmentScreen() {
                   Haptics.selectionAsync();
                   setSelected(tier.id);
                 }}
-                label={tier.label}
+                label={formatCurrency(tier.amount, "NGN")}
                 desc={tier.desc}
               />
             ))}
