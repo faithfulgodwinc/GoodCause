@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/src/context/auth";
 import { colors } from "@/src/theme";
+import { BrandLogo, AppText } from "@/src/components/ui";
 import { track } from "@/src/lib/api";
 import { storage } from "@/src/utils/storage";
 
@@ -29,7 +30,14 @@ export default function Index() {
   }, []);
 
   if (loading || !onboardingChecked) {
-    return <View style={{ flex: 1, backgroundColor: colors.surface }} />;
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>
+        <BrandLogo size={40} />
+        <AppText style={{ marginTop: 24, fontSize: 16, fontFamily: "Inter-Medium", color: colors.onSurfaceSecondary }}>
+          Waking up server...
+        </AppText>
+      </View>
+    );
   }
 
   // First-time user who hasn't seen onboarding yet
