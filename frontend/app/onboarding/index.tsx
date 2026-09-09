@@ -135,11 +135,15 @@ function SlideText({
   index,
   scrollX,
   isActive,
+  completedParagraphs,
+  setCompletedParagraphs,
 }: {
   slide: Slide;
   index: number;
   scrollX: Animated.Value;
   isActive: boolean;
+  completedParagraphs: number;
+  setCompletedParagraphs: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const inputRange = [
     (index - 1) * SCREEN_W,
@@ -175,7 +179,12 @@ function SlideText({
               key={i}
               style={[styles.paragraph, p.bold && styles.paragraphBold]}
               text={p.text}
-              start={isActive}
+              start={isActive && i <= completedParagraphs}
+              onComplete={() => {
+                if (isActive) {
+                  setCompletedParagraphs((prev) => Math.max(prev, i + 1));
+                }
+              }}
             />
           ))}
         </View>
@@ -192,6 +201,7 @@ export default function OnboardingScreen() {
   const flatRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
+  const [completedParagraphs, setCompletedParagraphs] = useState(0);
 
   const markDone = useCallback(async () => {
     await storage.setItem(ONBOARDING_DONE_KEY, true);
@@ -274,11 +284,21 @@ export default function OnboardingScreen() {
         )}
         onMomentumScrollEnd={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
-          setActiveIndex(idx);
-          Haptics.selectionAsync().catch(() => {});
+          if (idx !== activeIndex) {
+            setActiveIndex(idx);
+            setCompletedParagraphs(0);
+            Haptics.selectionAsync().catch(() => {});
+          }
         }}
         renderItem={({ item, index }) => (
-          <SlideText slide={item} index={index} scrollX={scrollX} isActive={activeIndex === index} />
+          <SlideText 
+            slide={item} 
+            index={index} 
+            scrollX={scrollX} 
+            isActive={activeIndex === index} 
+            completedParagraphs={completedParagraphs}
+            setCompletedParagraphs={setCompletedParagraphs}
+          />
         )}
         getItemLayout={(_, index) => ({
           length: SCREEN_W,

@@ -445,12 +445,14 @@ export function TypeWriterText({
   text, 
   delay = 25, 
   start = true, 
+  onComplete,
   style, 
   ...props 
 }: { 
   text: string, 
   delay?: number, 
   start?: boolean, 
+  onComplete?: () => void,
   style?: any, 
   [key: string]: any 
 }) {
@@ -469,7 +471,11 @@ export function TypeWriterText({
     setDisplayedText("");
 
     const typeNext = () => {
-      if (isCancelled || i >= text.length) return;
+      if (isCancelled) return;
+      if (i >= text.length) {
+        if (onComplete) onComplete();
+        return;
+      }
       
       setDisplayedText(text.substring(0, i + 1));
       const char = text[i];
