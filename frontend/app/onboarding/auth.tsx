@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Image } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
@@ -8,6 +8,10 @@ import { AppText, BrandLogo, TypeWriterText } from "@/src/components/ui";
 import { colors, font } from "@/src/theme";
 import { useAuth } from "@/src/context/auth";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const IMAGE_SIZE = SCREEN_W * 1.5;
 
 const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
@@ -30,6 +34,21 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const panY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Seamless infinite vertical scroll loop
+    panY.setValue(0);
+    Animated.loop(
+      Animated.timing(panY, {
+        toValue: -IMAGE_SIZE,
+        duration: 40000, // Slow, loping, endless vibe
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, [panY]);
+
   const handleContinueEmail = async () => {
     if (!email) return;
     setLoading(true);
@@ -50,7 +69,7 @@ export default function AuthScreen() {
     setError("");
     try {
       await verifyOtp(email, code);
-      router.push({ pathname: "/onboarding/payment", params: { tier } });
+      router.push({ pathname: "/onboarding/commitment" });
     } catch (e: any) {
       setError(e.message || "Invalid code");
     } finally {
@@ -59,149 +78,160 @@ export default function AuthScreen() {
   };
 
   const handleAppleAuth = async () => {
-    router.push({ pathname: "/onboarding/payment", params: { tier } });
+    router.push({ pathname: "/onboarding/commitment" });
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: Platform.OS === "android" ? insets.top : 0 }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <BrandLogo size={20} />
-        </View>
+    <View style={styles.container}>
+      {/* Edge to edge rolling background grid */}
+      <View style={[StyleSheet.absoluteFill, { height: SCREEN_H * 0.65, overflow: "hidden", alignItems: "center" }]}>
+        <Animated.View style={{ 
+          width: IMAGE_SIZE * 2,
+          flexDirection: "row",
+          flexWrap: "wrap",
+          transform: [
+            { translateY: panY },
+            { translateX: panY }
+          ] 
+        }}>
+          <Image 
+            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+            resizeMode="cover"
+          />
+          <Image 
+            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+            resizeMode="cover"
+          />
+          <Image 
+            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+            resizeMode="cover"
+          />
+          <Image 
+            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+            resizeMode="cover"
+          />
+        </Animated.View>
+        {/* Deep fade into the bottom black content area */}
+        <LinearGradient
+          colors={["transparent", "rgba(8,10,12,0.6)", "rgba(8,10,12,1)", "#080a0c"]}
+          locations={[0.2, 0.5, 0.8, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      </View>
 
-        <View style={styles.content}>
-          <View style={styles.imageContainer}>
-            {/* Using slide2 (smiling community) as a placeholder for the organic shape boy */}
-            <Image 
-              source={require("../../assets/images/onboarding/slide2.jpg")} 
-              style={styles.heroImage} 
-              resizeMode="cover" 
-            />
-            <View style={styles.doodle}>
-              <Ionicons name="leaf-outline" size={32} color={colors.brandPrimary} />
-            </View>
+      <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <View style={styles.header}>
+            <BrandLogo size={20} color={colors.surface} />
           </View>
 
-          <AppText style={styles.title}>One last step. ❤️</AppText>
-          <TypeWriterText 
-            style={styles.subtitle} 
-            text="Create your secure profile so you can see exactly whose lives you are changing, and watch your impact grow over time." 
-          />
+          <View style={styles.content}>
+            <View style={{ flex: 1 }} /> 
+            
+            {/* The Text was explicitly requested to remove the emoji */}
+            <AppText style={styles.title}>Let's get started.</AppText>
+            <TypeWriterText 
+              style={styles.subtitle} 
+              text="Create your secure profile to begin your journey and watch your impact grow over time." 
+            />
 
-          {step === "options" && (
-            <View style={styles.authOptions}>
-              <Pressable style={styles.socialBtnOutline} onPress={() => {}}>
-                <View style={styles.socialIconWrap}>
-                  <GoogleIcon size={20} />
-                </View>
-                <AppText style={styles.socialTextOutline}>Continue with Google</AppText>
-              </Pressable>
+            {step === "options" && (
+              <View style={styles.authOptions}>
+                <Pressable style={styles.socialBtnOutline} onPress={() => {}}>
+                  <View style={styles.socialIconWrap}>
+                    <GoogleIcon size={20} />
+                  </View>
+                  <AppText style={styles.socialTextOutline}>Continue with Google</AppText>
+                </Pressable>
 
-              {Platform.OS === "ios" && (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                  cornerRadius={24}
-                  style={{ width: "100%", height: 48 }}
-                  onPress={handleAppleAuth}
+                {Platform.OS === "ios" && (
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                    cornerRadius={24}
+                    style={{ width: "100%", height: 48 }}
+                    onPress={handleAppleAuth}
+                  />
+                )}
+
+                <Pressable style={styles.socialBtnPrimary} onPress={() => setStep("email")}>
+                  <View style={styles.socialIconWrap}>
+                    <Ionicons name="mail" size={20} color={colors.surface} />
+                  </View>
+                  <AppText style={styles.socialTextSolid}>Continue with email</AppText>
+                </Pressable>
+              </View>
+            )}
+
+            {step === "email" && (
+              <View style={styles.authForm}>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Email Address"
+                  placeholderTextColor={colors.onSurfaceTertiary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                  autoFocus
                 />
-              )}
+                <Pressable style={styles.socialBtnPrimaryCentered} onPress={handleContinueEmail} disabled={loading}>
+                  {loading ? <ActivityIndicator color={colors.surface} /> : <AppText style={styles.socialTextCentered}>Send Code</AppText>}
+                </Pressable>
+                <Pressable style={{ marginTop: 16 }} onPress={() => setStep("options")}>
+                  <AppText style={{ textAlign: "center", color: "rgba(255,255,255,0.6)", fontFamily: font.medium }}>Back to options</AppText>
+                </Pressable>
+              </View>
+            )}
 
-              <Pressable style={styles.socialBtnPrimary} onPress={() => setStep("email")}>
-                <View style={styles.socialIconWrap}>
-                  <Ionicons name="mail" size={20} color={colors.surface} />
-                </View>
-                <AppText style={styles.socialTextSolid}>Continue with email</AppText>
-              </Pressable>
-            </View>
-          )}
+            {step === "code" && (
+              <View style={styles.authForm}>
+                <TextInput
+                  style={styles.input}
+                  value={code}
+                  onChangeText={setCode}
+                  placeholder="6-Digit Code"
+                  placeholderTextColor={colors.onSurfaceTertiary}
+                  keyboardType="number-pad"
+                  editable={!loading}
+                  maxLength={6}
+                  autoFocus
+                />
+                <Pressable style={styles.socialBtnPrimaryCentered} onPress={handleVerifyCode} disabled={loading}>
+                  {loading ? <ActivityIndicator color={colors.surface} /> : <AppText style={styles.socialTextCentered}>Verify Code</AppText>}
+                </Pressable>
+              </View>
+            )}
 
-          {step === "email" && (
-            <View style={styles.authForm}>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Email Address"
-                placeholderTextColor={colors.onSurfaceTertiary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                editable={!loading}
-                autoFocus
-              />
-              <Pressable style={styles.socialBtnPrimaryCentered} onPress={handleContinueEmail} disabled={loading}>
-                {loading ? <ActivityIndicator color={colors.surface} /> : <AppText style={styles.socialTextCentered}>Send Code</AppText>}
-              </Pressable>
-              <Pressable style={{ marginTop: 16 }} onPress={() => setStep("options")}>
-                <AppText style={{ textAlign: "center", color: colors.onSurfaceSecondary, fontFamily: font.medium }}>Back to options</AppText>
-              </Pressable>
-            </View>
-          )}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
-          {step === "code" && (
-            <View style={styles.authForm}>
-              <TextInput
-                style={styles.input}
-                value={code}
-                onChangeText={setCode}
-                placeholder="6-Digit Code"
-                placeholderTextColor={colors.onSurfaceTertiary}
-                keyboardType="number-pad"
-                editable={!loading}
-                maxLength={6}
-                autoFocus
-              />
-              <Pressable style={styles.socialBtnPrimaryCentered} onPress={handleVerifyCode} disabled={loading}>
-                {loading ? <ActivityIndicator color={colors.surface} /> : <AppText style={styles.socialTextCentered}>Verify Code</AppText>}
-              </Pressable>
-            </View>
-          )}
-
-          {error ? <AppText style={styles.error}>{error}</AppText> : null}
-
-          <View style={{ flex: 1 }} />
-          
-          <AppText style={styles.terms}>
-            By continuing, you agree to our{"\n"}
-            <AppText style={{ textDecorationLine: "underline" }}>Terms</AppText> & <AppText style={{ textDecorationLine: "underline" }}>Privacy Policy</AppText>.
-          </AppText>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            <AppText style={styles.terms}>
+              By continuing, you agree to our{"\n"}
+              <AppText style={{ textDecorationLine: "underline" }}>Terms</AppText> & <AppText style={{ textDecorationLine: "underline" }}>Privacy Policy</AppText>.
+            </AppText>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
+  container: { flex: 1, backgroundColor: "#080a0c" },
   header: { alignItems: "center", paddingVertical: 16 },
-  content: { flex: 1, paddingHorizontal: 24, paddingBottom: 24 },
+  content: { flex: 1, paddingHorizontal: 24, paddingBottom: 24, justifyContent: "flex-end" },
   
-  imageContainer: {
-    alignSelf: "center",
-    width: "100%",
-    height: 180,
-    marginTop: 16,
-    marginBottom: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroImage: {
-    width: "80%",
-    height: "100%",
-    borderRadius: 32, // Gives a pill-like organic feel
-  },
-  doodle: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    transform: [{ rotate: "15deg" }]
-  },
-
-  title: { fontSize: 28, fontFamily: font.bold, color: colors.onSurface, marginBottom: 12, textAlign: "center", lineHeight: 40, paddingTop: 4 },
-  subtitle: { fontSize: 14, color: colors.onSurfaceSecondary, textAlign: "center", marginBottom: 32, lineHeight: 22, paddingHorizontal: 16 },
+  title: { fontSize: 32, fontFamily: font.bold, color: colors.surface, marginBottom: 12, textAlign: "center", lineHeight: 40, letterSpacing: -0.5 },
+  subtitle: { fontSize: 15, color: "rgba(255,255,255,0.7)", textAlign: "center", marginBottom: 32, lineHeight: 22, paddingHorizontal: 16 },
   
-  authOptions: { gap: 12 },
-  authForm: { gap: 12 },
+  authOptions: { gap: 12, marginBottom: 32 },
+  authForm: { gap: 12, marginBottom: 32 },
   
   socialBtnPrimary: {
     height: 48,
@@ -210,14 +240,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  socialBtnApple: {
-    height: 48,
-    backgroundColor: "#000000",
-    borderRadius: 24,
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
   },
   socialBtnPrimaryCentered: {
@@ -233,30 +255,31 @@ const styles = StyleSheet.create({
   
   socialBtnOutline: {
     height: 48,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255,255,255,0.1)",
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: "rgba(255,255,255,0.2)",
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  socialTextOutline: { color: colors.onSurface, fontSize: 16, fontFamily: font.semibold },
+  socialTextOutline: { color: colors.surface, fontSize: 16, fontFamily: font.semibold },
   socialIconWrap: { width: 24, alignItems: "center", marginRight: 8 },
   
   input: {
     height: 52,
     borderRadius: 26,
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
+    borderColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 24,
     fontSize: 16,
-    color: colors.onSurface,
+    color: colors.surface,
     fontFamily: font.medium,
     marginBottom: 8,
+    backgroundColor: "rgba(255,255,255,0.05)"
   },
   
   error: { color: colors.error, fontSize: 14, marginTop: 12, textAlign: "center" },
-  terms: { fontSize: 12, color: colors.onSurfaceSecondary, textAlign: "center", lineHeight: 18, fontFamily: font.medium },
+  terms: { fontSize: 12, color: "rgba(255,255,255,0.4)", textAlign: "center", lineHeight: 18, fontFamily: font.medium },
 });

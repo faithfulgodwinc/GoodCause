@@ -22,7 +22,7 @@ export default function ModelScreen() {
   const tierString = typeof tier === "string" && TIER_AMOUNTS[tier] ? TIER_AMOUNTS[tier] : "₦5,000";
 
   const handleContinue = () => {
-    router.push({ pathname: "/onboarding/auth", params: { tier } });
+    router.push({ pathname: "/onboarding/payment", params: { tier } });
   };
 
   return (

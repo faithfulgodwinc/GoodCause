@@ -218,7 +218,7 @@ export default function OnboardingScreen() {
       flatRef.current?.scrollToIndex({ index: next, animated: true });
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } else {
-      router.push("/onboarding/commitment");
+      router.push("/onboarding/auth");
     }
   }, [activeIndex, router]);
 
