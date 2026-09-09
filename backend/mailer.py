@@ -14,6 +14,7 @@ this is the default for local development so you can test without any email setu
 import os
 import smtplib
 import logging
+import httpx
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -96,6 +97,27 @@ def send_otp_email(to_email: str, code: str) -> bool:
         return True
 
     try:
+        # Many cloud providers (Render, DigitalOcean) block outbound SMTP ports (465/587).
+        # Since we use Resend, we can bypass this by calling their HTTPS API directly on port 443!
+        if "resend.com" in SMTP_HOST:
+            headers = {
+                "Authorization": f"Bearer {SMTP_PASS}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "from": EMAIL_FROM,
+                "to": [to_email],
+                "subject": f"{code} is your GoodCause sign-in code",
+                "html": _html_template(code)
+            }
+            # Synchronous HTTP POST request
+            with httpx.Client(timeout=10.0) as client:
+                r = client.post("https://api.resend.com/emails", headers=headers, json=data)
+                r.raise_for_status()
+            logger.info(f"OTP email sent to {to_email} via Resend API")
+            return True
+
+        # Fallback to standard SMTP for other providers
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"{code} is your GoodCause sign-in code"
         msg["From"] = EMAIL_FROM
@@ -107,12 +129,12 @@ def send_otp_email(to_email: str, code: str) -> bool:
 
         if SMTP_PORT == 465:
             # SSL connection
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=10) as server:
                 server.login(SMTP_USER, SMTP_PASS)
                 server.sendmail(EMAIL_FROM, to_email, msg.as_string())
         else:
             # TLS (port 587)
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
                 server.ehlo()
                 server.starttls()
                 server.login(SMTP_USER, SMTP_PASS)
