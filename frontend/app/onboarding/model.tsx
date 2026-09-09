@@ -50,7 +50,6 @@ export default function ModelScreen() {
         
         <TypeWriterText 
           style={styles.subtitle}
-          delay={30}
           text="Your monthly giving pools together with thousands of others to fund verified medical and food campaigns. Every ₦1,000 has a home."
         />
 

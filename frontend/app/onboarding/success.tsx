@@ -42,7 +42,6 @@ export default function SuccessScreen() {
         <AppText style={styles.title}>Welcome home. ❤️</AppText>
         <TypeWriterText 
           style={styles.subtitle} 
-          delay={30} 
           text="You just made a promise to catch someone when they fall. Somewhere in Nigeria, a life is about to change because of you." 
         />
 

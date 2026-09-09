@@ -85,7 +85,6 @@ export default function AuthScreen() {
           <AppText style={styles.title}>One last step. ❤️</AppText>
           <TypeWriterText 
             style={styles.subtitle} 
-            delay={30} 
             text="Create your secure profile so you can see exactly whose lives you are changing, and watch your impact grow over time." 
           />
 

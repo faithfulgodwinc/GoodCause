@@ -54,7 +54,7 @@ const SLIDES: Slide[] = [
     titleGreen: "helped a little?",
     paragraphs: [
       {
-        text: "But what if the little you have is exactly what someone else is praying for? When thousands of us come together to share what we can, miracles happen.",
+        text: "What if the little you have is exactly what someone else is praying for? When thousands of us come together to share what we can, miracles happen.",
         bold: true,
       },
     ],
@@ -63,7 +63,7 @@ const SLIDES: Slide[] = [
   {
     id: "cause",
     titleWhite: "Be someone’s",
-    titleGreen: "GoodCause",
+    titleGreen: "goodcause.",
     paragraphs: [
       {
         text: "Start with a small monthly commitment and watch it change lives in ways you never imagined.",
@@ -176,7 +176,6 @@ function SlideText({
               style={[styles.paragraph, p.bold && styles.paragraphBold]}
               text={p.text}
               start={isActive}
-              delay={30}
             />
           ))}
         </View>

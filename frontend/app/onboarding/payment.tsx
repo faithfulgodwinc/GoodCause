@@ -63,7 +63,6 @@ export default function PaymentScreen() {
           <AppText style={styles.secureTitle}>Secured by {Platform.OS === "ios" ? "Apple" : "Google"}</AppText>
           <TypeWriterText 
             style={styles.secureDesc} 
-            delay={30} 
             text={`Your generosity is processed with bank-level encryption by ${Platform.OS === "ios" ? "Apple" : "Google"}. We never hold your details, and you have complete freedom to pause or cancel anytime from your settings.`} 
           />
         </View>

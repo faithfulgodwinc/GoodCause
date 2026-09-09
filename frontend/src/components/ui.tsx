@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
 
 export function TypeWriterText({ 
   text, 
-  delay = 70, 
+  delay = 25, 
   start = true, 
   style, 
   ...props 
@@ -476,13 +476,13 @@ export function TypeWriterText({
       i++;
 
       let nextDelay = delay;
-      // Add emotional pauses for punctuation
+      // Add emotional pauses for punctuation (reduced multipliers for faster overall speed)
       if (char === "." || char === "!" || char === "?" || char === "❤️") {
-        nextDelay = delay * 6; // Deep pause
+        nextDelay = delay * 5; // Deep pause (but faster)
       } else if (char === ",") {
-        nextDelay = delay * 4; // Slight pause
+        nextDelay = delay * 3; // Slight pause
       } else {
-        nextDelay = delay + (Math.random() * 20); // Organic jitter
+        nextDelay = delay + (Math.random() * 10); // Organic jitter
       }
 
       timeoutId = setTimeout(typeNext, nextDelay);
