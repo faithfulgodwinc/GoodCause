@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Platform, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, Platform, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, BrandLogo } from "@/src/components/ui";
@@ -9,60 +9,45 @@ import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
-const { width } = Dimensions.get("window");
-
-const NEU_BG = "#E0E5EC";
-
 const TIERS = [
-  { id: "tier_1k", amount: 1000, desc: "A small step." },
-  { id: "tier_2k5", amount: 2500, desc: "More support." },
-  { id: "tier_5k", amount: 5000, desc: "Powerful way." },
-  { id: "tier_10k", amount: 10000, desc: "Greater reach." },
+  { id: "tier_1k",  amount: 1000,  desc: "A small step that still moves things forward." },
+  { id: "tier_2k5", amount: 2500,  desc: "Enough to make a meaningful difference." },
+  { id: "tier_5k",  amount: 5000,  desc: "A powerful way to back real change." },
+  { id: "tier_10k", amount: 10000, desc: "Maximum impact for those who need it most." },
 ];
 
-function TierButton({ 
-  isSelected, 
-  onPress, 
-  label, 
-  desc 
-}: { 
-  isSelected: boolean; 
-  onPress: () => void; 
-  label: string; 
-  desc: string 
+function TierRow({
+  isSelected,
+  onPress,
+  label,
+  desc,
+}: {
+  isSelected: boolean;
+  onPress: () => void;
+  label: string;
+  desc: string;
 }) {
   const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.96, { stiffness: 400, damping: 20 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { stiffness: 400, damping: 20 });
-  };
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Pressable 
+    <Pressable
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={{ width: "47%", aspectRatio: 1, marginBottom: "6%" }}
+      onPressIn={() => { scale.value = withSpring(0.98, { stiffness: 400, damping: 20 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { stiffness: 400, damping: 20 }); }}
     >
-      <Animated.View style={[styles.tierCard, isSelected && styles.tierCardSelected, animatedStyle]}>
-        <AppText 
-          style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {label}
-        </AppText>
-        <AppText style={styles.tierDesc}>
-          {desc}
-        </AppText>
+      <Animated.View style={[styles.tierRow, animatedStyle]}>
+        <View style={styles.tierText}>
+          <AppText style={[styles.tierAmount, isSelected && styles.tierAmountSelected]}>
+            {label}
+          </AppText>
+          <AppText style={styles.tierDesc} numberOfLines={2}>
+            {desc}
+          </AppText>
+        </View>
+        <View style={[styles.radio, isSelected && styles.radioSelected]}>
+          {isSelected && <View style={styles.radioDot} />}
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -79,203 +64,181 @@ export default function CommitmentScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        {/* Minimal Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.headerBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
-          </Pressable>
-          <BrandLogo size={20} color={colors.onSurface} />
-          <Pressable onPress={() => router.replace("/")} style={styles.headerBtn}>
-            <AppText style={styles.skipText}>Skip</AppText>
-          </Pressable>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={8}>
+          <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
+        </Pressable>
+        <BrandLogo size={20} color={colors.onSurface} />
+        <Pressable onPress={() => router.replace("/")} style={styles.headerBtn} hitSlop={8}>
+          <AppText style={styles.skipText}>Skip</AppText>
+        </Pressable>
+      </View>
+
+      {/* Body */}
+      <View style={styles.body}>
+        <View style={styles.titleWrap}>
+          <AppText style={styles.title}>How much would you{"\n"}like to give each month?</AppText>
+          <AppText style={styles.subtitle}>You can change this at any time.</AppText>
         </View>
 
-        <View style={[styles.body, { paddingBottom: insets.bottom + 20 }]}>
-          
-          <View style={styles.textWrap}>
-            <AppText style={styles.title}>How much would you like to give every month?</AppText>
-            <AppText style={styles.subtitle}>
-              Select a tier to join other GoodCauses.
-            </AppText>
-          </View>
-
-          {/* 2x2 Grid */}
-          <View style={styles.gridContainer}>
-            {TIERS.map((tier) => (
-            <TierButton 
+        {/* Tier list */}
+        <View style={styles.list}>
+          {TIERS.map((tier) => (
+            <TierRow
               key={tier.id}
               isSelected={selected === tier.id}
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelected(tier.id);
               }}
-              label={formatCurrency(tier.amount, "NGN")}
+              label={formatCurrency(tier.amount, "NGN") + "/mo"}
               desc={tier.desc}
             />
           ))}
-          </View>
-
-          <View style={styles.footer}>
-             <Pressable
-              style={({ pressed }) => [
-                styles.customBtn,
-                pressed && { opacity: 0.7 }
-              ]}
-              onPress={() => {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                alert("Custom amounts coming soon in production!");
-              }}
-            >
-              <AppText style={styles.customText}>Enter custom amount</AppText>
-            </Pressable>
-
-            {/* Neumorphic Continue Button */}
-            <Pressable onPress={handleContinue}>
-              <View style={styles.continueOuter}>
-                 <View style={styles.continueInner}>
-                     <AppText style={styles.continueText}>Continue</AppText>
-                     <Ionicons name="arrow-forward" size={20} color="#0A1A0F" />
-                 </View>
-              </View>
-            </Pressable>
-          </View>
-
         </View>
-      </SafeAreaView>
-    </View>
+      </View>
+
+      {/* Footer */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <Pressable
+          style={styles.customBtn}
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            alert("Custom amounts coming soon!");
+          }}
+        >
+          <AppText style={styles.customText}>Enter a custom amount</AppText>
+        </Pressable>
+
+        <Pressable style={styles.continueBtn} onPress={handleContinue}>
+          <AppText style={styles.continueText}>Continue</AppText>
+        </Pressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: NEU_BG,
+  container: {
+    flex: 1,
+    backgroundColor: colors.surface,
   },
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
+
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  headerBtn: { padding: 8 },
-  skipText: { fontSize: 16, fontFamily: font.medium, color: colors.onSurfaceSecondary },
-  
-  body: { 
+  headerBtn: { padding: 4 },
+  skipText: {
+    fontSize: 16,
+    fontFamily: font.medium,
+    color: colors.onSurfaceSecondary,
+  },
+
+  // Body
+  body: {
     flex: 1,
-    paddingHorizontal: 24, 
+    paddingHorizontal: 24,
     paddingTop: 16,
-    justifyContent: "space-between" // Pushes elements apart for non-scrollable fit
   },
-  
-  textWrap: {
-    marginBottom: 20,
+  titleWrap: {
+    marginBottom: 36,
   },
-  title: { 
-    fontSize: 32, 
-    fontFamily: font.bold, 
-    color: colors.onSurface, 
-    marginBottom: 8, 
-    letterSpacing: -1, 
-    lineHeight: 38 
-  },
-  subtitle: { 
-    fontSize: 16, 
-    color: colors.onSurfaceSecondary, 
-    lineHeight: 24, 
-    fontFamily: font.regular 
-  },
-  
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  /* Tier Card Styles */
-  tierCard: {
-    flex: 1,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceSecondary,
-    padding: 20,
-    justifyContent: "flex-end",
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  tierCardSelected: {
-    borderColor: colors.brandPrimary,
-    borderWidth: 2,
-    backgroundColor: "#F5FDF7",
-  },
-  tierLabel: { 
-    fontSize: 28, 
-    fontFamily: font.bold, 
+  title: {
+    fontSize: 28,
+    fontFamily: font.bold,
     color: colors.onSurface,
-    marginBottom: 4,
-    letterSpacing: -1
+    letterSpacing: -0.5,
+    lineHeight: 36,
+    marginBottom: 8,
   },
-  tierDesc: { 
-    fontSize: 14, 
-    color: colors.onSurfaceSecondary, 
-    fontFamily: font.medium 
-  },
-  selectedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#0A4A2A",
-    position: "absolute",
-    top: -24,
-    right: 0,
+  subtitle: {
+    fontSize: 15,
+    fontFamily: font.regular,
+    color: colors.onSurfaceSecondary,
   },
 
-  /* Footer Area */
+  // Tier list
+  list: {
+    gap: 0,
+  },
+  tierRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
+    justifyContent: "space-between",
+  },
+  tierText: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  tierAmount: {
+    fontSize: 17,
+    fontFamily: font.semibold,
+    color: colors.onSurface,
+    marginBottom: 3,
+  },
+  tierAmountSelected: {
+    color: colors.brandPrimary,
+  },
+  tierDesc: {
+    fontSize: 13,
+    fontFamily: font.regular,
+    color: colors.onSurfaceSecondary,
+    lineHeight: 18,
+  },
+
+  // Radio button
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.onSurfaceTertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioSelected: {
+    borderColor: colors.brandPrimary,
+  },
+  radioDot: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: colors.brandPrimary,
+  },
+
+  // Footer
   footer: {
-    gap: 24,
-    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    gap: 12,
   },
   customBtn: {
     alignSelf: "center",
     paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   customText: {
-    fontSize: 16,
-    fontFamily: font.semibold,
+    fontSize: 15,
+    fontFamily: font.medium,
     color: colors.onSurfaceSecondary,
-    textDecorationLine: "underline"
   },
-
-  /* Neumorphic Continue Button */
-  continueOuter: {
-    height: 60,
-    borderRadius: 30,
+  continueBtn: {
     backgroundColor: colors.brandPrimary,
-    // Soft glowing shadow matching brand color
-    shadowColor: colors.brandPrimary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  continueInner: {
-    flex: 1,
-    flexDirection: "row",
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
   },
-  continueText: { 
-    color: "#0A1A0F", 
-    fontSize: 18, 
-    fontFamily: font.bold 
+  continueText: {
+    color: colors.onBrandPrimary,
+    fontSize: 17,
+    fontFamily: font.semibold,
   },
 });
