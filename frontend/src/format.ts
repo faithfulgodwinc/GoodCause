@@ -8,9 +8,9 @@ export function formatNaira(kobo: number, opts: { compact?: boolean } = {}): str
   if (opts.compact) {
     if (naira >= 1_000_000) return `₦${trim(naira / 1_000_000)}M`;
     if (naira >= 1_000) return `₦${trim(naira / 1_000)}K`;
-    return `₦${naira.toLocaleString("en-NG")}`;
+    return `₦${naira.toLocaleString("en-US")}`;
   }
-  return `₦${naira.toLocaleString("en-NG")}`;
+  return `₦${naira.toLocaleString("en-US")}`;
 }
 
 export function formatCurrency(amount: number, currencyCode: string = "NGN"): string {

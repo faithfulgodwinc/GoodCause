@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import {
   View,
   ScrollView,
@@ -6,19 +6,19 @@ import {
   Pressable,
   RefreshControl,
   Platform,
-  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 
 import { api } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
 import { AppText, Avatar } from "@/src/components/ui";
 import { CampaignCard, Campaign } from "@/src/components/CampaignCard";
 import { useResponsive } from "@/src/lib/responsive";
-import { colors, spacing, radius, shadow, font } from "@/src/theme";
+import { colors, spacing, radius, font } from "@/src/theme";
 import { useSubscription } from "@/src/lib/revenuecat";
 
 type HomeData = {
@@ -44,124 +44,156 @@ export default function HomeScreen() {
   });
 
   const { urgent = [], recommended = [], greeting_name } = data || {};
-  const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : "Faithful");
+  const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : "Friend");
 
   const hour = new Date().getHours();
   let timeGreeting = "Good evening";
   if (hour < 12) timeGreeting = "Good morning";
   else if (hour < 17) timeGreeting = "Good afternoon";
 
-  const committedAmount = currentPackage ? currentPackage.product.priceString : "₦5,000";
+  const rawAmount = currentPackage ? currentPackage.product.priceString : "₦5,000";
+  const committedAmount = rawAmount
+    .replace(/(\d+)\.(\d{3})(?!\d)/g, "$1,$2")
+    .replace(/\.00$/, "");
   const directCauses = [...urgent, ...recommended].slice(0, 5);
 
-  const heartScale = useRef(new Animated.Value(1)).current;
+  const handleProfilePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/profile");
+  };
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(heartScale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1, duration: 150, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
-        Animated.timing(heartScale, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ])
-    ).start();
-  }, [heartScale]);
+  const handleSeeAllPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/explore");
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      {/* Header */}
+    <View style={styles.screenContainer}>
+      {/* Apple-style Navigation Header */}
       <View
         style={[
           styles.header,
-          { paddingTop: Platform.OS === "android" ? insets.top + spacing.md : insets.top },
+          { paddingTop: Platform.OS === "android" ? insets.top + 16 : insets.top + 16 },
         ]}
       >
         <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.push("/profile")}>
-            <Avatar name={user?.name} uri={user?.picture} size={44} />
+          <Pressable onPress={handleProfilePress} style={styles.avatarPressable}>
+            <Avatar name={user?.name} uri={user?.picture} size={42} />
           </Pressable>
-          <View style={{ marginLeft: spacing.sm }}>
-            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontSize: 13 }}>
-              {timeGreeting},
+          <View style={styles.greetingBox}>
+            <AppText style={styles.timeGreetingText}>
+              {timeGreeting}
             </AppText>
-            <AppText variant="h2" style={{ fontSize: 18, marginTop: -2 }}>
-              {displayName} 👋
+            <AppText variant="h2" style={styles.nameText}>
+              {displayName}
             </AppText>
           </View>
         </View>
-        <Pressable hitSlop={12} style={styles.bellIcon}>
-          <Feather name="bell" size={22} color={colors.onSurface} />
+
+        <Pressable 
+          hitSlop={12} 
+          style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.6 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }}
+        >
+          <Feather name="bell" size={20} color={colors.onSurface} />
         </Pressable>
       </View>
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: spacing.md }}
+        contentContainerStyle={{ paddingBottom: 110, paddingTop: spacing.xs }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={
+          <RefreshControl 
+            refreshing={isRefetching} 
+            onRefresh={refetch} 
+            tintColor={colors.brandPrimary} 
+          />
+        }
       >
         <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
           
-          {/* Commitment Card */}
-          <View style={styles.commitmentCard}>
-            <View style={{ flex: 1, paddingRight: 16 }}>
-              <AppText style={styles.ccTitle}>Your GoodCause</AppText>
-              <View style={styles.ccAmountRow}>
-                <AppText style={styles.ccAmount}>{committedAmount}</AppText>
-                <AppText style={styles.ccSub}> /month</AppText>
+          {/* Apple-Style Community Pledge Card */}
+          <View style={styles.pledgeCard}>
+            {/* Background side design */}
+            <View style={styles.pledgeBgCircle1} />
+            <View style={styles.pledgeBgCircle2} />
+            <View style={styles.pledgeWatermark}>
+              <Ionicons name="shield-checkmark" size={110} color="rgba(255, 255, 255, 0.12)" />
+            </View>
+
+            <View style={styles.pledgeHeader}>
+              <View style={styles.badgePill}>
+                <Ionicons name="shield-checkmark" size={13} color={colors.brandPrimary} />
+                <AppText style={styles.badgeText}>Active Member</AppText>
               </View>
-              <AppText style={styles.ccDesc}>
-                You're part of a community helping people across Nigeria.
+            </View>
+
+            <View style={styles.pledgeBody}>
+              <AppText style={styles.pledgeAmount}>
+                {committedAmount}
+                <AppText style={styles.pledgeSub}> / month</AppText>
+              </AppText>
+              <AppText style={styles.pledgeDesc}>
+                Your monthly promise is actively supporting verified causes and families in need across Nigeria.
               </AppText>
             </View>
-            <View style={styles.ccIconBox}>
-              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-                <Ionicons name="heart" size={20} color={colors.brandPrimary} />
-              </Animated.View>
-            </View>
           </View>
 
-          {/* Impact Section */}
+          {/* Apple Native Style Impact Metrics */}
           <View style={styles.section}>
-            <AppText variant="h2" style={styles.sectionTitle}>
-              This month's impact
+            <AppText style={styles.sectionHeaderTitle}>
+              Community Impact
             </AppText>
-            <View style={styles.impactRow}>
-              <View style={styles.impactCard}>
-                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>1,284</AppText>
-                <AppText style={styles.impactLabel}>GoodCauses have contributed</AppText>
+            <View style={styles.impactContainer}>
+              <View style={styles.impactCol}>
+                <AppText style={styles.impactNumber}>1,284</AppText>
+                <AppText style={styles.impactSublabel}>Members</AppText>
               </View>
-              <View style={styles.impactCard}>
-                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>₦8,420,000</AppText>
-                <AppText style={styles.impactLabel}>committed this month</AppText>
+              
+              <View style={styles.impactDivider} />
+              
+              <View style={styles.impactCol}>
+                <AppText style={styles.impactNumber}>₦8.4M</AppText>
+                <AppText style={styles.impactSublabel}>Given this month</AppText>
               </View>
-              <View style={styles.impactCard}>
-                <AppText style={styles.impactValue} adjustsFontSizeToFit numberOfLines={1}>145</AppText>
-                <AppText style={styles.impactLabel}>verified causes receiving support</AppText>
+              
+              <View style={styles.impactDivider} />
+              
+              <View style={styles.impactCol}>
+                <AppText style={styles.impactNumber}>145</AppText>
+                <AppText style={styles.impactSublabel}>Causes helped</AppText>
               </View>
             </View>
           </View>
 
-          {/* Causes you can support directly */}
+          {/* Causes List Section */}
           {directCauses.length > 0 && (
             <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <AppText variant="h2" style={{ flex: 1 }}>Causes you can support directly</AppText>
-                <Pressable onPress={() => router.push("/explore")}>
-                  <AppText variant="label" color={colors.brandPrimary}>See all</AppText>
+              <View style={styles.sectionRow}>
+                <AppText style={styles.sectionHeaderTitle}>
+                  Causes to support
+                </AppText>
+                <Pressable 
+                  onPress={handleSeeAllPress} 
+                  style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+                >
+                  <AppText style={styles.seeAllText}>See all</AppText>
                 </Pressable>
               </View>
               
-              <View style={styles.listWrap}>
+              <View style={styles.causesList}>
                 {directCauses.map((c) => (
-                  <View key={c.id} style={styles.causeItemWrapper}>
-                    <CampaignCard c={c} onPress={() => router.push(`/campaign/${c.id}`)} />
-                    <Pressable 
-                      style={styles.supportBtn}
-                      onPress={() => router.push(`/campaign/${c.id}`)}
-                    >
-                      <AppText style={styles.supportBtnText}>Support this cause →</AppText>
-                    </Pressable>
+                  <View key={c.id} style={styles.causeCardItem}>
+                    <CampaignCard 
+                      c={c} 
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.push(`/campaign/${c.id}`);
+                      }} 
+                    />
                   </View>
                 ))}
               </View>
@@ -175,134 +207,211 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: "#FFFFFF",
   },
+
+  // Apple Navigation Header
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-    backgroundColor: colors.surface,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
-  bellIcon: {
+  avatarPressable: {
+    marginRight: 12,
+  },
+  greetingBox: {
+    justifyContent: "center",
+  },
+  timeGreetingText: {
+    fontSize: 13,
+    fontFamily: font.medium,
+    color: colors.onSurfaceSecondary,
+    marginBottom: 1,
+  },
+  nameText: {
+    fontSize: 20,
+    fontFamily: font.bold,
+    color: colors.onSurface,
+    letterSpacing: -0.4,
+  },
+  bellButton: {
     width: 40,
     height: 40,
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  
-  commitmentCard: {
-    backgroundColor: colors.brandPrimary,
     borderRadius: 20,
-    marginHorizontal: spacing.lg,
-    padding: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    ...shadow.card,
-  },
-  ccTitle: {
-    color: colors.brandTertiary,
-    fontSize: 13,
-    fontFamily: font.bold,
-    marginBottom: 4,
-  },
-  ccAmountRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 8,
-  },
-  ccAmount: {
-    color: colors.surface,
-    fontSize: 28,
-    fontFamily: font.bold,
-    letterSpacing: -0.5,
-  },
-  ccSub: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 14,
-    fontFamily: font.medium,
-  },
-  ccDesc: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  ccIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: "#F4F5F7",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  section: {
-    marginTop: 32,
+  // Community Pledge Card (Apple Grouped Style)
+  pledgeCard: {
+    backgroundColor: colors.brandPrimary,
+    borderRadius: 22,
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 28,
+    padding: 20,
+    position: "relative",
+    overflow: "hidden",
+    // Soft subtle shadow
+    shadowColor: colors.brandPrimary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  sectionTitle: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: 16,
+  pledgeBgCircle1: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    position: "absolute",
+    right: -30,
+    top: -40,
   },
-  sectionHeaderRow: {
+  pledgeBgCircle2: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    position: "absolute",
+    right: -50,
+    bottom: -60,
+  },
+  pledgeWatermark: {
+    position: "absolute",
+    right: -12,
+    bottom: -20,
+    transform: [{ rotate: "-15deg" }],
+  },
+  pledgeHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    marginBottom: 16,
+    marginBottom: 14,
   },
-
-  impactRow: {
+  badgePill: {
     flexDirection: "row",
-    paddingHorizontal: spacing.lg,
-    gap: 12,
-  },
-  impactCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow.soft,
   },
-  impactValue: {
-    fontSize: 16,
+  badgeText: {
+    fontSize: 11,
     fontFamily: font.bold,
     color: colors.brandPrimary,
-    marginBottom: 4,
+    marginLeft: 4,
   },
-  impactLabel: {
-    fontSize: 11,
-    color: colors.onSurfaceSecondary,
-    lineHeight: 14,
-  },
-
-  listWrap: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.lg,
-  },
-  causeItemWrapper: {
-    backgroundColor: colors.surface,
-  },
-  supportBtn: {
-    backgroundColor: colors.brandPrimary,
-    borderRadius: radius.pill,
-    paddingVertical: 12,
+  heartCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 12,
   },
-  supportBtnText: {
-    color: colors.surface,
-    fontSize: 14,
+  pledgeBody: {
+    marginTop: 2,
+  },
+  pledgeAmount: {
+    fontSize: 30,
     fontFamily: font.bold,
+    color: "#FFFFFF",
+    letterSpacing: -0.6,
+    marginBottom: 6,
+  },
+  pledgeSub: {
+    fontSize: 15,
+    fontFamily: font.regular,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  pledgeDesc: {
+    fontSize: 13,
+    fontFamily: font.regular,
+    color: "rgba(255, 255, 255, 0.9)",
+    lineHeight: 19,
+  },
+
+  // Section Typography
+  section: {
+    marginBottom: 28,
+  },
+  sectionHeaderTitle: {
+    fontSize: 20,
+    fontFamily: font.bold,
+    color: colors.onSurface,
+    letterSpacing: -0.4,
+    paddingHorizontal: 20,
+    marginBottom: 14,
+  },
+  sectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: 20,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontFamily: font.semibold,
+    color: colors.brandPrimary,
+  },
+
+  // Impact Section (Apple Inset Style)
+  impactContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  impactCol: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  impactNumber: {
+    fontSize: 17,
+    fontFamily: font.bold,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    marginBottom: 2,
+  },
+  impactSublabel: {
+    fontSize: 11,
+    fontFamily: font.regular,
+    color: colors.onSurfaceSecondary,
+    textAlign: "center",
+  },
+  impactDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "#E2E8F0",
+  },
+
+  // Causes Feed
+  causesList: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  causeCardItem: {
+    borderRadius: 18,
+    overflow: "hidden",
   },
 });

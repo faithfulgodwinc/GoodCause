@@ -145,13 +145,12 @@ export function VerifiedBadge({ status, compact = true }: { status?: string; com
   const verified = status === "VERIFIED";
   const inReview = status === "IN_REVIEW" || status === "PENDING";
   if (!verified && !inReview) return null;
-  const bg = verified ? "#F0FDF4" : "#FFFBEB";
   const fg = verified ? colors.brandPrimary : colors.warning;
   const label = verified ? "Verified" : "Pending";
   const icon = verified ? "shield" : "clock";
   return (
-    <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Feather name={icon as any} size={10} color={fg} />
+    <View style={styles.badge}>
+      <Feather name={icon as any} size={11} color={fg} />
       <AppText variant="caption" color={fg} style={{ marginLeft: 3, fontSize: 11, fontWeight: "600" }}>{label}</AppText>
     </View>
   );
@@ -160,8 +159,8 @@ export function VerifiedBadge({ status, compact = true }: { status?: string; com
 /* ---------------- CommunityBackedBadge ---------------- */
 export function CommunityBackedBadge({ supportersCount }: { supportersCount?: number }) {
   return (
-    <View style={styles.communityBadge}>
-      <Feather name="users" size={10} color={colors.brandPrimary} />
+    <View style={styles.badge}>
+      <Feather name="users" size={11} color={colors.brandPrimary} />
       <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: 3, fontSize: 10.5, fontWeight: "700" }}>
         Community Backed
       </AppText>
