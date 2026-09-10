@@ -8,6 +8,7 @@ import {
   Dimensions,
   StatusBar,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,6 +30,8 @@ type Slide = {
   titleGreen: string;
   paragraphs: { text: string; bold?: boolean }[];
   image: any;
+  // Controls which part of the image is visible: "top", "center", "bottom"
+  imageAnchor?: "top" | "center" | "bottom";
   showButton?: boolean;
 };
 
@@ -47,6 +50,7 @@ const SLIDES: Slide[] = [
       },
     ],
     image: require("../../assets/images/onboarding/slide1.jpg"),
+    imageAnchor: "top",  // show full face from top
   },
   {
     id: "together",
@@ -59,10 +63,11 @@ const SLIDES: Slide[] = [
       },
     ],
     image: require("../../assets/images/onboarding/slide2.jpg"),
+    imageAnchor: "center",
   },
   {
     id: "cause",
-    titleWhite: "Be someone’s",
+    titleWhite: "Be someone's",
     titleGreen: "goodcause.",
     paragraphs: [
       {
@@ -74,6 +79,7 @@ const SLIDES: Slide[] = [
       },
     ],
     image: require("../../assets/images/onboarding/slide3.jpg"),
+    imageAnchor: "top",  // show face and hands
     showButton: true,
   },
 ];
@@ -106,13 +112,23 @@ function CinematicBackground({ scrollX }: { scrollX: Animated.Value }) {
           extrapolate: "clamp",
         });
 
+        const anchor = slide.imageAnchor ?? "center";
+        const contentPosition = {
+          top: { top: 0, left: "50%" },
+          center: { top: "50%", left: "50%" },
+          bottom: { top: "100%", left: "50%" },
+        }[anchor];
+
         return (
           <Animated.View key={slide.id} style={[StyleSheet.absoluteFill, { opacity }]}>
-            <Animated.Image
-              source={slide.image}
-              style={[StyleSheet.absoluteFill, { width: "100%", height: "100%", transform: [{ scale }] }]}
-              resizeMode="cover"
-            />
+            <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale }] }]}>
+              <Image
+                source={slide.image}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                contentPosition={contentPosition}
+              />
+            </Animated.View>
           </Animated.View>
         );
       })}

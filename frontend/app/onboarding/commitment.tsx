@@ -11,10 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 
 const { width } = Dimensions.get("window");
 
-// A premium cool off-white/gray for Neumorphism
 const NEU_BG = "#E0E5EC";
-const LIGHT_SHADOW = "#FFFFFF";
-const DARK_SHADOW = "#A3B1C6";
 
 const TIERS = [
   { id: "tier_1k", amount: 1000, desc: "A small step." },
@@ -23,7 +20,7 @@ const TIERS = [
   { id: "tier_10k", amount: 10000, desc: "Greater reach." },
 ];
 
-function NeuButton({ 
+function TierButton({ 
   isSelected, 
   onPress, 
   label, 
@@ -41,7 +38,7 @@ function NeuButton({
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { stiffness: 400, damping: 20 });
+    scale.value = withSpring(0.96, { stiffness: 400, damping: 20 });
   };
 
   const handlePressOut = () => {
@@ -55,24 +52,17 @@ function NeuButton({
       onPressOut={handlePressOut}
       style={{ width: "47%", aspectRatio: 1, marginBottom: "6%" }}
     >
-      <Animated.View style={[styles.neuOuter, animatedStyle]}>
-        <View style={[
-          styles.neuInner, 
-          isSelected && styles.neuInnerSelected
-        ]}>
-          <View style={styles.neuContent}>
-            <AppText 
-              style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {label}
-            </AppText>
-            <AppText style={styles.tierDesc}>
-              {desc}
-            </AppText>
-          </View>
-        </View>
+      <Animated.View style={[styles.tierCard, isSelected && styles.tierCardSelected, animatedStyle]}>
+        <AppText 
+          style={[styles.tierLabel, isSelected && { color: colors.brandPrimary }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {label}
+        </AppText>
+        <AppText style={styles.tierDesc}>
+          {desc}
+        </AppText>
       </Animated.View>
     </Pressable>
   );
@@ -96,7 +86,7 @@ export default function CommitmentScreen() {
           <Pressable onPress={() => router.back()} style={styles.headerBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
           </Pressable>
-          <BrandLogo size={20} />
+          <BrandLogo size={20} color={colors.onSurface} />
           <Pressable onPress={() => router.replace("/")} style={styles.headerBtn}>
             <AppText style={styles.skipText}>Skip</AppText>
           </Pressable>
@@ -111,20 +101,20 @@ export default function CommitmentScreen() {
             </AppText>
           </View>
 
-          {/* 2x2 Neumorphic Grid */}
+          {/* 2x2 Grid */}
           <View style={styles.gridContainer}>
             {TIERS.map((tier) => (
-              <NeuButton 
-                key={tier.id}
-                isSelected={selected === tier.id}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setSelected(tier.id);
-                }}
-                label={formatCurrency(tier.amount, "NGN")}
-                desc={tier.desc}
-              />
-            ))}
+            <TierButton 
+              key={tier.id}
+              isSelected={selected === tier.id}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setSelected(tier.id);
+              }}
+              label={formatCurrency(tier.amount, "NGN")}
+              desc={tier.desc}
+            />
+          ))}
           </View>
 
           <View style={styles.footer}>
@@ -145,8 +135,8 @@ export default function CommitmentScreen() {
             <Pressable onPress={handleContinue}>
               <View style={styles.continueOuter}>
                  <View style={styles.continueInner}>
-                    <AppText style={styles.continueText}>Continue</AppText>
-                    <Ionicons name="arrow-forward" size={20} color={colors.surface} />
+                     <AppText style={styles.continueText}>Continue</AppText>
+                     <Ionicons name="arrow-forward" size={20} color="#0A1A0F" />
                  </View>
               </View>
             </Pressable>
@@ -161,7 +151,7 @@ export default function CommitmentScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: NEU_BG 
+    backgroundColor: NEU_BG,
   },
   header: { 
     flexDirection: "row", 
@@ -205,38 +195,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /* Neumorphic Tier Button Styles */
-  neuOuter: {
+  /* Tier Card Styles */
+  tierCard: {
     flex: 1,
-    borderRadius: 24,
-    backgroundColor: NEU_BG,
-    // Dark bottom-right shadow
-    shadowColor: DARK_SHADOW,
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-    elevation: 8,
-  },
-  neuInner: {
-    flex: 1,
-    borderRadius: 24,
-    backgroundColor: NEU_BG,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceSecondary,
     padding: 20,
     justifyContent: "flex-end",
-    // Light top-left shadow
-    shadowColor: LIGHT_SHADOW,
-    shadowOffset: { width: -8, height: -8 },
-    shadowOpacity: 0.9,
-    shadowRadius: 15,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  neuInnerSelected: {
-    backgroundColor: "#D6DCE5", // slightly darker, mimicking being pressed in
-    borderColor: "rgba(0,0,0,0.05)",
-  },
-  neuContent: {
-    alignItems: "flex-start"
+  tierCardSelected: {
+    borderColor: colors.brandPrimary,
+    borderWidth: 2,
+    backgroundColor: "#F5FDF7",
   },
   tierLabel: { 
     fontSize: 28, 
@@ -254,7 +231,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.brandPrimary,
+    backgroundColor: "#0A4A2A",
     position: "absolute",
     top: -24,
     right: 0,
@@ -297,7 +274,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   continueText: { 
-    color: colors.surface, 
+    color: "#0A1A0F", 
     fontSize: 18, 
     fontFamily: font.bold 
   },

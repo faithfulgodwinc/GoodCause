@@ -232,7 +232,7 @@ export function EmptyState({ icon = "inbox", title, message, actionLabel, onActi
 /* ---------------- BrandLogo ---------------- */
 export function BrandLogo({
   size = 24,
-  color = colors.brandPrimary,
+  color = colors.onSurface,
   style,
 }: {
   size?: number;

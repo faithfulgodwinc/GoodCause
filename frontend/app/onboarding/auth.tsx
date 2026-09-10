@@ -127,7 +127,7 @@ export default function AuthScreen() {
       <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
           <View style={styles.header}>
-            <BrandLogo size={20} color={colors.surface} />
+            <BrandLogo size={20} color={colors.brandPrimary} />
           </View>
 
           <View style={styles.content}>
@@ -159,11 +159,10 @@ export default function AuthScreen() {
                   />
                 )}
 
-                <Pressable style={styles.socialBtnPrimary} onPress={() => setStep("email")}>
-                  <View style={styles.socialIconWrap}>
-                    <Ionicons name="mail" size={20} color={colors.surface} />
-                  </View>
-                  <AppText style={styles.socialTextSolid}>Continue with email</AppText>
+                <Pressable onPress={() => setStep("email")} style={styles.emailTextBtn}>
+                  <AppText style={styles.emailTextBtnLabel}>
+                    or continue with email
+                  </AppText>
                 </Pressable>
               </View>
             )}
@@ -250,8 +249,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  socialTextSolid: { color: colors.surface, fontSize: 16, fontFamily: font.semibold },
-  socialTextCentered: { color: colors.surface, fontSize: 16, fontFamily: font.semibold },
+  socialTextSolid: { color: "#0A1A0F", fontSize: 16, fontFamily: font.semibold },
+  socialTextCentered: { color: "#0A1A0F", fontSize: 16, fontFamily: font.semibold },
+
+  emailTextBtn: { alignItems: "center", paddingVertical: 14, marginTop: 4 },
+  emailTextBtnLabel: {
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 13,
+    fontFamily: font.medium,
+    textDecorationLine: "underline",
+    letterSpacing: 0.2,
+  },
   
   socialBtnOutline: {
     height: 48,

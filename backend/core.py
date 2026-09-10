@@ -13,7 +13,9 @@ from supabase_adapter import db
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "goodcause_super_secret_jwt_key_2026_nigeria_trusted")
+JWT_SECRET = os.environ.get("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is missing or empty")
 SESSION_DAYS = 7
 
 

@@ -12,19 +12,19 @@ export const colors = {
   onSurfaceTertiary: "#8C8C8C",  // Timestamps and metadata
   onSurfaceInverse: "#FFFFFF",
 
-  // GoFundMe Signature Green
-  brand: "#02A95C",
-  brandPrimary: "#02A95C",       // Signature GoFundMe Kelly Green
+  // brand — GoodCause Green (as per design mockup)
+  brand: "#16A34A",
+  brandPrimary: "#16A34A",
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#008748",
-  brandTertiary: "#E8F5E9",
-  onBrandTertiary: "#00693E",
-  brandDark: "#005C33",
+  brandSecondary: "#22C55E",
+  brandTertiary: "#E8F9F1",
+  onBrandTertiary: "#15803D",
+  brandDark: "#14532D",
 
   // Warm accent & semantic
   accent: "#F59E0B",
   accentTint: "#FEF3C7",
-  success: "#02A95C",
+  success: "#16A34A",
   onSuccess: "#FFFFFF",
   warning: "#D97706",
   onWarning: "#FFFFFF",
@@ -80,10 +80,10 @@ export const CATEGORY_COLORS: Record<string, string> = {
   medical: "#E02E2E",
   education: "#0284C7",
   emergency: "#D97706",
-  community: "#02A95C",
+  community: "#16A34A",
   memorial: "#6B7280",
   business: "#8B5CF6",
-  environment: "#02A95C",
+  environment: "#16A34A",
   animals: "#78716C",
   others: "#71717A",
 };
