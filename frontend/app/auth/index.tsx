@@ -113,7 +113,7 @@ export default function AuthScreen() {
   const onAuthSuccess = useCallback(
     async (isNew: boolean) => {
       const onboardingDone = await storage.getItem("gc_onboarding_done", false);
-      if (!onboardingDone) {
+      if (!onboardingDone && Platform.OS !== "web") {
         router.replace("/onboarding");
         return;
       }

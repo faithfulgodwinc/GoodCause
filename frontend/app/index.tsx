@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, Platform } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/src/context/auth";
 import { colors } from "@/src/theme";
@@ -40,8 +40,8 @@ export default function Index() {
     );
   }
 
-  // First-time user who hasn't seen onboarding yet
-  if (!onboardingDone) return <Redirect href="/onboarding" />;
+  // First-time mobile user who hasn't seen onboarding yet (skipped on web)
+  if (!onboardingDone && Platform.OS !== "web") return <Redirect href="/onboarding" />;
 
   if (!user) return <Redirect href="/auth" />;
 
