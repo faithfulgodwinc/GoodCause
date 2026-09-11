@@ -388,9 +388,23 @@ export default function AuthScreen() {
 
                   <AppText variant="caption" color={colors.muted} style={styles.legalNote}>
                     By continuing to use GoodCause, you{"\n"}agree to the GoodCause{" "}
-                    <AppText variant="caption" color={colors.brandPrimary} style={{ textDecorationLine: "underline" }}>terms</AppText>
+                    <AppText
+                      variant="caption"
+                      color={colors.brandPrimary}
+                      style={{ textDecorationLine: "underline" }}
+                      onPress={() => router.push("/privacy")}
+                    >
+                      terms
+                    </AppText>
                     {" "}and{" "}
-                    <AppText variant="caption" color={colors.brandPrimary} style={{ textDecorationLine: "underline" }}>privacy policy</AppText>.
+                    <AppText
+                      variant="caption"
+                      color={colors.brandPrimary}
+                      style={{ textDecorationLine: "underline" }}
+                      onPress={() => router.push("/privacy")}
+                    >
+                      privacy policy
+                    </AppText>.
                   </AppText>
                 </Animated.View>
               )}

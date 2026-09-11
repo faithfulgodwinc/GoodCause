@@ -86,6 +86,7 @@ export default function Profile() {
         <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
         <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
         <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/paywall")} testID="menu-pro" />
+        <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
         {user?.role === "admin" ? (
           <MenuItem icon="shield" label="Admin dashboard" onPress={() => router.push("/admin")} testID="menu-admin" highlight />
         ) : null}
