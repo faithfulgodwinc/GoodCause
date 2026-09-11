@@ -57,7 +57,7 @@ export default function Profile() {
                 {formatNaira(impact?.total_contributed_kobo || 0)}
               </AppText>
               <AppText variant="body" style={{ marginTop: spacing.xs }}>
-                across {impact?.causes_supported || 0} {impact?.causes_supported === 1 ? "cause" : "causes"} — thank you for your generosity.
+                across {impact?.causes_supported || 0} {impact?.causes_supported === 1 ? "cause" : "causes"}, thank you for your generosity.
               </AppText>
               <View style={styles.statsRow}>
                 <Stat value={String(impact?.donations_count || 0)} label="Donations" />
