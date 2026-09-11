@@ -15,9 +15,12 @@ export function getBaseUrl(): string {
   if (Platform.OS === "web") {
     if (typeof window !== "undefined" && window.location) {
       const host = window.location.hostname || "localhost";
+      if (host !== "localhost" && host !== "127.0.0.1") {
+        return "https://goodcause.onrender.com/api";
+      }
       return `http://${host}:8000/api`;
     }
-    return "http://localhost:8000/api";
+    return "https://goodcause.onrender.com/api";
   }
 
   // On Native Mobile without env, use hostUri
@@ -75,7 +78,7 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     });
   } catch (e: any) {
     console.error("Fetch failed:", e.message, "URL:", `${base}${path}`);
-    throw new ApiError(0, "You appear to be offline. Please check your connection.");
+    throw new ApiError(0, "Unable to reach server. Please check your internet connection or try again.");
   }
 
   if (resp.status === 204) return undefined as T;

@@ -86,8 +86,11 @@ app.include_router(routes_payouts.router)
 allowed_origins = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
+    "http://localhost:8082",
     "exp://localhost:8081",
-    "https://goodcause-eight.vercel.app"
+    "https://goodcause-eight.vercel.app",
+    "https://goodcause.app",
+    "https://www.goodcause.app"
 ]
 frontend_url = os.environ.get("FRONTEND_RETURN_URL", "")
 if frontend_url.startswith("http"):
@@ -98,7 +101,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"http://localhost:.*|http://127\.0\.0\.1:.*",
+    allow_origin_regex=r".*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
