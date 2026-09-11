@@ -10,6 +10,8 @@ import {
   Image,
   Animated,
   Dimensions,
+  Easing,
+  ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
@@ -17,7 +19,9 @@ import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Path } from "react-native-svg";
 
 import { useAuth } from "@/src/context/auth";
 import { AppText, BrandLogo, FirstTimePreloader } from "@/src/components/ui";
@@ -27,10 +31,19 @@ import { storage } from "@/src/utils/storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Safely load the native Google Sign-In SDK.
-// It requires a compiled native module (not available in Expo Go), so we use
-// a dynamic require() wrapped in try-catch. In Expo Go this returns null and
-// we fall back to expo-auth-session. In a real native build it's fully loaded.
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const IMAGE_SIZE = SCREEN_W * 1.5;
+
+const GoogleIcon = ({ size = 20 }: { size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 48 48">
+    <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+    <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </Svg>
+);
+
+// Native Google Sign-in loader
 let GoogleSignin: any = null;
 let statusCodes: any = {};
 try {
@@ -46,11 +59,10 @@ try {
     });
   }
 } catch {
-  // Running in Expo Go — native Google Sign-In unavailable, will use web OAuth
+  // Running in Expo Go — native Google Sign-In unavailable
 }
 
 type Step = "main" | "email" | "code";
-
 const OTP_RESEND_SECONDS = 60;
 
 export default function AuthScreen() {
@@ -75,22 +87,22 @@ export default function AuthScreen() {
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Animations ─────────────────────────────────────────────────────────────
-  const stepAnim = useRef(new Animated.Value(0)).current;
+  // ── Rolling background animation ─────────────────────────────────────────
+  const panY = useRef(new Animated.Value(0)).current;
 
-  const animateToStep = (toStep: Step) => {
-    Animated.sequence([
-      Animated.timing(stepAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
-      Animated.timing(stepAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => {
-      setStep(toStep);
-    });
-  };
+  useEffect(() => {
+    panY.setValue(0);
+    Animated.loop(
+      Animated.timing(panY, {
+        toValue: -IMAGE_SIZE,
+        duration: 40000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, [panY]);
 
   // ── Google OAuth (web) ─────────────────────────────────────────────────────
-  // We ONLY pass the Web Client ID here. If we pass androidClientId, Expo Go on Android 
-  // will try to use it in the browser flow, which throws a 404 from Google because 
-  // Android Client IDs don't have web redirect URIs.
   const [request, response, promptAsync] = Google.useAuthRequest({
     responseType: "id_token",
     clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "",
@@ -158,9 +170,7 @@ export default function AuthScreen() {
     try {
       await sendOtp(trimmed);
       startResendTimer();
-      animateToStep("code");
-      // Small delay so the animation completes before updating step
-      setTimeout(() => setStep("code"), 160);
+      setStep("code");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Couldn't send code. Please try again.");
     } finally {
@@ -225,12 +235,6 @@ export default function AuthScreen() {
     setError("");
     setGoogleLoading(true);
     try {
-      console.log("=== GOOGLE SIGN-IN DEBUG ===");
-      console.log("Web Client ID:", process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
-      console.log("Request Object URL:", request?.url);
-      console.log("============================");
-
-      // ── Native build: use @react-native-google-signin for best UX ──────────
       if (GoogleSignin && Platform.OS !== "web") {
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
         const res = await GoogleSignin.signIn();
@@ -243,15 +247,12 @@ export default function AuthScreen() {
         return;
       }
 
-      // ── Expo Go / web: use expo-auth-session (browser OAuth) ───────────────
       if (!request) {
         setError("Google sign-in is not ready yet. Please wait a moment.");
         setGoogleLoading(false);
         return;
       }
       await promptAsync();
-      // result handled in the useEffect above via `response`
-
     } catch (e: any) {
       const isCancelled =
         e.code === statusCodes.SIGN_IN_CANCELLED ||
@@ -289,396 +290,351 @@ export default function AuthScreen() {
     }
   };
 
-  // ── Preloader ──────────────────────────────────────────────────────────────
   if (showPreloader) {
     return <FirstTimePreloader message="Welcome back to GoodCause..." />;
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/auth_hero.jpg")}
-        style={styles.heroImage}
-        resizeMode="cover"
-      />
+      {/* Edge to edge rolling background grid */}
+      <View style={[StyleSheet.absoluteFill, { height: SCREEN_H * 0.65, overflow: "hidden", alignItems: "center" }]}>
+        <Animated.View style={{ 
+          width: IMAGE_SIZE * 3,
+          flexDirection: "row",
+          flexWrap: "wrap",
+          transform: [
+            { translateY: panY },
+            { translateX: panY }
+          ] 
+        }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Image 
+              key={i}
+              source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+              style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+              resizeMode="cover"
+            />
+          ))}
+        </Animated.View>
+        <LinearGradient
+          colors={["transparent", "rgba(8,10,12,0.6)", "rgba(8,10,12,1)", "#080a0c"]}
+          locations={[0.2, 0.5, 0.8, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      </View>
 
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* Spacer to push the card down to overlap the image */}
-          <View style={styles.spacer} />
-
-          {/* White Bottom Card */}
-          <View style={styles.card}>
-            {/* ── Logo + heading ── */}
+      <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.header}>
-              <BrandLogo size={32} color={colors.brandPrimary} style={{ marginBottom: spacing.lg }} />
-              {step === "code" ? (
-                <>
-                  <AppText variant="display" style={styles.title}>Check your email</AppText>
-                  <AppText variant="body" color={colors.onSurfaceSecondary} style={styles.subtitle}>
-                    We sent a 6-digit code to{"\n"}
-                    <AppText variant="bodyMedium" color={colors.onSurface}>{email}</AppText>
-                  </AppText>
-                </>
-              ) : step === "email" ? (
-                <>
-                  <AppText variant="display" style={styles.title}>What's your email?</AppText>
-                  <AppText variant="body" color={colors.onSurfaceSecondary} style={styles.subtitle}>
-                    We'll send you a code to sign in.
-                  </AppText>
-                </>
-              ) : (
-                <>
-                  <AppText variant="display" style={styles.title}>Welcome to{"\n"}your home for help</AppText>
-                </>
-              )}
+              <BrandLogo size={22} color={colors.brandPrimary} />
             </View>
 
-            <View style={styles.inner}>
-              {/* ── Step 0: Main (SSO Only) ── */}
-              {step === "main" && (
-                <Animated.View style={[styles.form, { opacity: stepAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
-                  <Pressable
-                    onPress={() => animateToStep("email")}
-                    style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.8 }]}
-                    testID="auth-email-button"
-                  >
-                    <AppText variant="button" color="#fff" style={styles.btnText}>
-                      Continue with Email
-                    </AppText>
-                  </Pressable>
+            <View style={styles.content}>
+              <View style={{ flex: 1, minHeight: 60 }} />
 
+              {/* Title & subtitle */}
+              <AppText style={styles.title}>
+                {step === "code"
+                  ? "Check your email"
+                  : step === "email"
+                  ? "What's your email?"
+                  : "Welcome to\nyour home for help"}
+              </AppText>
+              <AppText style={styles.subtitle}>
+                {step === "code"
+                  ? `We sent a 6-digit code to ${email}`
+                  : step === "email"
+                  ? "We'll send you a code to sign in."
+                  : "Create your secure profile to begin your journey and watch your impact grow."}
+              </AppText>
+
+              {/* Step 0: Main options */}
+              {step === "main" && (
+                <View style={styles.formGroup}>
                   <Pressable
                     onPress={googleSignIn}
                     disabled={googleLoading}
-                    style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.7 }]}
+                    style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
                     testID="auth-google-button"
                   >
-                    <AppText variant="button" color={colors.onSurface} style={styles.outlineBtnText}>
-                      {googleLoading ? "Connecting…" : "Sign in with Google"}
+                    <View style={styles.socialIconWrap}>
+                      <GoogleIcon size={20} />
+                    </View>
+                    <AppText style={styles.outlineBtnText}>
+                      {googleLoading ? "Connecting…" : "Continue with Google"}
                     </AppText>
                   </Pressable>
 
-                  {error ? <ErrorBanner message={error} /> : null}
-
-                  <View style={styles.dividerRow}>
-                    <View style={styles.dividerLine} />
-                    <AppText variant="caption" color={colors.muted} style={{ paddingHorizontal: spacing.sm }}>or</AppText>
-                    <View style={styles.dividerLine} />
-                  </View>
-
-                  {Platform.OS === "ios" ? (
-                    <Pressable onPress={appleSignIn} disabled={appleLoading} style={styles.textBtn}>
-                      <AppText variant="button" color={colors.brandPrimary}>
+                  {Platform.OS === "ios" && (
+                    <Pressable
+                      onPress={appleSignIn}
+                      disabled={appleLoading}
+                      style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
+                    >
+                      <Feather name="apple" size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <AppText style={styles.outlineBtnText}>
                         {appleLoading ? "Connecting…" : "Continue with Apple"}
                       </AppText>
                     </Pressable>
-                  ) : (
-                    <View style={{ height: 44 }} />
                   )}
 
-                  <AppText variant="caption" color={colors.muted} style={styles.legalNote}>
-                    By continuing to use GoodCause, you{"\n"}agree to the GoodCause{" "}
-                    <AppText
-                      variant="caption"
-                      color={colors.brandPrimary}
-                      style={{ textDecorationLine: "underline" }}
-                      onPress={() => router.push("/privacy")}
-                    >
-                      terms
+                  <Pressable
+                    onPress={() => setStep("email")}
+                    style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
+                    testID="auth-email-button"
+                  >
+                    <AppText style={styles.primaryBtnText}>
+                      Continue with Email
                     </AppText>
-                    {" "}and{" "}
-                    <AppText
-                      variant="caption"
-                      color={colors.brandPrimary}
-                      style={{ textDecorationLine: "underline" }}
-                      onPress={() => router.push("/privacy")}
-                    >
-                      privacy policy
-                    </AppText>.
-                  </AppText>
-                </Animated.View>
+                  </Pressable>
+                </View>
               )}
 
-              {/* ── Step 1: Email Input ── */}
+              {/* Step 1: Email Input */}
               {step === "email" && (
-                <Animated.View style={[styles.form, { opacity: stepAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
-                  <View style={styles.fieldGroup}>
-                    <View style={styles.inputBox}>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="name@example.com"
-                        placeholderTextColor={colors.muted}
-                        value={email}
-                        onChangeText={(t) => { setEmail(t); setError(""); }}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        returnKeyType="done"
-                        onSubmitEditing={handleSendOtp}
-                        testID="auth-email-input"
-                        autoFocus
-                      />
-                    </View>
+                <View style={styles.formGroup}>
+                  <View style={styles.inputBox}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="name@example.com"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      value={email}
+                      onChangeText={(t) => { setEmail(t); setError(""); }}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      returnKeyType="done"
+                      onSubmitEditing={handleSendOtp}
+                      testID="auth-email-input"
+                      autoFocus
+                    />
                   </View>
-
-                  {error ? <ErrorBanner message={error} /> : null}
 
                   <Pressable
                     onPress={handleSendOtp}
                     disabled={emailLoading}
                     style={({ pressed }) => [
                       styles.primaryBtn,
-                      pressed && { opacity: 0.8 },
+                      pressed && { opacity: 0.85 },
                       emailLoading && { opacity: 0.6 },
                     ]}
                     testID="auth-send-otp-button"
                   >
-                    <AppText variant="button" color="#fff" style={styles.btnText}>
-                      {emailLoading ? "Sending…" : "Send code"}
-                    </AppText>
+                    {emailLoading ? (
+                      <ActivityIndicator color="#080a0c" />
+                    ) : (
+                      <AppText style={styles.primaryBtnText}>Send code</AppText>
+                    )}
                   </Pressable>
 
-                  <Pressable onPress={() => animateToStep("main")} style={styles.textBtn}>
-                    <AppText variant="button" color={colors.onSurfaceSecondary}>
-                      Back
-                    </AppText>
+                  <Pressable onPress={() => setStep("main")} style={styles.textBtn}>
+                    <AppText style={styles.textBtnLabel}>Back to options</AppText>
                   </Pressable>
-                </Animated.View>
+                </View>
               )}
 
-              {/* ── Step 2: OTP Code + (optional) Name ── */}
+              {/* Step 2: OTP Code */}
               {step === "code" && (
-                <Animated.View style={[styles.form, { opacity: stepAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
-                  <View style={styles.fieldGroup}>
-                    <OtpInput value={code} onChange={(v) => { setCode(v); setError(""); if (v.length === 6) setIsNewUser(false); }} />
+                <View style={styles.formGroup}>
+                  <View style={styles.inputBox}>
+                    <TextInput
+                      style={[styles.input, { letterSpacing: 8, textAlign: "center", fontSize: 22, fontFamily: font.bold }]}
+                      placeholder="123456"
+                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      value={code}
+                      onChangeText={(t) => { setCode(t.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      testID="auth-otp-input"
+                      autoFocus
+                    />
                   </View>
 
                   {(isNewUser || code.length === 6) && (
-                    <View style={[styles.fieldGroup, { marginTop: spacing.md }]}>
-                      <AppText variant="label" style={styles.label}>
-                        Your name <AppText variant="caption" color={colors.muted}>(for new accounts)</AppText>
-                      </AppText>
-                      <View style={styles.inputBox}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="e.g. Faithful Godwin"
-                          placeholderTextColor={colors.muted}
-                          value={name}
-                          onChangeText={setName}
-                          autoCapitalize="words"
-                          returnKeyType="done"
-                          testID="auth-name-input"
-                        />
-                      </View>
+                    <View style={styles.inputBox}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Your full name"
+                        placeholderTextColor="rgba(255,255,255,0.4)"
+                        value={name}
+                        onChangeText={setName}
+                        autoCapitalize="words"
+                        returnKeyType="done"
+                        testID="auth-name-input"
+                      />
                     </View>
                   )}
-
-                  {error ? <ErrorBanner message={error} /> : null}
 
                   <Pressable
                     onPress={handleVerify}
                     disabled={verifyLoading}
                     style={({ pressed }) => [
                       styles.primaryBtn,
-                      pressed && { opacity: 0.8 },
+                      pressed && { opacity: 0.85 },
                       verifyLoading && { opacity: 0.6 },
                     ]}
                     testID="auth-verify-button"
                   >
-                    <AppText variant="button" color="#fff" style={styles.btnText}>
-                      {verifyLoading ? "Verifying…" : "Sign in"}
-                    </AppText>
+                    {verifyLoading ? (
+                      <ActivityIndicator color="#080a0c" />
+                    ) : (
+                      <AppText style={styles.primaryBtnText}>Sign in</AppText>
+                    )}
                   </Pressable>
 
                   <View style={styles.codeActions}>
                     <Pressable
                       onPress={handleSendOtp}
                       disabled={resendTimer > 0 || emailLoading}
-                      style={{ opacity: resendTimer > 0 ? 0.4 : 1 }}
-                      testID="auth-resend-button"
+                      style={{ opacity: resendTimer > 0 ? 0.5 : 1 }}
                     >
-                      <AppText variant="label" color={colors.brandPrimary}>
+                      <AppText style={{ color: colors.brandPrimary, fontSize: 13, fontFamily: font.semibold }}>
                         {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend code"}
                       </AppText>
                     </Pressable>
 
-                    <Pressable onPress={() => { animateToStep("email"); setCode(""); setName(""); setError(""); }} hitSlop={12}>
-                      <AppText variant="label" color={colors.onSurfaceSecondary}>
+                    <Pressable onPress={() => { setStep("email"); setCode(""); setName(""); setError(""); }}>
+                      <AppText style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontFamily: font.medium }}>
                         Change email
                       </AppText>
                     </Pressable>
                   </View>
-                </Animated.View>
+                </View>
               )}
+
+              {error ? (
+                <View style={styles.errorBox}>
+                  <Feather name="alert-circle" size={14} color={colors.error} style={{ marginRight: 6 }} />
+                  <AppText style={styles.errorText}>{error}</AppText>
+                </View>
+              ) : null}
+
+              {/* Legal Footer */}
+              <AppText style={styles.legalNote}>
+                By continuing to use goodcause, you agree to our{"\n"}
+                <AppText
+                  style={styles.legalLink}
+                  onPress={() => router.push("/privacy")}
+                >
+                  Terms of Service
+                </AppText>
+                {" "}and{" "}
+                <AppText
+                  style={styles.legalLink}
+                  onPress={() => router.push("/privacy")}
+                >
+                  Privacy Policy
+                </AppText>.
+              </AppText>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </View>
   );
 }
-
-// ─── OTP digit input ──────────────────────────────────────────────────────────
-
-function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const inputRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    // Auto-focus when step changes to code
-    setTimeout(() => inputRef.current?.focus(), 250);
-  }, []);
-
-  const digits = value.padEnd(6, " ").split("");
-
-  return (
-    <Pressable style={styles.otpRow} onPress={() => inputRef.current?.focus()}>
-      {digits.map((d, i) => (
-        <View
-          key={i}
-          style={[
-            styles.otpBox,
-            value.length === i && styles.otpBoxActive,
-            d.trim() && styles.otpBoxFilled,
-          ]}
-        >
-          <AppText variant="h1" style={styles.otpDigit}>{d.trim()}</AppText>
-          {value.length === i && <View style={styles.otpCursor} />}
-        </View>
-      ))}
-      <TextInput
-        ref={inputRef}
-        value={value}
-        onChangeText={(t) => onChange(t.replace(/\D/g, "").slice(0, 6))}
-        keyboardType="number-pad"
-        maxLength={6}
-        style={styles.otpHidden}
-        testID="auth-otp-input"
-        caretHidden
-      />
-    </Pressable>
-  );
-}
-
-// ─── Error banner ─────────────────────────────────────────────────────────────
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <View style={styles.errorBox}>
-      <Feather name="alert-circle" size={14} color={colors.error} style={{ marginRight: spacing.xs }} />
-      <AppText variant="caption" color={colors.error} style={{ flex: 1 }}>{message}</AppText>
-    </View>
-  );
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#02A95C" }, // Fallback color if image doesn't load
-  heroImage: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    width: "100%",
-  },
-  keyboardView: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#080a0c" },
   scroll: { flexGrow: 1 },
-  spacer: { height: Dimensions.get("window").height * 0.35 },
-  card: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 48,
-    paddingHorizontal: 24,
-    paddingBottom: 64,
-    alignItems: "center",
-  },
-  inner: { width: "100%", maxWidth: 400 },
+  header: { alignItems: "center", paddingTop: 16 },
+  content: { flex: 1, paddingHorizontal: 28, paddingBottom: 36, justifyContent: "flex-end" },
 
-  header: { alignItems: "center", marginBottom: 32 },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: font.bold,
-    color: "#333333",
+    color: "#FFFFFF",
     textAlign: "center",
+    lineHeight: 38,
     letterSpacing: -0.5,
-    marginBottom: spacing.sm,
-    lineHeight: 34,
+    marginBottom: 10,
   },
-  subtitle: { fontSize: 15, textAlign: "center", lineHeight: 22, color: colors.onSurfaceSecondary },
+  subtitle: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    marginBottom: 28,
+    lineHeight: 22,
+    paddingHorizontal: 12,
+  },
 
-  form: { width: "100%", gap: 16 },
+  formGroup: { gap: 12, marginBottom: 20 },
 
   primaryBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    backgroundColor: "#02A95C", // GoFundMe style green
-    height: 52, borderRadius: 12,
+    height: 52,
+    backgroundColor: colors.brandPrimary,
+    borderRadius: 26,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  btnText: { fontSize: 16, fontFamily: font.bold },
+  primaryBtnText: { color: "#080a0c", fontSize: 16, fontFamily: font.bold },
 
   outlineBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1, borderColor: "#E5E5E5",
-    height: 52, borderRadius: 12,
+    height: 52,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    borderRadius: 26,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
   },
-  outlineBtnText: { fontSize: 16, fontFamily: font.bold, color: "#333333" },
+  outlineBtnText: { color: "#FFFFFF", fontSize: 16, fontFamily: font.semibold },
+  socialIconWrap: { width: 24, alignItems: "center", marginRight: 8 },
 
-  textBtn: { paddingVertical: spacing.md, alignItems: "center", justifyContent: "center" },
-
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 8 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#E5E5E5" },
-
-  fieldGroup: { gap: spacing.xs },
-  label: { fontSize: 13, fontFamily: font.medium, color: colors.onSurface, marginLeft: 4 },
   inputBox: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#FFFFFF", borderRadius: 12,
-    borderWidth: 1, borderColor: "#E5E5E5",
-    paddingHorizontal: spacing.md, height: 52,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 26,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 20,
+    height: 52,
+    justifyContent: "center",
   },
-  input: { flex: 1, fontFamily: font.regular, fontSize: 16, color: colors.onSurface },
+  input: { flex: 1, fontFamily: font.medium, fontSize: 16, color: "#FFFFFF" },
 
-  errorBox: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#FFF0F0", borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-  },
-
-  legalNote: { textAlign: "center", fontSize: 12, lineHeight: 18, color: colors.muted, marginTop: spacing.md },
-
-  // OTP
-  otpRow: { flexDirection: "row", gap: spacing.sm, justifyContent: "center" },
-  otpBox: {
-    width: 48, height: 58, borderRadius: 12,
-    backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E5E5E5",
-    alignItems: "center", justifyContent: "center",
-  },
-  otpBoxActive: { backgroundColor: "#FFFFFF", borderWidth: 2, borderColor: "#02A95C" },
-  otpBoxFilled: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E5E5E5" },
-  otpDigit: { fontSize: 24, fontFamily: font.bold, color: colors.onSurface },
-  otpCursor: {
-    position: "absolute", bottom: 12, width: 2, height: 20,
-    backgroundColor: "#02A95C", borderRadius: 1,
-  },
-  otpHidden: {
-    position: "absolute", width: 1, height: 1, opacity: 0,
-  },
+  textBtn: { paddingVertical: 12, alignItems: "center" },
+  textBtnLabel: { color: "rgba(255,255,255,0.6)", fontSize: 14, fontFamily: font.medium },
 
   codeActions: {
-    flexDirection: "row", justifyContent: "space-between",
-    alignItems: "center", paddingHorizontal: spacing.sm, marginTop: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    marginTop: 4,
+  },
+
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(224,46,46,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(224,46,46,0.4)",
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: 16,
+  },
+  errorText: { color: "#FF6B6B", fontSize: 13, fontFamily: font.medium, flex: 1 },
+
+  legalNote: {
+    textAlign: "center",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "rgba(255,255,255,0.4)",
+    marginTop: 8,
+  },
+  legalLink: {
+    color: colors.brandPrimary,
+    textDecorationLine: "underline",
+    fontFamily: font.semibold,
   },
 });
