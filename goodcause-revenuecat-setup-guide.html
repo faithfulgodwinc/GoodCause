@@ -35,6 +35,7 @@
   .warning { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: 13px; color: #9a3412; }
   .info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: 13px; color: #1e40af; }
   .success { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: 13px; color: #15803d; }
+  .changed { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #92400e; border-radius: 0 6px 6px 0; }
   .step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
   .step-dot { width: 20px; height: 20px; border-radius: 50%; background: #f7f8fa; border: 1px solid #e5e7eb; color: #57606a; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
   .step-body { flex: 1; }
@@ -48,28 +49,31 @@
 <div class="wrap">
 
   <h1>GoodCause — RevenueCat Production Setup</h1>
-  <p class="subtitle">Full walkthrough: Google Play Console → RevenueCat dashboard → Expo/React Native code config</p>
+  <p class="subtitle">Full walkthrough: Google Play Console → Google Cloud → RevenueCat dashboard → Expo/React Native code config</p>
 
-  
+  <div class="changed">
+    <strong>Updated:</strong> Google Play Console has removed the old "API access" menu. You no longer link a Google Cloud project to Play Console. Instead, you create a Service Account in Google Cloud first, then add it directly as a user in Play Console. Steps 1.3–1.5 below reflect this new flow.
+  </div>
+
   <div class="info">
     <strong>What you're building:</strong> A monthly "commitment" subscription where the user picks how much they want to give (₦1,000 / ₦2,500 / ₦5,000 / ₦10,000 per month). Each tier is a separate in-app subscription product. RevenueCat manages entitlement, receipt validation, and cross-platform state. Your app already has the sandbox packages and paywall UI — this guide wires it all up to real billing.
   </div>
 
-  
+
   <div class="section">
-    <h2><span class="section-num">1</span> Google Play Console — Create Subscription Products</h2>
+    <h2><span class="section-num">1</span> Google Play Console — Subscriptions &amp; Service Account</h2>
 
     <h3>1.1 — Prerequisites</h3>
     <ul>
       <li>Your app must be uploaded to Play Console at least once (even as an internal test track) before you can create in-app products.</li>
       <li>App package: <code>com.goodcause.app</code></li>
-      <li>Your developer account needs a Google Payments merchant account linked.</li>
+      <li>Your developer account must have a Google Payments merchant account linked.</li>
     </ul>
 
     <h3>1.2 — Create the Subscription Products</h3>
     <div class="step"><div class="step-dot">1</div><div class="step-body">Go to <strong>Play Console → Your App → Monetise → Products → Subscriptions</strong></div></div>
     <div class="step"><div class="step-dot">2</div><div class="step-body">Click <strong>"Create subscription"</strong></div></div>
-    <div class="step"><div class="step-dot">3</div><div class="step-body">Create all four products using these exact product IDs (they must match what RevenueCat expects):
+    <div class="step"><div class="step-dot">3</div><div class="step-body">Create all four products using these exact product IDs:
 
     <div class="table-wrap"><table>
       <tr><th>Product ID</th><th>Name</th><th>Price (NGN)</th><th>Billing period</th></tr>
@@ -91,16 +95,33 @@
     </div></div>
     <div class="step"><div class="step-dot">5</div><div class="step-body">Click <strong>Activate</strong> on each base plan. Products must be active before RevenueCat can sync them.</div></div>
 
-    <h3>1.3 — Link Google Play to RevenueCat (Service Account)</h3>
-    <div class="step"><div class="step-dot">1</div><div class="step-body">In Play Console: <strong>Setup → API access</strong> → click <strong>"Link to a Google Cloud project"</strong> (create one if needed)</div></div>
-    <div class="step"><div class="step-dot">2</div><div class="step-body">In Google Cloud Console, go to <strong>IAM &amp; Admin → Service Accounts</strong> → create a new service account</div></div>
-    <div class="step"><div class="step-dot">3</div><div class="step-body">Grant the service account the role: <strong>Service Account User</strong></div></div>
-    <div class="step"><div class="step-dot">4</div><div class="step-body">Create a JSON key for the service account → download the <code>.json</code> file</div></div>
-    <div class="step"><div class="step-dot">5</div><div class="step-body">Back in Play Console → <strong>Setup → API access</strong> → find the service account → click <strong>Grant access</strong> → give it <strong>Finance</strong> permission</div></div>
-    <div class="warning">Keep the service account JSON file secret. You will paste its contents into RevenueCat in Part 2.</div>
+    <h3>1.3 — Create a Google Cloud Service Account</h3>
+    <div class="changed"><strong>New flow:</strong> There is no longer an "API access" menu in Play Console. You create the service account in Google Cloud first, then invite it into Play Console as a user.</div>
+
+    <div class="step"><div class="step-dot">1</div><div class="step-body">Go to <a href="https://console.cloud.google.com">console.cloud.google.com</a> → create a new project (e.g. <strong>GoodCause</strong>) or use an existing one</div></div>
+    <div class="step"><div class="step-dot">2</div><div class="step-body">Navigate to <strong>IAM &amp; Admin → Service Accounts → + Create Service Account</strong></div></div>
+    <div class="step"><div class="step-dot">3</div><div class="step-body">Name it something like <code>goodcause-play-revenuecat</code> → click <strong>Create and continue</strong></div></div>
+    <div class="step"><div class="step-dot">4</div><div class="step-body">For the role, select <strong>Service Account User</strong> → click <strong>Continue → Done</strong></div></div>
+    <div class="step"><div class="step-dot">5</div><div class="step-body">Open the service account you just created → go to the <strong>Keys</strong> tab → <strong>Add Key → Create new key → JSON</strong> → download the <code>.json</code> file. <strong>Keep this file secret.</strong></div></div>
+    <div class="step"><div class="step-dot">6</div><div class="step-body">Note the service account's email address — it looks like <code>goodcause-play-revenuecat@your-project.iam.gserviceaccount.com</code>. You'll need it in the next step.</div></div>
+
+    <h3>1.4 — Enable the Google Play Android Developer API</h3>
+    <div class="step"><div class="step-dot">1</div><div class="step-body">In Google Cloud Console → <strong>APIs &amp; Services → Library</strong></div></div>
+    <div class="step"><div class="step-dot">2</div><div class="step-body">Search for <strong>"Google Play Android Developer API"</strong> → click it → click <strong>Enable</strong></div></div>
+
+    <h3>1.5 — Grant the Service Account Access in Play Console</h3>
+    <div class="step"><div class="step-dot">1</div><div class="step-body">Go to <strong>Play Console → Users and permissions → Invite new users</strong></div></div>
+    <div class="step"><div class="step-dot">2</div><div class="step-body">Paste the service account email address from step 1.3.6 into the email field</div></div>
+    <div class="step"><div class="step-dot">3</div><div class="step-body">Under <strong>Account permissions</strong>, grant: <strong>View app information</strong> and <strong>View financial data, orders, and cancellation survey responses</strong></div></div>
+    <div class="step"><div class="step-dot">4</div><div class="step-body">Under <strong>App permissions</strong>, also add <code>com.goodcause.app</code> and grant it the same financial data permissions at the app level</div></div>
+    <div class="step"><div class="step-dot">5</div><div class="step-body">Click <strong>Invite user</strong> (ignore the "no email will be sent" notice — service accounts don't receive emails)</div></div>
+
+    <div class="warning">
+      <strong>Wait 24–48 hours</strong> after granting access before connecting to RevenueCat. Google's permission propagation can take time and RevenueCat will fail to verify the credentials if you connect too soon.
+    </div>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">2</span> RevenueCat Dashboard — Project &amp; Entitlement Setup</h2>
 
@@ -112,7 +133,7 @@
     <div class="step"><div class="step-dot">1</div><div class="step-body">In your project: <strong>Project Settings → Apps → + New app → Google Play Store</strong></div></div>
     <div class="step"><div class="step-dot">2</div><div class="step-body">App name: <strong>GoodCause</strong></div></div>
     <div class="step"><div class="step-dot">3</div><div class="step-body">Package name: <code>com.goodcause.app</code></div></div>
-    <div class="step"><div class="step-dot">4</div><div class="step-body">Service credentials: paste the full contents of the service account JSON file you downloaded from Google Cloud</div></div>
+    <div class="step"><div class="step-dot">4</div><div class="step-body">Service credentials: paste the full contents of the JSON key file you downloaded in step 1.3.5</div></div>
     <div class="step"><div class="step-dot">5</div><div class="step-body">Copy the <strong>Android Public API Key</strong> that is generated — you will add it to your <code>.env</code></div></div>
 
     <h3>2.3 — Add the iOS App (for future)</h3>
@@ -129,7 +150,7 @@
     <div class="step"><div class="step-dot">1</div><div class="step-body"><strong>Products → + New</strong> — create one product per tier:</div></div>
 
     <div class="table-wrap"><table>
-      <tr><th>Product ID (in RevenueCat)</th><th>Store product ID</th><th>App Store product ID</th></tr>
+      <tr><th>Product ID (in RevenueCat)</th><th>Google Play product ID</th><th>App Store product ID</th></tr>
       <tr><td><code>gc_monthly_1k</code></td><td><code>gc_monthly_1k</code></td><td><code>gc_monthly_1k</code></td></tr>
       <tr><td><code>gc_monthly_2k5</code></td><td><code>gc_monthly_2k5</code></td><td><code>gc_monthly_2k5</code></td></tr>
       <tr><td><code>gc_monthly_5k</code></td><td><code>gc_monthly_5k</code></td><td><code>gc_monthly_5k</code></td></tr>
@@ -156,7 +177,7 @@
     <p>Go to <strong>Project Settings → Webhooks → + Add webhook</strong>. Point it to your backend if you need server-side subscription event handling. Not required for MVP.</p>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">3</span> Add API Keys to Your Expo Environment</h2>
 
@@ -175,13 +196,13 @@
       <strong>Never commit .env to git.</strong> Confirm <code>.env</code> is in your <code>frontend/.gitignore</code>. For EAS Build, add these as EAS Secrets instead (see step 3.2).
     </div>
 
-    <h3>3.2 — Add to EAS Build Secrets (for CI/CD production builds)</h3>
+    <h3>3.2 — Add to EAS Build Secrets (for production builds)</h3>
     <div class="code-block">eas secret:create --scope project --name EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY --value "goog_xxx"
 eas secret:create --scope project --name EXPO_PUBLIC_REVENUECAT_IOS_API_KEY --value "appl_xxx"</div>
     <p>Run these from the <code>frontend/</code> directory. EAS will inject them at build time automatically.</p>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">4</span> Code Changes in <code>revenuecat.tsx</code></h2>
 
@@ -195,7 +216,7 @@ eas secret:create --scope project --name EXPO_PUBLIC_REVENUECAT_IOS_API_KEY --va
     </ul>
 
     <h3>4.2 — One required change: add the RevenueCat plugin to <code>app.json</code></h3>
-    <p>The <code>react-native-purchases</code> SDK requires a native plugin entry for it to work properly in production builds:</p>
+    <p>The <code>react-native-purchases</code> SDK requires a native plugin entry to work properly in production builds:</p>
 
     <div class="code-block"><span class="cmt">// In frontend/app.json — add to the "plugins" array:</span>
 "plugins": [
@@ -212,13 +233,13 @@ eas secret:create --scope project --name EXPO_PUBLIC_REVENUECAT_IOS_API_KEY --va
       <li>User opens Paywall → selects a tier (e.g. ₦5,000/month)</li>
       <li><code>purchase(pkg)</code> is called → RevenueCat triggers the Play Store billing sheet</li>
       <li>User completes payment on Play Store</li>
-      <li>RevenueCat validates the receipt server-side with Google</li>
+      <li>RevenueCat validates the receipt server-side with Google using the service account credentials</li>
       <li><code>customerInfo.entitlements.active["pro"]</code> becomes truthy</li>
       <li><code>isSubscribed</code> → <code>true</code> — Pro features unlock instantly</li>
     </ol>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">5</span> Build &amp; Test on Android</h2>
 
@@ -229,7 +250,10 @@ eas build --platform android --profile development</div>
 
     <h3>5.2 — Production build</h3>
     <div class="code-block">eas build --platform android --profile production</div>
-    <p>Submit to the Play Console internal testing track first, then promote to production after testing.</p>
+    <p>This produces a signed <code>.aab</code> for Google Play. Submit to the internal testing track first, then promote to production after testing.</p>
+    <p>Or to build locally in WSL (once your environment is set up):</p>
+    <div class="code-block">cd ~/GoodCause/frontend
+eas build --profile production --platform android --local</div>
 
     <h3>5.3 — Test subscriptions on Play Store</h3>
     <ul>
@@ -245,15 +269,17 @@ eas build --platform android --profile development</div>
     <div class="step"><div class="step-dot">3</div><div class="step-body">Confirm the correct product identifier is shown (e.g. <code>gc_monthly_5k</code>)</div></div>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">6</span> Pre-Launch Checklist</h2>
 
     <div class="table-wrap"><table>
       <tr><th>Item</th><th>Status</th></tr>
       <tr><td>4 subscription products created in Play Console with correct product IDs</td><td>☐</td></tr>
-      <tr><td>Service account JSON linked between Google Cloud and Play Console</td><td>☐</td></tr>
-      <tr><td>RevenueCat project created, Android app added</td><td>☐</td></tr>
+      <tr><td>Google Cloud service account created with JSON key downloaded</td><td>☐</td></tr>
+      <tr><td>Google Play Android Developer API enabled in Google Cloud</td><td>☐</td></tr>
+      <tr><td>Service account added as a user in Play Console with financial data permissions</td><td>☐</td></tr>
+      <tr><td>RevenueCat project created, Android app added with service account JSON</td><td>☐</td></tr>
       <tr><td>4 products created in RevenueCat, all attached to <code>pro</code> entitlement</td><td>☐</td></tr>
       <tr><td><code>default</code> offering created with 4 packages (<code>tier_1k</code> … <code>tier_10k</code>)</td><td>☐</td></tr>
       <tr><td><code>EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY</code> added to <code>.env</code> and EAS secrets</td><td>☐</td></tr>
@@ -264,7 +290,7 @@ eas build --platform android --profile development</div>
     </table></div>
   </div>
 
-  
+
   <div class="section">
     <h2><span class="section-num">7</span> Important Notes</h2>
 
@@ -279,6 +305,9 @@ eas build --platform android --profile development</div>
 
     <h3>Web platform</h3>
     <p>RevenueCat does not support web billing. Your code already handles this: <code>rcEnabled = Platform.OS !== "web"</code>. On web, the sandbox simulation is used. If you need web subscriptions in the future, integrate Stripe separately.</p>
+
+    <h3>Service account permission propagation</h3>
+    <div class="warning">After granting Play Console access to the service account, wait 24–48 hours before testing RevenueCat's connection to Google Play. Attempting to connect too early will result in a "credentials invalid" error even though the setup is correct.</div>
   </div>
 
   <div class="footer">Made with IBM Bob</div>

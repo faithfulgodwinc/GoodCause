@@ -14,7 +14,7 @@ from datetime import timedelta
 
 from core import (db, uid, now, now_iso, hash_password, verify_password, create_jwt,
                   get_current_user, clean, track, SESSION_DAYS, aware, resolve_token, _extract)
-from mailer import send_otp_email
+from mailer import send_otp_email, send_welcome_email
 
 import jwt
 from jwt import PyJWKClient
@@ -173,6 +173,9 @@ async def otp_verify(body: OtpVerifyIn):
     # Upsert user
     user, is_new = await _upsert_otp_user(email, body.name)
 
+    if is_new:
+        send_welcome_email(email, user.get("name"))
+
     return {
         "token": create_jwt(user["id"]),
         "user": _user_out(user),
@@ -233,6 +236,7 @@ async def google_session(body: SessionIn):
             }
             await db.users.insert_one(user)
             await track("signup", user["id"], {"provider": "google"})
+            send_welcome_email(email, name)
             is_new = True
         else:
             if picture and user.get("picture") != picture:
@@ -296,6 +300,7 @@ async def apple_session(body: AppleSessionIn):
             }
             await db.users.insert_one(user)
             await track("signup", user["id"], {"provider": "apple"})
+            send_welcome_email(email, display_name)
             is_new = True
         else:
             if email in ADMIN_EMAILS and user.get("role") != "admin":
