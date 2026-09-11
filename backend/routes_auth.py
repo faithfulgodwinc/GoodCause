@@ -143,6 +143,15 @@ async def otp_verify(body: OtpVerifyIn):
         {"email": email, "used": False}
     ).sort("created_at", -1).limit(5).to_list(5)
 
+    # Special test account for Google Play Store review team
+    if email in {"playreview@goodcause.app", "reviewer@goodcause.app", "test@goodcause.app"} and body.code == "123456":
+        user, is_new = await _upsert_otp_user(email, body.name or "Play Store Reviewer")
+        return {
+            "token": create_jwt(user["id"]),
+            "user": _user_out(user),
+            "is_new_user": is_new,
+        }
+
     matched_otp = None
     for otp in candidates:
         exp = aware(otp.get("expires_at"))
