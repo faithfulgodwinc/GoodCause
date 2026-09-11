@@ -86,7 +86,7 @@ export default function AuthScreen() {
       {/* Edge to edge rolling background grid */}
       <View style={[StyleSheet.absoluteFill, { height: SCREEN_H * 0.65, overflow: "hidden", alignItems: "center" }]}>
         <Animated.View style={{ 
-          width: IMAGE_SIZE * 2,
+          width: IMAGE_SIZE * 3,
           flexDirection: "row",
           flexWrap: "wrap",
           transform: [
@@ -94,26 +94,14 @@ export default function AuthScreen() {
             { translateX: panY }
           ] 
         }}>
-          <Image 
-            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
-            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
-            resizeMode="cover"
-          />
-          <Image 
-            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
-            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
-            resizeMode="cover"
-          />
-          <Image 
-            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
-            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
-            resizeMode="cover"
-          />
-          <Image 
-            source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
-            style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
-            resizeMode="cover"
-          />
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Image 
+              key={i}
+              source={require("../../assets/images/onboarding/grid_nigerian.jpg")}
+              style={{ width: IMAGE_SIZE, height: IMAGE_SIZE, opacity: 0.6 }}
+              resizeMode="cover"
+            />
+          ))}
         </Animated.View>
         {/* Deep fade into the bottom black content area */}
         <LinearGradient
