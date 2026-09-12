@@ -13,7 +13,7 @@ import {
   Easing,
   ActivityIndicator,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
@@ -43,6 +43,8 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   </Svg>
 );
 
+const DEFAULT_GOOGLE_WEB_CLIENT_ID = "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com";
+
 // Native Google Sign-in loader
 let GoogleSignin: any = null;
 let statusCodes: any = {};
@@ -52,7 +54,7 @@ try {
   statusCodes = pkg.statusCodes || {};
   if (GoogleSignin && Platform.OS !== "web") {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "",
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
       iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
       androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
       offlineAccess: false,
@@ -105,7 +107,7 @@ export default function AuthScreen() {
   // ── Google OAuth (web) ─────────────────────────────────────────────────────
   const [request, response, promptAsync] = Google.useAuthRequest({
     responseType: "id_token",
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "",
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
     redirectUri: makeRedirectUri(),
   });
 
@@ -236,27 +238,30 @@ export default function AuthScreen() {
     setGoogleLoading(true);
     try {
       if (GoogleSignin && Platform.OS !== "web") {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        const res = await GoogleSignin.signIn();
-        const idToken = res.data?.idToken || (res as any).idToken;
-        if (idToken) {
-          await handleGoogleSession(idToken);
-        } else {
-          throw new Error("Could not retrieve ID token from Google.");
+        try {
+          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+          try { await GoogleSignin.signOut(); } catch {}
+          const res = await GoogleSignin.signIn();
+          const idToken = res.data?.idToken || (res as any).idToken;
+          if (idToken) {
+            await handleGoogleSession(idToken);
+            return;
+          }
+        } catch (nativeErr: any) {
+          console.warn("Native Google Sign-In notice, using browser OAuth:", nativeErr);
         }
-        return;
       }
 
-      if (!request) {
-        setError("Google sign-in is not ready yet. Please wait a moment.");
+      if (request) {
+        await promptAsync();
+      } else {
+        setError("Google sign-in is initializing. Please try again in a moment.");
         setGoogleLoading(false);
-        return;
       }
-      await promptAsync();
     } catch (e: any) {
+      console.error("Google Sign-In Error:", e);
       const isCancelled =
         e.code === statusCodes.SIGN_IN_CANCELLED ||
-        e.code === statusCodes.IN_PROGRESS ||
         e.code === "ERR_REQUEST_CANCELED";
       if (!isCancelled) {
         setError(e.message || "Google sign-in failed.");
@@ -297,7 +302,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.container}>
       {/* Edge to edge rolling background grid */}
-      <View style={[StyleSheet.absoluteFill, { height: SCREEN_H * 0.65, overflow: "hidden", alignItems: "center" }]}>
+      <View style={[StyleSheet.absoluteFill, { height: SCREEN_H * 0.65, overflow: "hidden", alignItems: "center" }]} pointerEvents="none">
         <Animated.View style={{ 
           width: IMAGE_SIZE * 3,
           flexDirection: "row",
@@ -377,7 +382,7 @@ export default function AuthScreen() {
                       disabled={appleLoading}
                       style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
                     >
-                      <Feather name="apple" size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
                       <AppText style={styles.outlineBtnText}>
                         {appleLoading ? "Connecting…" : "Continue with Apple"}
                       </AppText>

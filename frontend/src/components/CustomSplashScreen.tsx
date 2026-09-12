@@ -61,7 +61,7 @@ export function CustomSplashScreen({ onFinish }: { onFinish: () => void }) {
           opacity,
         }}
       >
-        <BrandLogo size={42} />
+        <BrandLogo size={42} color="#000000" />
       </Animated.View>
     </Animated.View>
   );
