@@ -237,34 +237,43 @@ export default function AuthScreen() {
     setError("");
     setGoogleLoading(true);
     try {
-      if (GoogleSignin && Platform.OS !== "web") {
-        try {
-          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-          try { await GoogleSignin.signOut(); } catch {}
-          const res = await GoogleSignin.signIn();
-          const idToken = res.data?.idToken || (res as any).idToken;
-          if (idToken) {
-            await handleGoogleSession(idToken);
-            return;
-          }
-        } catch (nativeErr: any) {
-          console.warn("Native Google Sign-In notice, using browser OAuth:", nativeErr);
+      if (Platform.OS !== "web" && GoogleSignin) {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        try { await GoogleSignin.signOut(); } catch {}
+        const res = await GoogleSignin.signIn();
+        const idToken = res.data?.idToken || (res as any).idToken;
+        if (idToken) {
+          await handleGoogleSession(idToken);
+        } else {
+          throw new Error("Could not retrieve ID token from Google.");
         }
+        return;
       }
 
-      if (request) {
+      if (Platform.OS === "web") {
+        if (!request) {
+          setError("Google sign-in is initializing. Please try again in a moment.");
+          setGoogleLoading(false);
+          return;
+        }
         await promptAsync();
-      } else {
-        setError("Google sign-in is initializing. Please try again in a moment.");
-        setGoogleLoading(false);
+        return;
       }
+
+      setError("Google sign-in is unavailable on this device.");
+      setGoogleLoading(false);
     } catch (e: any) {
       console.error("Google Sign-In Error:", e);
       const isCancelled =
         e.code === statusCodes.SIGN_IN_CANCELLED ||
+        e.code === statusCodes.IN_PROGRESS ||
         e.code === "ERR_REQUEST_CANCELED";
       if (!isCancelled) {
-        setError(e.message || "Google sign-in failed.");
+        let msg = e.message || "Google sign-in failed.";
+        if (e.code === "10" || e.code === 10 || (typeof msg === "string" && msg.includes("DEVELOPER_ERROR"))) {
+          msg = "Google Sign-In setup pending (SHA-1 fingerprint in Google Cloud). Please use Email code for now.";
+        }
+        setError(msg);
       }
       setGoogleLoading(false);
     }
