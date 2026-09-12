@@ -55,7 +55,7 @@ export default function RootLayout() {
   const [splashFinished, setSplashFinished] = useState(false);
 
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
+    if (ready) SplashScreen.hideAsync().catch(() => { });
   }, [ready]);
 
   if (!ready) return null;
@@ -74,18 +74,18 @@ export default function RootLayout() {
                     <GlobalHeader />
                     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
                       <Stack.Screen name="index" />
-                  <Stack.Screen name="auth" />
-                  <Stack.Screen name="onboarding" options={{ animation: "fade", gestureEnabled: false }} />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="campaign/[id]" options={{ animation: "slide_from_right" }} />
-                  <Stack.Screen name="campaign/new" options={{ animation: "slide_from_bottom" }} />
-                  <Stack.Screen name="donate/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-                  <Stack.Screen name="paywall" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-                  <Stack.Screen name="circles/index" />
-                  <Stack.Screen name="circles/[id]" />
-                  <Stack.Screen name="update/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-                  <Stack.Screen name="admin/index" />
-                </Stack>
+                      <Stack.Screen name="auth" />
+                      <Stack.Screen name="onboarding" options={{ animation: "fade", gestureEnabled: false }} />
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="campaign/[id]" options={{ animation: "slide_from_right" }} />
+                      <Stack.Screen name="campaign/new" options={{ animation: "slide_from_bottom" }} />
+                      <Stack.Screen name="donate/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+                      <Stack.Screen name="paywall" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+                      <Stack.Screen name="circles/index" />
+                      <Stack.Screen name="circles/[id]" />
+                      <Stack.Screen name="update/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+                      <Stack.Screen name="admin/index" />
+                    </Stack>
                   </>
                 )}
               </View>

@@ -8,11 +8,17 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
       }
     }
   },

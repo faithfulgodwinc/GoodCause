@@ -1,25 +1,66 @@
-// metro.config.js
+const fs = require("fs");
+const path = require("path");
+
+try {
+  const gracefulFs = require("graceful-fs");
+  gracefulFs.gracefulify(fs);
+
+  if (fs.promises) {
+    const wrapRetry = (origFn) => {
+      if (typeof origFn !== "function") return origFn;
+      return async (...args) => {
+        let retries = 0;
+        while (true) {
+          try {
+            return await origFn(...args);
+          } catch (err) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE") && retries < 15) {
+              retries++;
+              await new Promise((resolve) => setTimeout(resolve, 30 * retries));
+            } else {
+              throw err;
+            }
+          }
+        }
+      };
+    };
+
+    if (fs.promises.open) fs.promises.open = wrapRetry(fs.promises.open);
+    if (fs.promises.readFile) fs.promises.readFile = wrapRetry(fs.promises.readFile);
+    if (fs.promises.stat) fs.promises.stat = wrapRetry(fs.promises.stat);
+  }
+} catch (e) {
+  // Fallback
+}
+
 const { getDefaultConfig } = require("expo/metro-config");
-const path = require('path');
-const { FileStore } = require('metro-cache');
+const { FileStore } = require("metro-cache");
 
 const config = getDefaultConfig(__dirname);
 
-// Use a stable on-disk store (shared across web/android)
-const root = process.env.METRO_CACHE_ROOT || path.join(__dirname, '.metro-cache');
-config.cacheStores = [
-  new FileStore({ root: path.join(root, 'cache') }),
-];
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === "react-native-css-interop/jsx-runtime") {
+    return {
+      filePath: require.resolve("react-native-css-interop/dist/runtime/jsx-runtime.js"),
+      type: "sourceFile",
+    };
+  }
+  if (moduleName === "react-native-css-interop/jsx-dev-runtime") {
+    return {
+      filePath: require.resolve("react-native-css-interop/dist/runtime/jsx-dev-runtime.js"),
+      type: "sourceFile",
+    };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
+if (!process.env.EAS_BUILD && !process.env.CI) {
+  const root = process.env.METRO_CACHE_ROOT || path.join(__dirname, ".metro-cache");
+  config.cacheStores = [
+    new FileStore({ root: path.join(root, "cache") }),
+  ];
+}
 
-// // Exclude unnecessary directories from file watching
-// config.watchFolders = [__dirname];
-// config.resolver.blacklistRE = /(.*)\/(__tests__|android|ios|build|dist|.git|node_modules\/.*\/android|node_modules\/.*\/ios|node_modules\/.*\/windows|node_modules\/.*\/macos)(\/.*)?$/;
-
-// // Alternative: use a more aggressive exclusion pattern
-// config.resolver.blacklistRE = /node_modules\/.*\/(android|ios|windows|macos|__tests__|\.git|.*\.android\.js|.*\.ios\.js)$/;
-
-// Reduce the number of workers to decrease resource usage
 config.maxWorkers = 2;
 
 module.exports = config;

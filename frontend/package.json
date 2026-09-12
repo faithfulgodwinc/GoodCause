@@ -10,7 +10,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build": "expo export"
+    "build": "expo export",
+    "postinstall": "node ./scripts/fix-css-interop.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "6.1.2",
