@@ -5,12 +5,21 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192",
+        "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-ni8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY"
+      }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=8192"
+        "NODE_OPTIONS": "--max-old-space-size=8192",
+        "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-ni8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY"
       }
     },
     "production": {
@@ -18,7 +27,10 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=8192"
+        "NODE_OPTIONS": "--max-old-space-size=8192",
+        "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-ni8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY"
       }
     }
   },
