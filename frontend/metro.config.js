@@ -61,6 +61,17 @@ if (!process.env.EAS_BUILD && !process.env.CI) {
   ];
 }
 
+const projectRoot = path.resolve(__dirname).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+config.resolver.blockList = [
+  new RegExp("^" + projectRoot + "[\\\\/]backend[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/]android[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/]ios[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/]dist[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/].git[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/].expo[\\\\/].*"),
+  new RegExp("^" + projectRoot + "[\\\\/].metro-cache[\\\\/].*"),
+];
+
 config.maxWorkers = 2;
 
 module.exports = config;
