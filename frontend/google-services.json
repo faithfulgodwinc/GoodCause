@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "121930938754-l8l11cpbe44m9hvvf8531fgn1o8jgp0o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.goodcause.app",
+            "certificate_hash": "19ad112232490212ffadd98ee7f48fdb521ac01b"
+          }
+        },
+        {
           "client_id": "121930938754-3vip4qerdqtn8gll3g2mq3hvkqall21a.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -22,7 +30,7 @@
           }
         },
         {
-          "client_id": "121930938754-ni8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
+          "client_id": "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -35,7 +43,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "121930938754-ni8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
+              "client_id": "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

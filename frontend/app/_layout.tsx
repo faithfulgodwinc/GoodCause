@@ -39,15 +39,13 @@ const queryClient = new QueryClient({
   },
 });
 
-const CDN = "https://cdn.jsdelivr.net/fontsource/fonts";
-
 export default function RootLayout() {
   const [iconsLoaded, iconsError] = useIconFonts();
   const [fontsLoaded, fontsError] = useFonts({
-    "Inter-Regular": `${CDN}/inter@latest/latin-400-normal.ttf`,
-    "Inter-Medium": `${CDN}/inter@latest/latin-500-normal.ttf`,
-    "Inter-SemiBold": `${CDN}/inter@latest/latin-600-normal.ttf`,
-    "Inter-Bold": `${CDN}/inter@latest/latin-700-normal.ttf`,
+    "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
+    "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
+    "Inter-SemiBold": require("../assets/fonts/Inter-SemiBold.ttf"),
+    "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
   });
 
   const ready = (iconsLoaded || iconsError) && (fontsLoaded || fontsError);

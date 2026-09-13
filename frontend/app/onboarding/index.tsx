@@ -228,15 +228,16 @@ export default function OnboardingScreen() {
     router.replace("/");
   }, [markDone, router]);
 
-  const goNext = useCallback(() => {
+  const goNext = useCallback(async () => {
     const next = activeIndex + 1;
     if (next < SLIDES.length) {
       flatRef.current?.scrollToIndex({ index: next, animated: true });
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } else {
+      await markDone();
       router.push("/onboarding/auth");
     }
-  }, [activeIndex, router]);
+  }, [activeIndex, markDone, router]);
 
   const isLast = activeIndex === SLIDES.length - 1;
 

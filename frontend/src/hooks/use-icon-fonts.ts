@@ -1,52 +1,39 @@
-// Icon font loader for Expo apps. Fonts are loaded from a CDN only under
-// Expo Go (StoreClient) — that's where @expo/vector-icons' .ttf files come
-// back as 0 bytes from Metro's asset resolver on Android. Native dev/prod
-// builds and web pass an empty map, so useFonts resolves to [true, null]
-// immediately via react-native-vector-icons autolinking / web stubs.
-// ICON_VECTOR_VERSION must match @expo/vector-icons in package.json.
+// Icon font loader for Expo apps. Fonts are loaded from the local node_modules
+// package under Expo Go (StoreClient) — where @expo/vector-icons' .ttf files
+// come back as 0 bytes from Metro's asset resolver on Android.
+// Native dev/prod builds and web pass an empty map so useFonts resolves to
+// [true, null] immediately via react-native-vector-icons autolinking / web stubs.
 // Usage: const [loaded, error] = useIconFonts();
 
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useFonts } from "expo-font";
 
-const ICON_VECTOR_VERSION = "15.1.1";
-
-// short internal fontName (what the library queries) -> CDN .ttf file name
-const ICON_FAMILIES: Record<string, string> = {
-  anticon: "AntDesign",
-  entypo: "Entypo",
-  evilicons: "EvilIcons",
-  feather: "Feather",
-  FontAwesome: "FontAwesome",
-  Fontisto: "Fontisto",
-  foundation: "Foundation",
-  ionicons: "Ionicons",
-  "material-community": "MaterialCommunityIcons",
-  material: "MaterialIcons",
-  octicons: "Octicons",
-  "simple-line-icons": "SimpleLineIcons",
-  zocial: "Zocial",
-  // FontAwesome5 style variants (key = `FontAwesome5Free-<style>`)
-  "FontAwesome5Free-Regular": "FontAwesome5_Regular",
-  "FontAwesome5Free-Solid": "FontAwesome5_Solid",
-  "FontAwesome5Free-Brand": "FontAwesome5_Brands",
-  // FontAwesome6 style variants (key = `FontAwesome6Free-<style>`)
-  "FontAwesome6Free-Regular": "FontAwesome6_Regular",
-  "FontAwesome6Free-Solid": "FontAwesome6_Solid",
-  "FontAwesome6Free-Brand": "FontAwesome6_Brands",
+// Statically require every .ttf so Metro can bundle them without a network call.
+const localFontMap = {
+  anticon: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf"),
+  entypo: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.ttf"),
+  evilicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.ttf"),
+  feather: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"),
+  FontAwesome: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.ttf"),
+  Fontisto: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.ttf"),
+  foundation: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.ttf"),
+  ionicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),
+  "material-community": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"),
+  material: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"),
+  octicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.ttf"),
+  "simple-line-icons": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.ttf"),
+  zocial: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.ttf"),
+  "FontAwesome5Free-Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"),
+  "FontAwesome5Free-Solid": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.ttf"),
+  "FontAwesome5Free-Brand": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.ttf"),
+  "FontAwesome6Free-Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.ttf"),
+  "FontAwesome6Free-Solid": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.ttf"),
+  "FontAwesome6Free-Brand": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.ttf"),
 };
-
-const cdnUrl = (file: string): string =>
-  `https://cdn.jsdelivr.net/npm/@expo/vector-icons@${ICON_VECTOR_VERSION}/build/vendor/react-native-vector-icons/Fonts/${file}.ttf`;
-
-const iconFontMap = (): Record<string, string> =>
-  Object.fromEntries(
-    Object.entries(ICON_FAMILIES).map(([key, file]) => [key, cdnUrl(file)]),
-  );
 
 export const useIconFonts = (): readonly [boolean, Error | null] =>
   useFonts(
     Constants.executionEnvironment === ExecutionEnvironment.StoreClient
-      ? iconFontMap()
+      ? localFontMap
       : {},
   );
