@@ -92,7 +92,7 @@ async def resolve_bank_account(body: BankResolveIn, user: dict = Depends(get_cur
             pass
 
     # High-trust fallback for test/sandbox mode
-    user_name = user.get("name") or "FAITHFUL GODWIN"
+    user_name = user.get("name") or (user.get("email", "").split("@")[0].upper() if user.get("email") else "ACCOUNT HOLDER")
     return {
         "account_number": account_num,
         "account_name": user_name.upper(),

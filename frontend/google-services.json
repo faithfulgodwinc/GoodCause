@@ -14,19 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "121930938754-l8l11cpbe44m9hvvf8531fgn1o8jgp0o.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.goodcause.app",
-            "certificate_hash": "19ad112232490212ffadd98ee7f48fdb521ac01b"
-          }
-        },
-        {
           "client_id": "121930938754-3vip4qerdqtn8gll3g2mq3hvkqall21a.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.goodcause.app",
             "certificate_hash": "fd203f73d4ed8fc8eaa381c97e810b1add365456"
+          }
+        },
+        {
+          "client_id": "121930938754-l8l11cpbe44m9hvvf8531fgn1o8jgp0o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.goodcause.app",
+            "certificate_hash": "19ad112232490212ffadd98ee7f48fdb521ac01b"
           }
         },
         {

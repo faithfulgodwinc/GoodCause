@@ -51,10 +51,12 @@ export default function HomeScreen() {
   if (hour < 12) timeGreeting = "Good morning";
   else if (hour < 17) timeGreeting = "Good afternoon";
 
-  const rawAmount = currentPackage ? currentPackage.product.priceString : "₦5,000";
-  const committedAmount = rawAmount
-    .replace(/(\d+)\.(\d{3})(?!\d)/g, "$1,$2")
-    .replace(/\.00$/, "");
+  const hasCommitment = !!currentPackage;
+  const committedAmount = currentPackage
+    ? currentPackage.product.priceString
+        .replace(/(\d+)\.(\d{3})(?!\d)/g, "$1,$2")
+        .replace(/\.00$/, "")
+    : null;
   const directCauses = [...urgent, ...recommended].slice(0, 5);
 
   const handleProfilePress = () => {
@@ -116,7 +118,15 @@ export default function HomeScreen() {
         <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
           
           {/* Apple-Style Community Pledge Card */}
-          <View style={styles.pledgeCard}>
+          <Pressable 
+            onPress={() => {
+              if (!hasCommitment) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push("/onboarding/commitment");
+              }
+            }}
+            style={styles.pledgeCard}
+          >
             {/* Background side design */}
             <View style={styles.pledgeBgCircle1} />
             <View style={styles.pledgeBgCircle2} />
@@ -127,20 +137,24 @@ export default function HomeScreen() {
             <View style={styles.pledgeHeader}>
               <View style={styles.badgePill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.brandPrimary} />
-                <AppText style={styles.badgeText}>Active Member</AppText>
+                <AppText style={styles.badgeText}>
+                  {hasCommitment ? "Active Member" : "Join Community"}
+                </AppText>
               </View>
             </View>
 
             <View style={styles.pledgeBody}>
               <AppText style={styles.pledgeAmount}>
-                {committedAmount}
-                <AppText style={styles.pledgeSub}> / month</AppText>
+                {hasCommitment ? `${committedAmount}` : "Make a Commitment"}
+                {hasCommitment ? <AppText style={styles.pledgeSub}> / month</AppText> : null}
               </AppText>
               <AppText style={styles.pledgeDesc}>
-                Your monthly promise is actively supporting verified causes and families in need across Nigeria.
+                {hasCommitment
+                  ? "Your monthly promise is actively supporting verified causes and families in need across Nigeria."
+                  : "Set your monthly commitment to join over 1,200 members supporting verified causes."}
               </AppText>
             </View>
-          </View>
+          </Pressable>
 
           {/* Apple Native Style Impact Metrics */}
           <View style={styles.section}>

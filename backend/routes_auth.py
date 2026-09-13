@@ -20,8 +20,7 @@ import jwt
 from jwt import PyJWKClient
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+from google_oauth_config import google_client_ids
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -64,10 +63,17 @@ async def _upsert_otp_user(email: str, name: Optional[str] = None) -> dict:
         await track("signup", user["id"], {"provider": "email_otp"})
         return user, True  # (user, is_new)
     else:
+        updates = {}
+        if name and name.strip() and name.strip() != user.get("name"):
+            updates["name"] = name.strip()
+            user["name"] = name.strip()
         if email in ADMIN_EMAILS and user.get("role") != "admin":
-            await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+            updates["role"] = "admin"
+            updates["verified_organizer"] = True
             user["role"] = "admin"
             user["verified_organizer"] = True
+        if updates:
+            await db.users.update_one({"id": user["id"]}, {"$set": updates})
         await track("login", user["id"], {"provider": "email_otp"})
         return user, False  # (user, is_new)
 
@@ -191,11 +197,7 @@ class SessionIn(BaseModel):
 
 @router.post("/session")
 async def google_session(body: SessionIn):
-    valid_client_ids = [c for c in [
-        os.environ.get("GOOGLE_CLIENT_ID"),
-        os.environ.get("GOOGLE_ANDROID_CLIENT_ID"),
-        os.environ.get("GOOGLE_IOS_CLIENT_ID")
-    ] if c and "your_" not in c]
+    valid_client_ids = google_client_ids()
 
     if not valid_client_ids:
         raise HTTPException(status_code=501, detail="Google SSO requires production configuration.")
@@ -239,13 +241,20 @@ async def google_session(body: SessionIn):
             send_welcome_email(email, name)
             is_new = True
         else:
+            updates = {}
+            if name and name.strip() and name.strip() != user.get("name"):
+                updates["name"] = name.strip()
+                user["name"] = name.strip()
             if picture and user.get("picture") != picture:
-                await db.users.update_one({"id": user["id"]}, {"$set": {"picture": picture}})
+                updates["picture"] = picture
                 user["picture"] = picture
             if email in ADMIN_EMAILS and user.get("role") != "admin":
-                await db.users.update_one({"id": user["id"]}, {"$set": {"role": "admin", "verified_organizer": True}})
+                updates["role"] = "admin"
+                updates["verified_organizer"] = True
                 user["role"] = "admin"
                 user["verified_organizer"] = True
+            if updates:
+                await db.users.update_one({"id": user["id"]}, {"$set": updates})
             await track("login", user["id"], {"provider": "google"})
             is_new = False
 

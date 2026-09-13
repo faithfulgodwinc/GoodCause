@@ -53,12 +53,15 @@ try {
   GoogleSignin = pkg.GoogleSignin;
   statusCodes = pkg.statusCodes || {};
   if (GoogleSignin && Platform.OS !== "web") {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID;
+    const config: any = {
+      webClientId,
       offlineAccess: false,
-    });
+    };
+    if (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
+      config.iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    }
+    GoogleSignin.configure(config);
   }
 } catch {
   // Running in Expo Go — native Google Sign-In unavailable
@@ -127,8 +130,9 @@ export default function AuthScreen() {
   const onAuthSuccess = useCallback(
     async (isNew: boolean) => {
       const onboardingDone = await storage.getItem("gc_onboarding_done", false);
-      if (!onboardingDone && Platform.OS !== "web") {
-        router.replace("/onboarding");
+      if (isNew || !onboardingDone) {
+        await storage.setItem("gc_onboarding_done", false);
+        router.replace("/onboarding/commitment");
         return;
       }
       const firstLogin = await storage.getItem("gc_first_signin_done", false);
