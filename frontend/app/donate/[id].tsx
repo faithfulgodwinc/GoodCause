@@ -76,7 +76,7 @@ export default function Donate() {
       if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
         payload.return_url = window.location.origin + "/donate/" + id;
       } else {
-        payload.return_url = "https://goodcause.ng/payment-result";
+        payload.return_url = "https://www.goodcause.app/payment-result";
       }
       const init = await api<any>(`/campaigns/${id}/donate`, {
         method: "POST",
@@ -151,9 +151,9 @@ export default function Donate() {
               title="Share to WhatsApp"
               icon="share-2"
               onPress={() => {
-                const msg = encodeURIComponent(`I just donated to support “${c.title}” on GoodCause. Join me in making a difference: https://goodcause.ng/c/${id}`);
+                const msg = encodeURIComponent(`I just donated to support “${c.title}” on GoodCause. Join me in making a difference: https://www.goodcause.app/c/${id}`);
                 Linking.openURL(`whatsapp://send?text=${msg}`).catch(() => {
-                  RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {});
+                  RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://www.goodcause.app/c/${id}` }).catch(() => {});
                 });
               }}
               style={{ marginTop: spacing.md, alignSelf: "stretch", backgroundColor: colors.brandPrimary }}
@@ -162,7 +162,7 @@ export default function Donate() {
             <Button
               title="More share options"
               variant="outline"
-              onPress={() => RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://goodcause.ng/c/${id}` }).catch(() => {})}
+              onPress={() => RNShare.share({ message: `I just supported “${c.title}” on GoodCause. Join me: https://www.goodcause.app/c/${id}` }).catch(() => {})}
               style={{ marginTop: spacing.xs, alignSelf: "stretch" }}
               testID="donation-share-button"
             />
@@ -198,7 +198,7 @@ export default function Donate() {
               style={{ flex: 1 }}
               startInLoadingState={true}
               onNavigationStateChange={(navState) => {
-                if (navState.url.includes("goodcause.ng/payment-result")) {
+                if (navState.url.includes("goodcause.app/payment-result")) {
                   setPaystackUrl(null);
                   if (payRef) verifyPayment(payRef);
                 }

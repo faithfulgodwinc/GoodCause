@@ -43,7 +43,7 @@ export default function CampaignDetail() {
   const supporters = useQuery({ queryKey: ["supporters", id], queryFn: () => api<any[]>(`/campaigns/${id}/donations`), enabled: !!id });
 
   const c = campaign.data;
-  const shareUrl = `https://goodcause.ng/c/${id}`;
+  const shareUrl = `https://www.goodcause.app/c/${id}`;
   const heroVideo = campaign.data?.hero_video || null;
   const player = useVideoPlayer(null, (p) => { p.loop = true; p.muted = true; });
   React.useEffect(() => {
