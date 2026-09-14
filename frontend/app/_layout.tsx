@@ -74,10 +74,12 @@ export default function RootLayout() {
                   <Stack.Screen name="campaign/new" options={{ animation: "slide_from_bottom" }} />
                   <Stack.Screen name="donate/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
                   <Stack.Screen name="paywall" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+                  <Stack.Screen name="impact-commitment" options={{ animation: "slide_from_right" }} />
                   <Stack.Screen name="circles/index" />
                   <Stack.Screen name="circles/[id]" />
                   <Stack.Screen name="update/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
                   <Stack.Screen name="admin/index" />
+                  <Stack.Screen name="admin/impact" />
                 </Stack>
               </View>
             </SubscriptionProvider>

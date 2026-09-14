@@ -117,9 +117,9 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
         "categories": cats,
         "greeting_name": user["name"].split(" ")[0] if user else None,
         "impact_metrics": {
-            "members_count": max(members_count, 1284),
-            "given_this_month_kobo": max(given_kobo, 840000000),
-            "causes_helped_count": max(causes_helped_count, 145),
+            "members_count": members_count,
+            "given_this_month_kobo": given_kobo,
+            "causes_helped_count": causes_helped_count,
         },
     }
 

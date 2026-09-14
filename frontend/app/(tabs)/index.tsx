@@ -53,13 +53,13 @@ export default function HomeScreen() {
 
   const membersDisplay = impact_metrics?.members_count
     ? impact_metrics.members_count.toLocaleString()
-    : "1,284";
+    : "0";
   const givenDisplay = impact_metrics?.given_this_month_kobo
     ? `₦${(impact_metrics.given_this_month_kobo / 10000000).toFixed(1)}M`
-    : "₦8.4M";
+    : "₦0";
   const causesDisplay = impact_metrics?.causes_helped_count
     ? impact_metrics.causes_helped_count.toLocaleString()
-    : "145";
+    : "0";
 
   const hour = new Date().getHours();
   let timeGreeting = "Good evening";
@@ -139,6 +139,8 @@ export default function HomeScreen() {
               if (!hasCommitment) {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 router.push("/onboarding/commitment");
+              } else {
+                router.push("/impact-commitment");
               }
             }}
             style={styles.pledgeCard}
@@ -166,8 +168,8 @@ export default function HomeScreen() {
               </AppText>
               <AppText style={styles.pledgeDesc}>
                 {hasCommitment
-                  ? "Your monthly promise is actively supporting verified causes and families in need across Nigeria."
-                  : "Set your monthly commitment to join over 1,200 members supporting verified causes."}
+                  ? "Your membership is active. See GoodCause's confirmed monthly allocations."
+                  : "Join GoodCause for member tools and our published 80% Impact Commitment."}
               </AppText>
             </View>
           </Pressable>
@@ -180,14 +182,14 @@ export default function HomeScreen() {
             <View style={styles.impactContainer}>
               <View style={styles.impactCol}>
                 <AppText style={styles.impactNumber}>{membersDisplay}</AppText>
-                <AppText style={styles.impactSublabel}>Members</AppText>
+                <AppText style={styles.impactSublabel}>Community accounts</AppText>
               </View>
               
               <View style={styles.impactDivider} />
               
               <View style={styles.impactCol}>
                 <AppText style={styles.impactNumber}>{givenDisplay}</AppText>
-                <AppText style={styles.impactSublabel}>Given this month</AppText>
+                <AppText style={styles.impactSublabel}>Raised on GoodCause</AppText>
               </View>
               
               <View style={styles.impactDivider} />

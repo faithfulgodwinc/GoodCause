@@ -121,7 +121,10 @@ async def impact_period(period_key: str):
 
 @router.get("/admin/impact-periods")
 async def admin_periods(admin: dict = Depends(require_admin)):
-    return await supabase_db.query("SELECT * FROM impact_periods ORDER BY period_key DESC")
+    periods = await supabase_db.query("SELECT * FROM impact_periods ORDER BY period_key DESC")
+    for period in periods:
+        period["allocations"] = await _allocations(period["id"])
+    return periods
 
 
 @router.post("/admin/impact-periods")
