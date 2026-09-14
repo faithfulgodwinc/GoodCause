@@ -10,6 +10,7 @@ import hmac
 import hashlib
 import httpx
 from abc import ABC, abstractmethod
+from donation_policy import normalize_paystack_transaction
 
 PAYSTACK_BASE = "https://api.paystack.co"
 
@@ -64,8 +65,7 @@ class PaystackProvider(PaymentProvider):
         if not body.get("status"):
             return {"status": "failed"}
         d = body["data"]
-        return {"status": d.get("status"), "amount_kobo": d.get("amount"),
-                "currency": d.get("currency"), "raw": d}
+        return normalize_paystack_transaction(d)
 
     @staticmethod
     def verify_signature(raw: bytes, signature: str) -> bool:

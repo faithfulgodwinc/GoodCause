@@ -7,6 +7,9 @@ from typing import Optional
 from core import (db, uid, now_iso, get_current_user, get_current_user_optional,
                   notify, track, campaign_percent, serialize_campaign)
 from payments import get_provider, provider_mode, PaystackProvider, paystack_configured
+from donation_policy import (donation_identity, normalize_paystack_transaction,
+                             payment_matches_donation, public_donation)
+from donation_ledger import apply_verified_donation
 
 router = APIRouter(prefix="/api", tags=["donations"])
 
@@ -22,74 +25,60 @@ class DonateIn(BaseModel):
     return_url: Optional[str] = None
 
 
-async def _apply_paid(reference: str) -> Optional[dict]:
-    """Idempotently mark a donation paid and update campaign totals. Returns result dict or None."""
+async def _apply_paid(reference: str, payment: Optional[dict] = None) -> Optional[dict]:
+    """Atomically credit a verified donation and send post-commit notifications once."""
     donation = await db.donations.find_one({"reference": reference}, {"_id": 0})
     if not donation:
         return None
-    if donation["status"] == "paid":
-        return {"already": True, "campaign_id": donation["campaign_id"]}
-
-    donation_to_update = await db.donations.find_one({"reference": reference, "status": {"$ne": "paid"}})
-    if not donation_to_update:
-        return {"already": True, "campaign_id": donation["campaign_id"]}
-
-    await db.donations.update_one(
-        {"reference": reference},
-        {"$set": {"status": "paid", "paid_at": now_iso()}}
-    )
-
-    campaign = await db.campaigns.find_one({"id": donation["campaign_id"]}, {"_id": 0})
-    if not campaign:
+    ledger = await apply_verified_donation(reference, payment)
+    if not ledger:
         return None
-    prev_pct = campaign_percent(campaign.get("raised_kobo", 0), campaign.get("goal_kobo", 0))
-    new_raised = campaign.get("raised_kobo", 0) + donation["amount_kobo"]
 
-    # unique supporter count
-    existing_paid = await db.donations.count_documents({
-        "campaign_id": campaign["id"], "status": "paid",
-        "donor_id": donation.get("donor_id"), "reference": {"$ne": reference},
-    }) if donation.get("donor_id") else 0
-    inc_supporters = 0 if existing_paid else 1
+    new_pct = campaign_percent(ledger["raised_kobo"], ledger["goal_kobo"])
+    if ledger.get("already"):
+        return {
+            "already": True, "campaign_id": ledger["id"],
+            "raised_kobo": ledger["raised_kobo"], "new_percent": new_pct,
+        }
 
+    previous_raised = ledger["raised_kobo"] - ledger["amount_kobo"]
+    prev_pct = campaign_percent(previous_raised, ledger["goal_kobo"])
+    campaign = await db.campaigns.find_one({"id": ledger["id"]}, {"_id": 0}) or {}
     reached = list(campaign.get("milestones_reached", []))
-    new_pct = campaign_percent(new_raised, campaign.get("goal_kobo", 0))
     newly = [m for m in MILESTONES if prev_pct < m <= new_pct and m not in reached]
-    reached = sorted(set(reached + newly))
-
-    set_fields = {"raised_kobo": new_raised, "milestones_reached": reached}
-    if new_pct >= 100 and campaign.get("status") == "LIVE":
+    set_fields = {"milestones_reached": sorted(set(reached + newly))}
+    if new_pct >= 100 and ledger.get("status") == "LIVE":
         set_fields["status"] = "COMPLETED"
+    await db.campaigns.update_one({"id": ledger["id"]}, {"$set": set_fields})
 
-    await db.campaigns.update_one({"id": campaign["id"]}, {
-        "$set": set_fields, "$inc": {"supporters_count": inc_supporters}})
-
-    # notify organizer
-    amt = donation["amount_kobo"] // 100
-    await notify(campaign["organizer_id"], "donation_received", "New donation received",
-                 f"You received ₦{amt:,} for “{campaign['title']}”.", campaign["id"])
-    # thank-you moment for the donor (non-anonymous, signed-in)
-    if donation.get("donor_id"):
-        await notify(donation["donor_id"], "donation_thankyou",
+    amt = ledger["amount_kobo"] // 100
+    await notify(ledger["organizer_id"], "donation_received", "New donation received",
+                 f"You received ₦{amt:,} for “{ledger['title']}”.", ledger["id"])
+    if ledger.get("donor_id"):
+        await notify(ledger["donor_id"], "donation_thankyou",
                      "Thank you for your generosity 💛",
-                     f"Your ₦{amt:,} gift is helping move “{campaign['title']}” forward. "
-                     f"It's now at {new_pct}% of its goal.",
-                     campaign["id"])
-    # milestone notifications
-    for m in newly:
-        title = "Campaign complete! 🎉" if m == 100 else f"{m}% milestone reached"
-        await notify(campaign["organizer_id"], f"campaign_{m}_percent", title,
-                     f"“{campaign['title']}” has reached {m}% of its goal.", campaign["id"])
-        followers = await db.campaign_followers.find({"campaign_id": campaign["id"]}, {"_id": 0}).to_list(1000)
-        for f in followers:
-            await notify(f["user_id"], f"campaign_{m}_percent", title,
-                         f"A cause you follow reached {m}%.", campaign["id"])
+                     f"Your ₦{amt:,} gift is helping move “{ledger['title']}” forward. "
+                     f"It's now at {new_pct}% of its goal.", ledger["id"])
+    for milestone in newly:
+        title = "Campaign complete! 🎉" if milestone == 100 else f"{milestone}% milestone reached"
+        await notify(ledger["organizer_id"], f"campaign_{milestone}_percent", title,
+                     f"“{ledger['title']}” has reached {milestone}% of its goal.", ledger["id"])
+        followers = await db.campaign_followers.find(
+            {"campaign_id": ledger["id"]}, {"_id": 0}
+        ).to_list(1000)
+        for follower in followers:
+            await notify(follower["user_id"], f"campaign_{milestone}_percent", title,
+                         f"A cause you follow reached {milestone}%.", ledger["id"])
 
-    await track("donation_completed", donation.get("donor_id"),
-                {"campaign_id": campaign["id"], "amount_kobo": donation["amount_kobo"],
-                 "provider": donation.get("provider")})
-    return {"prev_percent": prev_pct, "new_percent": new_pct, "campaign_id": campaign["id"],
-            "milestones": newly}
+    await track("donation_completed", ledger.get("donor_id"), {
+        "campaign_id": ledger["id"], "amount_kobo": ledger["amount_kobo"],
+        "provider": ledger.get("provider"),
+    })
+    return {
+        "prev_percent": prev_pct, "new_percent": new_pct,
+        "campaign_id": ledger["id"], "raised_kobo": ledger["raised_kobo"],
+        "milestones": newly,
+    }
 
 
 @router.post("/campaigns/{campaign_id}/donate")
@@ -101,13 +90,13 @@ async def initialize_donation(campaign_id: str, body: DonateIn,
     if campaign["status"] not in {"LIVE", "COMPLETED"}:
         raise HTTPException(status_code=400, detail="This campaign is not accepting donations right now.")
 
-    email = body.email or (user or {}).get("email") or "donor@goodcause.ng"
+    email = body.email or (user or {}).get("email") or "donor@goodcause.app"
     reference = uid("don_")
     provider = get_provider()
     donation = {
         "id": uid("dnt_"), "reference": reference, "campaign_id": campaign_id,
-        "donor_id": None if body.anonymous else (user["id"] if user else None),
-        "anonymous": body.anonymous, "message": body.message or "",
+        **donation_identity(user, body.anonymous),
+        "message": body.message or "",
         "amount_kobo": body.amount_kobo, 
         "status": "pending", "provider": provider.name,
         "is_test": provider.name == "sandbox", 
@@ -172,10 +161,19 @@ async def verify_payment(body: VerifyIn):
         raise HTTPException(status_code=404, detail="Donation not found.")
     provider = get_provider()
     v = await provider.verify(body.reference)
-    if v.get("status") == "success" and v.get("currency") == "NGN" and v.get("amount_kobo") == donation["amount_kobo"]:
-        await _apply_paid(body.reference)
+    result = None
+    if payment_matches_donation(v, donation):
+        result = await _apply_paid(body.reference, v)
     d = await db.donations.find_one({"reference": body.reference}, {"_id": 0})
-    return {"reference": body.reference, "status": d["status"]}
+    response = {"reference": body.reference, "status": d["status"]}
+    if d["status"] == "paid" and result:
+        response.update({
+            "campaign_id": result.get("campaign_id"),
+            "raised_kobo": result.get("raised_kobo"),
+            "prev_percent": result.get("prev_percent"),
+            "new_percent": result.get("new_percent"),
+        })
+    return response
 
 
 @router.post("/payments/paystack/webhook")
@@ -189,8 +187,9 @@ async def paystack_webhook(request: Request):
         data = event.get("data", {})
         ref = data.get("reference")
         donation = await db.donations.find_one({"reference": ref}, {"_id": 0})
-        if donation and data.get("currency") == "NGN" and data.get("amount") == donation["amount_kobo"]:
-            await _apply_paid(ref)
+        payment = normalize_paystack_transaction(data)
+        if donation and payment_matches_donation(payment, donation):
+            await _apply_paid(ref, payment)
     return {"received": True}
 
 
@@ -199,17 +198,7 @@ async def campaign_donations(campaign_id: str):
     rows = await db.donations.find(
         {"campaign_id": campaign_id, "status": "paid"}, {"_id": 0}
     ).sort("paid_at", -1).limit(30).to_list(30)
-    out = []
-    for r in rows:
-        out.append({
-            "id": r["id"],
-            "name": "Anonymous" if r.get("anonymous") else (r.get("donor_name") or "Supporter"),
-            "amount_kobo": r["amount_kobo"], "message": r.get("message", ""),
-            "anonymous": r.get("anonymous", False), "created_at": r.get("paid_at"),
-            "can_thank": bool(r.get("donor_id") and not r.get("anonymous")),
-            "thanked": bool(r.get("thanked")),
-        })
-    return out
+    return [public_donation(row) for row in rows]
 
 
 class ThankIn(BaseModel):

@@ -43,8 +43,13 @@ export default function Donate() {
     api<any>("/payments/verify", { method: "POST", body: { reference: refToVerify } })
       .then((verify) => {
         if (verify.status === "paid") {
-          setSuccess({ prev: c?.percent || 0, next: c?.percent || 0, test: false });
+          setSuccess({
+            prev: verify.prev_percent ?? c?.percent ?? 0,
+            next: verify.new_percent ?? c?.percent ?? 0,
+            test: false,
+          });
           qc.invalidateQueries({ queryKey: ["campaign", id] });
+          qc.invalidateQueries({ queryKey: ["supporters", id] });
           qc.invalidateQueries({ queryKey: ["impact"] });
           qc.invalidateQueries({ queryKey: ["myDonations"] });
         } else {
@@ -87,6 +92,7 @@ export default function Donate() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
         setSuccess({ prev: res.prev_percent, next: res.new_percent, test: true });
         qc.invalidateQueries({ queryKey: ["campaign", id] });
+        qc.invalidateQueries({ queryKey: ["supporters", id] });
         qc.invalidateQueries({ queryKey: ["impact"] });
         qc.invalidateQueries({ queryKey: ["myDonations"] });
       } else if (init.authorization_url) {

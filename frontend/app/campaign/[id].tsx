@@ -369,18 +369,19 @@ export default function CampaignDetail() {
                         <AppText variant="label">{s.name}</AppText>
                         {s.message ? <AppText variant="caption" numberOfLines={1}>{s.message}</AppText> : null}
                       </View>
-                      {isOrganizer && s.can_thank ? (
-                        s.thanked ? (
-                          <View style={styles.thankedPill}><Feather name="check" size={12} color={colors.success} /><AppText variant="caption" color={colors.success} style={{ marginLeft: 4 }}>Thanked</AppText></View>
-                        ) : (
-                          <Pressable testID={`thank-${s.id}`} onPress={() => { setThankFor(s); setThankMsg(""); setThankMedia([]); setThankDone(false); }} style={styles.thankBtn}>
-                            <Feather name="mail" size={13} color={colors.brandPrimary} />
-                            <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: 4 }}>Thank</AppText>
-                          </Pressable>
-                        )
-                      ) : (
+                      <View style={{ alignItems: "flex-end", gap: 4 }}>
                         <AppText variant="label" color={colors.success}>{formatNaira(s.amount_kobo, { compact: true })}</AppText>
-                      )}
+                        {isOrganizer && s.can_thank ? (
+                          s.thanked ? (
+                            <View style={styles.thankedPill}><Feather name="check" size={12} color={colors.success} /><AppText variant="caption" color={colors.success} style={{ marginLeft: 4 }}>Thanked</AppText></View>
+                          ) : (
+                            <Pressable testID={`thank-${s.id}`} onPress={() => { setThankFor(s); setThankMsg(""); setThankMedia([]); setThankDone(false); }} style={styles.thankBtn}>
+                              <Feather name="mail" size={13} color={colors.brandPrimary} />
+                              <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: 4 }}>Thank</AppText>
+                            </Pressable>
+                          )
+                        ) : null}
+                      </View>
                     </View>
                   ))}
                 </View>

@@ -92,6 +92,8 @@ CREATE TABLE IF NOT EXISTS donations (
     reference VARCHAR(120) UNIQUE NOT NULL,
     campaign_id VARCHAR(64) NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
     donor_id VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+    donor_name VARCHAR(160),
+    donor_email VARCHAR(320),
     amount_kobo BIGINT NOT NULL CHECK (amount_kobo > 0),
     anonymous BOOLEAN NOT NULL DEFAULT FALSE,
     message TEXT,
@@ -99,8 +101,25 @@ CREATE TABLE IF NOT EXISTS donations (
     provider VARCHAR(32) NOT NULL DEFAULT 'sandbox', -- 'paystack', 'sandbox'
     is_test BOOLEAN NOT NULL DEFAULT FALSE,
     paid_at TIMESTAMPTZ,
+    verified_amount_kobo BIGINT,
+    provider_transaction_id VARCHAR(32),
+    payment_channel VARCHAR(64),
+    provider_fee_kobo BIGINT,
+    provider_paid_at TIMESTAMPTZ,
+    accounted_at TIMESTAMPTZ,
+    thanked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS donor_name VARCHAR(160);
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS donor_email VARCHAR(320);
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS verified_amount_kobo BIGINT;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS provider_transaction_id VARCHAR(32);
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS payment_channel VARCHAR(64);
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS provider_fee_kobo BIGINT;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS provider_paid_at TIMESTAMPTZ;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS accounted_at TIMESTAMPTZ;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS thanked BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS idx_donations_ref ON donations(reference);
 CREATE INDEX IF NOT EXISTS idx_donations_campaign ON donations(campaign_id);
@@ -275,5 +294,4 @@ CREATE TABLE IF NOT EXISTS payouts (
 
 CREATE INDEX IF NOT EXISTS idx_payouts_campaign ON payouts(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts(user_id);
-
 
