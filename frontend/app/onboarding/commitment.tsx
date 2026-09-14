@@ -12,10 +12,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { useAuth } from "@/src/context/auth";
 
 const TIERS = [
-  { id: "tier_1k",  amount: 1000,  desc: "A small step that still moves things forward." },
-  { id: "tier_2k5", amount: 2500,  desc: "Enough to make a meaningful difference." },
-  { id: "tier_5k",  amount: 5000,  desc: "A powerful way to back real change." },
-  { id: "tier_10k", amount: 10000, desc: "Maximum impact for those who need it most." },
+  { id: "tier_1k", amount: 1000, desc: "Essential membership." },
+  { id: "tier_2k5", amount: 2500, desc: "Supporting membership." },
+  { id: "tier_5k", amount: 5000, desc: "Impact membership." },
+  { id: "tier_10k", amount: 10000, desc: "Champion membership." },
 ];
 
 function TierRow({
@@ -90,8 +90,8 @@ export default function CommitmentScreen() {
       {/* Body */}
       <View style={styles.body}>
         <View style={styles.titleWrap}>
-          <AppText style={styles.title}>How much would you{"\n"}like to give each month?</AppText>
-          <AppText style={styles.subtitle}>You can change this at any time.</AppText>
+          <AppText style={styles.title}>Choose your GoodCause{"\n"}membership</AppText>
+          <AppText style={styles.subtitle}>Get member benefits and help GoodCause fund verified causes every month.</AppText>
         </View>
 
         {/* Tier list */}

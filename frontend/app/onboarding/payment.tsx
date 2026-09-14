@@ -25,6 +25,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { IMPACT_DISCLOSURE_COMPACT } from "@/src/constants/impact-commitment";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -189,7 +190,7 @@ export default function PaymentScreen() {
 
       {/* Content */}
       <View style={styles.content}>
-        <AppText style={styles.title}>Seal your promise</AppText>
+        <AppText style={styles.title}>Confirm your membership</AppText>
 
         {/* Card + stamp */}
         {pkg && (
@@ -206,7 +207,7 @@ export default function PaymentScreen() {
                 </View>
                 <View>
                   <AppText style={styles.receiptTitle}>
-                    GoodCause Community Fund
+                    GoodCause Membership
                   </AppText>
                   <AppText style={styles.receiptAmount}>
                     {pkg.product.priceString}{" "}
@@ -219,7 +220,7 @@ export default function PaymentScreen() {
 
               <View style={styles.receiptBottom}>
                 <AppText style={styles.firstContribution}>
-                  Your journey begins with
+                  Membership price
                 </AppText>
                 <AppText style={styles.totalValue}>
                   {pkg.product.priceString}
@@ -243,9 +244,9 @@ export default function PaymentScreen() {
           </AppText>
           <TypeWriterText
             style={styles.secureDesc}
-            text={`Your generosity is processed with bank-level encryption by ${
+            text={`Your subscription is processed securely by ${
               Platform.OS === "ios" ? "Apple" : "Google"
-            }. We never hold your details, and you can pause or cancel anytime from settings.`}
+            }. RevenueCat manages your entitlement, and you can cancel anytime in store settings.`}
           />
         </View>
 
@@ -263,6 +264,10 @@ export default function PaymentScreen() {
         ]}
         pointerEvents={stampLanded ? "auto" : "none"}
       >
+        <AppText style={styles.disclosure}>{IMPACT_DISCLOSURE_COMPACT}</AppText>
+        <Pressable onPress={() => router.push("/impact-commitment")}>
+          <AppText style={styles.learnLink}>Learn how it works</AppText>
+        </Pressable>
         <Pressable
           style={[styles.payBtn, (!pkg || isPurchasing) && styles.payBtnDisabled]}
           onPress={handlePay}
@@ -499,4 +504,6 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceSecondary,
     fontFamily: font.medium,
   },
+  disclosure: { fontSize: 12, lineHeight: 17, textAlign: "center", color: colors.onSurfaceSecondary, marginBottom: 4 },
+  learnLink: { fontSize: 12, fontFamily: font.semibold, color: colors.brandPrimary, marginBottom: 10 },
 });

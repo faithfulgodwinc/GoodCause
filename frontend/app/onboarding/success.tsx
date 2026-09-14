@@ -66,7 +66,7 @@ export default function SuccessScreen() {
         <AppText variant="display" style={styles.title}>Welcome home.</AppText>
         
         <AppText style={styles.subtitle}>
-          You just made a promise to catch someone when they fall. Somewhere in Nigeria, a life is about to change because of you.
+          Your membership is active. You support the tools behind GoodCause, and 80% of confirmed net membership proceeds is committed to verified causes.
         </AppText>
 
         {/* Minimalist Apple-style summary card */}
@@ -80,7 +80,7 @@ export default function SuccessScreen() {
                 {pkg.product.priceString}{" "}
                 <AppText style={styles.cardSub}>/month</AppText>
               </AppText>
-              <AppText style={styles.cardDesc}>Your active community pledge</AppText>
+              <AppText style={styles.cardDesc}>Your active GoodCause membership</AppText>
             </View>
           </View>
         )}
@@ -88,7 +88,7 @@ export default function SuccessScreen() {
         {/* Emotional quote block */}
         <View style={styles.quoteContainer}>
           <AppText style={styles.quoteText}>
-            "You don't always have to know whose life you're saving. You just have to know you saved one."
+            See confirmed allocations in our transparent monthly Impact Commitment reports.
           </AppText>
         </View>
       </Animated.View>
@@ -102,7 +102,7 @@ export default function SuccessScreen() {
           ]} 
           onPress={handleFinish}
         >
-          <AppText style={styles.primaryBtnText}>See the lives you'll touch</AppText>
+          <AppText style={styles.primaryBtnText}>Explore verified causes</AppText>
         </Pressable>
         
         <Pressable 

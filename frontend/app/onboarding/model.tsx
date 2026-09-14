@@ -19,13 +19,6 @@ import Animated, {
   runOnJS 
 } from "react-native-reanimated";
 
-const IMPACT_MAP: Record<string, string> = {
-  tier_1k: "provides warm, nutritious meals for a family in need this month.",
-  tier_2k5: "funds urgent medical supplies for a local community clinic.",
-  tier_5k: "provides critical anti-malaria medicine for two children this month.",
-  tier_10k: "covers life-saving hospital bills for an emergency patient.",
-};
-
 const TIER_RAW: Record<string, number> = {
   tier_1k: 1000,
   tier_2k5: 2500,
@@ -94,7 +87,7 @@ function HeartbeatButton({ onComplete }: { onComplete: () => void }) {
         
         <View style={styles.heartbeatInner}>
           <Ionicons name="finger-print-outline" size={24} color={colors.surface} />
-          <AppText style={styles.heartbeatText}>Press & hold to pledge</AppText>
+          <AppText style={styles.heartbeatText}>Press & hold to continue</AppText>
         </View>
       </Animated.View>
     </Pressable>
@@ -110,7 +103,6 @@ export default function ModelScreen() {
   const tierKey = typeof tier === "string" ? tier : "tier_5k";
   const amountNum = TIER_RAW[tierKey] || 5000;
   const tierString = formatCurrency(amountNum, "NGN");
-  const impactString = IMPACT_MAP[tierKey] || IMPACT_MAP.tier_5k;
 
   const handlePledgeComplete = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -150,7 +142,7 @@ export default function ModelScreen() {
         <View style={{ height: 80, justifyContent: "center" }}>
           <TypeWriterText 
             style={styles.storyText}
-            text={`Your ${tierString} doesn't just sit in a bank. It ${impactString} You are literally changing lives.`}
+            text={`Your ${tierString} monthly membership unlocks GoodCause benefits and supports our published Impact Commitment.`}
           />
         </View>
 
@@ -162,9 +154,9 @@ export default function ModelScreen() {
                 <Ionicons name="heart" size={24} color={colors.brandPrimary} />
               </View>
               <View style={styles.glassTextCol}>
-                <AppText style={styles.glassTitle}>Your Monthly Pledge</AppText>
+                <AppText style={styles.glassTitle}>Your Monthly Membership</AppText>
                 <AppText style={styles.glassAmount}>{tierString}</AppText>
-                <AppText style={styles.glassDesc}>You are always in control. Pause or cancel your giving anytime.</AppText>
+                <AppText style={styles.glassDesc}>80% of confirmed net membership proceeds is allocated to verified causes. Cancel anytime.</AppText>
               </View>
             </View>
           </BlurView>
