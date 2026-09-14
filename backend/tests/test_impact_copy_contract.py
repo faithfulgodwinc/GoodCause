@@ -44,3 +44,20 @@ def test_home_has_no_fabricated_community_metric_floors_or_fallbacks():
     combined = backend_home + frontend_home + paywall
     for claim in forbidden:
         assert claim not in combined
+
+
+def test_in_app_and_public_policies_define_the_same_financial_relationship():
+    policies = "\n".join([
+        _read("frontend/app/privacy.tsx"),
+        _read("frontend/public/privacy.html"),
+        _read("frontend/public/terms.html"),
+    ])
+
+    assert policies.count("80%") >= 3
+    assert policies.count("20%") >= 3
+    assert "confirmed net membership proceeds" in policies
+    assert "restricted rollover" in policies
+    assert "not a direct charitable donation" in policies
+    assert "Paystack" in policies
+    assert "RevenueCat manages" in policies
+    assert "tax-deductible" in policies

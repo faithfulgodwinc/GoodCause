@@ -2,6 +2,11 @@ BEGIN;
 
 ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS payout_bank JSONB;
 
+UPDATE campaigns
+SET verification_status = 'VERIFIED'
+WHERE verification->>'status' = 'VERIFIED'
+  AND verification_status <> 'VERIFIED';
+
 CREATE TABLE IF NOT EXISTS impact_periods (
     id VARCHAR(64) PRIMARY KEY,
     period_key VARCHAR(32) UNIQUE NOT NULL,

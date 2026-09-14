@@ -18,6 +18,7 @@ def test_impact_migration_defines_append_only_financial_ledger():
     assert "REFERENCES campaigns(id)" in sql
     assert "REFERENCES users(id)" in sql
     assert "ADD COLUMN IF NOT EXISTS payout_bank JSONB" in sql
+    assert "verification->>'status' = 'VERIFIED'" in sql
 
 
 def test_canonical_schema_matches_impact_migration_tables():

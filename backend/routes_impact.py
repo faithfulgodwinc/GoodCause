@@ -264,7 +264,10 @@ async def cancel_allocation(allocation_id: str, body: CancellationIn,
             if not allocation:
                 raise HTTPException(status_code=409, detail="Allocation cannot be cancelled.")
             await conn.execute(
-                "UPDATE impact_periods SET closing_rollover_kobo=closing_rollover_kobo+$2,updated_at=NOW() WHERE id=$1",
+                """UPDATE impact_periods
+                SET allocated_kobo=allocated_kobo-$2,
+                    closing_rollover_kobo=closing_rollover_kobo+$2,
+                    updated_at=NOW() WHERE id=$1""",
                 allocation["period_id"], allocation["amount_kobo"],
             )
             await conn.execute(
