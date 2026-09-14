@@ -52,7 +52,8 @@ async def verify_campaign(campaign_id: str, checks: VerifyChecks, admin: dict = 
     verification = {"status": "VERIFIED", "checks": checks.dict(),
                     "verified_at": now_iso(), "verified_by": admin["id"]}
     await db.campaigns.update_one({"id": campaign_id}, {"$set": {
-        "status": "VERIFIED", "verification": verification, "updated_at": now_iso()}})
+        "status": "VERIFIED", "verification_status": "VERIFIED",
+        "verification": verification, "updated_at": now_iso()}})
     await db.verification_checks.insert_one({
         "id": uid("vch_"), "campaign_id": campaign_id, "checks": checks.dict(),
         "reviewer_id": admin["id"], "created_at": now_iso()})

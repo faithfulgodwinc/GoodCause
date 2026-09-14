@@ -537,7 +537,7 @@ export default function AuthScreen() {
                 By continuing to use goodcause, you agree to our{"\n"}
                 <AppText
                   style={styles.legalLink}
-                  onPress={() => router.push("/privacy")}
+                  onPress={() => WebBrowser.openBrowserAsync("https://www.goodcause.app/terms.html")}
                 >
                   Terms of Service
                 </AppText>

@@ -14,6 +14,7 @@ import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira, formatAmountInput } from "@/src/format";
 import { useResponsive } from "@/src/lib/responsive";
+import { DIRECT_DONATION_DISCLOSURE } from "@/src/constants/impact-commitment";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
@@ -287,6 +288,9 @@ export default function Donate() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginBottom: spacing.sm }}>
+          {DIRECT_DONATION_DISCLOSURE}
+        </AppText>
         <Button
           title={`Support with ${formatNaira(finalAmount || 0)}`}
           onPress={donate}

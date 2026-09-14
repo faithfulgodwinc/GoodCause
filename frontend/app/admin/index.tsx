@@ -55,7 +55,7 @@ export default function Admin() {
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
           <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
           <AppText variant="title">Admin</AppText>
-          <View style={{ width: 24 }} />
+          <Pressable onPress={() => router.push("/admin/impact")}><Feather name="pie-chart" size={22} color={colors.brandPrimary} /></Pressable>
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>

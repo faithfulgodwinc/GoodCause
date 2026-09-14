@@ -99,12 +99,12 @@ export default function PrivacyPolicyScreen() {
                 Privacy Policy
               </AppText>
               <AppText variant="caption" color={colors.muted} style={{ marginBottom: spacing.lg }}>
-                Effective Date: September 11, 2026
+                Effective Date: September 13, 2026
               </AppText>
 
               <SectionTitle icon="shield" title="1. Overview" />
               <Paragraph>
-                GoodCause ("we", "our", or "us") is dedicated to protecting your personal privacy while enabling transparent, impactful giving. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our mobile app and services.
+                GoodCause (we, our, or us) is dedicated to protecting your personal privacy while enabling transparent, impactful giving. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our mobile app and services.
               </Paragraph>
 
               <SectionTitle icon="database" title="2. Information We Collect" />
@@ -118,7 +118,7 @@ export default function PrivacyPolicyScreen() {
                 Campaign titles, stories, goals, photos uploaded from your Photo Library (`READ_MEDIA_IMAGES`), and voice updates recorded using your device microphone (`RECORD_AUDIO`).
               </BulletPoint>
               <BulletPoint title="Financial & Subscription Data">
-                Donation records, transaction history, and subscription status (processed securely through RevenueCat and PCI-DSS compliant payment processors).
+                Donation records, transaction history, and subscription status. Apple or Google processes native subscription payments, RevenueCat manages subscription data and entitlements, and Paystack processes direct campaign donations.
               </BulletPoint>
               <BulletPoint title="Technical & Device Identifiers">
                 Device OS version, app version, crash logs, and network connection status used solely for service reliability and fraud prevention.
@@ -170,7 +170,7 @@ export default function PrivacyPolicyScreen() {
                 Terms of Service
               </AppText>
               <AppText variant="caption" color={colors.muted} style={{ marginBottom: spacing.lg }}>
-                Effective Date: September 11, 2026
+                Effective Date: September 13, 2026
               </AppText>
 
               <SectionTitle icon="file-text" title="1. Acceptance of Terms" />
@@ -189,6 +189,9 @@ export default function PrivacyPolicyScreen() {
               <SectionTitle icon="refresh-cw" title="3. Subscriptions & Payouts" />
               <Paragraph>
                 GoodCause Pro subscriptions auto-renew according to App Store and Google Play billing rules. Payouts to campaign creators are subject to identity verification and compliance audits.
+              </Paragraph>
+              <Paragraph>
+                Membership is a purchase of ongoing GoodCause benefits and is not a direct charitable donation. GoodCause commits 80% of confirmed net membership proceeds to eligible verified causes and retains 20% for platform operations. Amounts that cannot be distributed become restricted rollover for future eligible causes. Direct Paystack donations are separate and designated for the selected campaign. GoodCause does not represent payments as tax-deductible.
               </Paragraph>
 
               <SectionTitle icon="alert-circle" title="4. Limitation of Liability" />

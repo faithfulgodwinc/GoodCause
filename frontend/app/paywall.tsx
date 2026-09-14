@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSubscription } from "@/src/lib/revenuecat";
 import { AppText, Button } from "@/src/components/ui";
 import { colors, spacing, radius, shadow, font } from "@/src/theme";
+import { IMPACT_DISCLOSURE_COMPACT } from "@/src/constants/impact-commitment";
 
 // ─── Feature list ─────────────────────────────────────────────────────────────
 
@@ -252,7 +253,7 @@ export default function Paywall() {
                 color="rgba(255,255,255,0.7)"
                 style={styles.proSubtitle}
               >
-                Powerful tools for serious fundraisers.{"\n"}Donating is always free.
+                Powerful membership tools—and a transparent commitment to verified causes.
               </AppText>
 
               {/* Social proof */}
@@ -273,7 +274,7 @@ export default function Paywall() {
                   color="rgba(255,255,255,0.65)"
                   style={{ marginLeft: spacing.sm, fontSize: 12 }}
                 >
-                  Join 2,400+ Pro members
+                  Membership that powers tools and impact
                 </AppText>
               </View>
             </Animated.View>
@@ -401,6 +402,13 @@ export default function Paywall() {
                 </AppText>
               ) : null}
 
+              <AppText variant="caption" color="rgba(255,255,255,0.72)" style={{ textAlign: "center", marginBottom: spacing.xs }}>
+                {IMPACT_DISCLOSURE_COMPACT}
+              </AppText>
+              <Pressable onPress={() => router.push("/impact-commitment")} style={{ alignSelf: "center", marginBottom: spacing.sm }}>
+                <AppText variant="caption" color={colors.brandPrimary}>Learn how it works</AppText>
+              </Pressable>
+
               {/* CTA */}
               <Pressable
                 onPress={() => setConfirm(selected)}
@@ -487,6 +495,9 @@ export default function Paywall() {
                 {confirm?.product?.priceString || "the selected plan"}
               </AppText>
               ?
+            </AppText>
+            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
+              {IMPACT_DISCLOSURE_COMPACT}
             </AppText>
             <View
               style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.xl }}
