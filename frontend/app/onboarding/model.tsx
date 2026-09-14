@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
+import { useAuth } from "@/src/context/auth";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -104,6 +105,7 @@ export default function ModelScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tier } = useLocalSearchParams();
+  const { user } = useAuth();
   
   const tierKey = typeof tier === "string" ? tier : "tier_5k";
   const amountNum = TIER_RAW[tierKey] || 5000;
@@ -112,7 +114,11 @@ export default function ModelScreen() {
 
   const handlePledgeComplete = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.push({ pathname: "/onboarding/payment", params: { tier } });
+    if (user) {
+      router.push({ pathname: "/onboarding/payment", params: { tier } });
+    } else {
+      router.push({ pathname: "/onboarding/auth", params: { tier, returnTo: "payment" } });
+    }
   };
 
   return (

@@ -57,7 +57,7 @@ export function ResponsiveContainer({
           borderRadius: radius.lg,
           borderWidth: 1,
           borderColor: colors.border,
-          ...shadow.md,
+          ...shadow.card,
           overflow: "hidden",
         },
         style,

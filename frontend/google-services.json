@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "121930938754-2hs0shpg1ce6tblufk61qslq49sq43dj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.goodcause.app",
+            "certificate_hash": "f552ca4df2c2694b1cee581ccfffca0154ae20f3"
+          }
+        },
+        {
           "client_id": "121930938754-3vip4qerdqtn8gll3g2mq3hvkqall21a.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

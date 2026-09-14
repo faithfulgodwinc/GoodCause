@@ -464,7 +464,7 @@ export function TypeWriterText({
     }
     
     let isCancelled = false;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let i = 0;
     
     setDisplayedText("");

@@ -29,6 +29,11 @@ type HomeData = {
   recommended: Campaign[];
   categories: { id: string; name: string; slug: string; icon: string; color: string }[];
   greeting_name?: string | null;
+  impact_metrics?: {
+    members_count: number;
+    given_this_month_kobo: number;
+    causes_helped_count: number;
+  };
 };
 
 export default function HomeScreen() {
@@ -36,24 +41,34 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { maxContentWidth } = useResponsive();
-  const { currentPackage } = useSubscription();
+  const { isSubscribed, availablePackages } = useSubscription();
 
   const { data, isRefetching, refetch } = useQuery({
     queryKey: ["home"],
     queryFn: () => api<HomeData>("/home"),
   });
 
-  const { urgent = [], recommended = [], greeting_name } = data || {};
+  const { urgent = [], recommended = [], greeting_name, impact_metrics } = data || {};
   const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : "Friend");
+
+  const membersDisplay = impact_metrics?.members_count
+    ? impact_metrics.members_count.toLocaleString()
+    : "1,284";
+  const givenDisplay = impact_metrics?.given_this_month_kobo
+    ? `₦${(impact_metrics.given_this_month_kobo / 10000000).toFixed(1)}M`
+    : "₦8.4M";
+  const causesDisplay = impact_metrics?.causes_helped_count
+    ? impact_metrics.causes_helped_count.toLocaleString()
+    : "145";
 
   const hour = new Date().getHours();
   let timeGreeting = "Good evening";
   if (hour < 12) timeGreeting = "Good morning";
   else if (hour < 17) timeGreeting = "Good afternoon";
 
-  const hasCommitment = !!currentPackage;
-  const committedAmount = currentPackage
-    ? currentPackage.product.priceString
+  const hasCommitment = isSubscribed;
+  const committedAmount = isSubscribed
+    ? (availablePackages[1]?.product?.priceString || "₦5,000")
         .replace(/(\d+)\.(\d{3})(?!\d)/g, "$1,$2")
         .replace(/\.00$/, "")
     : null;
@@ -97,6 +112,7 @@ export default function HomeScreen() {
           style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.6 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push("/(tabs)/activity");
           }}
         >
           <Feather name="bell" size={20} color={colors.onSurface} />
@@ -163,21 +179,21 @@ export default function HomeScreen() {
             </AppText>
             <View style={styles.impactContainer}>
               <View style={styles.impactCol}>
-                <AppText style={styles.impactNumber}>1,284</AppText>
+                <AppText style={styles.impactNumber}>{membersDisplay}</AppText>
                 <AppText style={styles.impactSublabel}>Members</AppText>
               </View>
               
               <View style={styles.impactDivider} />
               
               <View style={styles.impactCol}>
-                <AppText style={styles.impactNumber}>₦8.4M</AppText>
+                <AppText style={styles.impactNumber}>{givenDisplay}</AppText>
                 <AppText style={styles.impactSublabel}>Given this month</AppText>
               </View>
               
               <View style={styles.impactDivider} />
               
               <View style={styles.impactCol}>
-                <AppText style={styles.impactNumber}>145</AppText>
+                <AppText style={styles.impactNumber}>{causesDisplay}</AppText>
                 <AppText style={styles.impactSublabel}>Causes helped</AppText>
               </View>
             </View>

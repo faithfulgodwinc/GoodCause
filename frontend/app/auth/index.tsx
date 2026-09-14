@@ -18,7 +18,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -73,6 +73,7 @@ const OTP_RESEND_SECONDS = 60;
 export default function AuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { tier, returnTo } = useLocalSearchParams();
   const { sendOtp, verifyOtp, completeGoogleSession, completeAppleSession } = useAuth();
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -129,22 +130,15 @@ export default function AuthScreen() {
   // ── Auth success routing ───────────────────────────────────────────────────
   const onAuthSuccess = useCallback(
     async (isNew: boolean) => {
-      const onboardingDone = await storage.getItem("gc_onboarding_done", false);
-      if (isNew || !onboardingDone) {
-        await storage.setItem("gc_onboarding_done", false);
+      if (returnTo === "payment" && tier) {
+        router.replace({ pathname: "/onboarding/payment", params: { tier } });
+      } else if (returnTo === "tabs") {
+        router.replace("/(tabs)");
+      } else {
         router.replace("/onboarding/commitment");
-        return;
       }
-      const firstLogin = await storage.getItem("gc_first_signin_done", false);
-      if (!firstLogin) {
-        setShowPreloader(true);
-        await storage.setItem("gc_first_signin_done", true);
-        setTimeout(() => router.replace("/(tabs)"), 1800);
-        return;
-      }
-      router.replace("/(tabs)");
     },
-    [router]
+    [router, tier, returnTo]
   );
 
   // ── Resend timer ───────────────────────────────────────────────────────────
@@ -343,18 +337,23 @@ export default function AuthScreen() {
       </View>
 
       <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+          style={{ flex: 1 }}
+        >
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerStyle={[styles.scroll, step !== "main" && { justifyContent: "center" }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            automaticallyAdjustKeyboardInsets={true}
           >
             <View style={styles.header}>
               <BrandLogo size={22} color={colors.brandPrimary} />
             </View>
 
-            <View style={styles.content}>
-              <View style={{ flex: 1, minHeight: 60 }} />
+            <View style={[styles.content, step !== "main" && { justifyContent: "center", paddingTop: 20 }]}>
+              <View style={{ flex: step === "main" ? 1 : 0.2, minHeight: step === "main" ? 60 : 16 }} />
 
               {/* Title & subtitle */}
               <AppText style={styles.title}>

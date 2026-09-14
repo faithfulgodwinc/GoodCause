@@ -9,6 +9,8 @@ import * as Haptics from "expo-haptics";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
+import { useAuth } from "@/src/context/auth";
+
 const TIERS = [
   { id: "tier_1k",  amount: 1000,  desc: "A small step that still moves things forward." },
   { id: "tier_2k5", amount: 2500,  desc: "Enough to make a meaningful difference." },
@@ -56,7 +58,16 @@ function TierRow({
 export default function CommitmentScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [selected, setSelected] = useState("tier_5k");
+
+  const handleSkip = () => {
+    if (user) {
+      router.replace("/(tabs)");
+    } else {
+      router.replace({ pathname: "/onboarding/auth", params: { returnTo: "tabs" } });
+    }
+  };
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -71,7 +82,7 @@ export default function CommitmentScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </Pressable>
         <BrandLogo size={20} color={colors.onSurface} />
-        <Pressable onPress={() => router.replace("/")} style={styles.headerBtn} hitSlop={8}>
+        <Pressable onPress={handleSkip} style={styles.headerBtn} hitSlop={8}>
           <AppText style={styles.skipText}>Skip</AppText>
         </Pressable>
       </View>

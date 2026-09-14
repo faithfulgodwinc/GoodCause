@@ -223,10 +223,13 @@ export default function OnboardingScreen() {
     await storage.setItem(ONBOARDING_DONE_KEY, true);
   }, []);
 
-  const skipToTabs = useCallback(async () => {
-    await markDone();
-    router.replace("/");
-  }, [markDone, router]);
+  const skipToLastSlide = useCallback(() => {
+    const lastIndex = SLIDES.length - 1;
+    flatRef.current?.scrollToIndex({ index: lastIndex, animated: true });
+    setActiveIndex(lastIndex);
+    setCompletedParagraphs(0);
+    Haptics.selectionAsync().catch(() => {});
+  }, []);
 
   const goNext = useCallback(async () => {
     const next = activeIndex + 1;
@@ -235,7 +238,7 @@ export default function OnboardingScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } else {
       await markDone();
-      router.push("/onboarding/auth");
+      router.push("/onboarding/commitment");
     }
   }, [activeIndex, markDone, router]);
 
@@ -279,7 +282,7 @@ export default function OnboardingScreen() {
       {!isLast && (
         <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
           <View style={{ flex: 1 }} />
-          <Pressable onPress={skipToTabs} hitSlop={20} style={styles.skipBtn}>
+          <Pressable onPress={skipToLastSlide} hitSlop={20} style={styles.skipBtn}>
             <AppText style={styles.skipText}>Skip</AppText>
           </Pressable>
         </View>

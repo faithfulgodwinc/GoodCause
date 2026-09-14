@@ -1,15 +1,23 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from "react-native-reanimated";
 
 import { api } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
 import { useSubscription } from "@/src/lib/revenuecat";
 import { AppText, Avatar, Card } from "@/src/components/ui";
-import { colors, spacing, radius, shadow } from "@/src/theme";
+import { colors, spacing, radius, shadow, font } from "@/src/theme";
 import { formatNaira } from "@/src/format";
 import { useResponsive } from "@/src/lib/responsive";
 
@@ -20,6 +28,74 @@ type Impact = {
   campaigns_completed: number;
   following_count: number;
 };
+
+function CommitToHelpCard({ onPress }: { onPress: () => void }) {
+  const floatAnim = useSharedValue(0);
+
+  useEffect(() => {
+    floatAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 3500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 3500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedCircle1 = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: floatAnim.value * -12 },
+      { scale: 1 + floatAnim.value * 0.1 },
+    ],
+    opacity: 0.15 + floatAnim.value * 0.08,
+  }));
+
+  const animatedCircle2 = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: floatAnim.value * 10 },
+      { scale: 1 - floatAnim.value * 0.06 },
+    ],
+    opacity: 0.1 + (1 - floatAnim.value) * 0.08,
+  }));
+
+  return (
+    <Pressable
+      testID="profile-pro-card"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.commitCard,
+        pressed && { opacity: 0.92, transform: [{ scale: 0.98 }] },
+      ]}
+    >
+      {/* Animated Background Motion Elements */}
+      <Animated.View style={[styles.commitBgCircle1, animatedCircle1]} />
+      <Animated.View style={[styles.commitBgCircle2, animatedCircle2]} />
+      <View style={styles.commitWatermark}>
+        <Ionicons name="heart" size={120} color="rgba(255, 255, 255, 0.14)" />
+      </View>
+
+      {/* Header Pill */}
+      <View style={styles.commitBadgePill}>
+        <Ionicons name="sparkles" size={12} color={colors.brandPrimary} />
+        <AppText style={styles.commitBadgeText}>Join Community</AppText>
+      </View>
+
+      {/* Content */}
+      <View style={styles.commitCardContent}>
+        <View style={{ flex: 1 }}>
+          <AppText style={styles.commitCardTitle}>Commit to Help</AppText>
+          <AppText style={styles.commitCardDesc}>
+            Join over 1,200 monthly givers supporting verified causes across Nigeria.
+          </AppText>
+        </View>
+        <View style={styles.commitArrowCircle}>
+          <Feather name="arrow-right" size={20} color={colors.brandPrimary} />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -39,7 +115,7 @@ export default function Profile() {
               <AppText variant="h2">{user?.name}</AppText>
               <AppText variant="caption" style={{ marginTop: 2 }}>{user?.email}</AppText>
               {isSubscribed ? (
-                <View style={styles.proTag}><Feather name="star" size={11} color={colors.onBrandTertiary} /><AppText variant="caption" color={colors.onBrandTertiary} style={{ marginLeft: 4 }}>GoodCause Pro</AppText></View>
+                <View style={styles.proTag}><Ionicons name="shield-checkmark" size={11} color={colors.onBrandTertiary} /><AppText variant="caption" color={colors.onBrandTertiary} style={{ marginLeft: 4 }}>Active Member</AppText></View>
               ) : null}
             </View>
           </View>
@@ -67,17 +143,9 @@ export default function Profile() {
             </Card>
           </View>
 
-      {/* Pro */}
+      {/* Commit to help */}
       {!isSubscribed ? (
-        <Pressable testID="profile-pro-card" onPress={() => router.push("/paywall")} style={styles.proCard}>
-          <View style={{ flex: 1 }}>
-            <AppText variant="title" color="#fff">Go Pro</AppText>
-            <AppText variant="caption" color="rgba(255,255,255,0.85)" style={{ marginTop: 2 }}>
-              AI assistant, advanced analytics, QR kit & more
-            </AppText>
-          </View>
-          <Feather name="arrow-right" size={20} color="#fff" />
-        </Pressable>
+        <CommitToHelpCard onPress={() => router.push("/onboarding/commitment")} />
       ) : null}
 
       {/* Menu */}
@@ -85,7 +153,7 @@ export default function Profile() {
         <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
         <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
         <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
-        <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/paywall")} testID="menu-pro" />
+        <MenuItem icon="heart" label="Commit to Help" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
         <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
         {user?.role === "admin" ? (
           <MenuItem icon="shield" label="Admin dashboard" onPress={() => router.push("/admin")} testID="menu-admin" highlight />
@@ -130,12 +198,95 @@ const styles = StyleSheet.create({
   proTag: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", marginTop: 6, backgroundColor: colors.brandTertiary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
   statsRow: { flexDirection: "row", marginTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: spacing.md },
   stat: { flex: 1 },
-  proCard: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.brandDark,
-    marginHorizontal: spacing.lg, marginTop: spacing.xl, padding: spacing.lg, borderRadius: radius.lg, ...shadow.card,
+  commitCard: {
+    backgroundColor: colors.brandPrimary,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xl,
+    padding: 22,
+    borderRadius: 24,
+    position: "relative",
+    overflow: "hidden",
+    shadowColor: colors.brandPrimary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  commitBgCircle1: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    position: "absolute",
+    right: -20,
+    top: -40,
+  },
+  commitBgCircle2: {
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    position: "absolute",
+    left: -40,
+    bottom: -60,
+  },
+  commitWatermark: {
+    position: "absolute",
+    right: -10,
+    bottom: -20,
+    transform: [{ rotate: "-12deg" }],
+  },
+  commitBadgePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  commitBadgeText: {
+    fontSize: 11,
+    fontFamily: font.bold,
+    color: colors.brandPrimary,
+    marginLeft: 4,
+  },
+  commitCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  commitCardTitle: {
+    fontSize: 22,
+    fontFamily: font.bold,
+    color: "#FFFFFF",
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  commitCardDesc: {
+    fontSize: 13,
+    fontFamily: font.regular,
+    color: "rgba(255, 255, 255, 0.92)",
+    lineHeight: 18,
+    paddingRight: 8,
+  },
+  commitArrowCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
   },
   menuItem: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
   },
 });
