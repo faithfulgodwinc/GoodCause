@@ -157,9 +157,6 @@ HOW IT WORKS:
 3. Track Direct Impact: Receive photo, audio, and milestone updates as your contribution changes lives.
 
 Join goodcause today and experience the power of transparent giving.
-
-THIRD-PARTY AI DISCLOSURE (Guideline 5.1.2):
-goodcause utilizes third-party artificial intelligence services (including OpenAI / Google Gemini) to assist campaign organizers with drafting and structuring campaign text. User inputs provided for AI draft assistance are processed solely to generate draft copy and are not stored or used to train third-party models.
 ```
 
 #### 4. Keywords (98/100 Characters — Pure ASO, Comma-Separated, No Spaces)

@@ -80,9 +80,6 @@ function Builder() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiNote, setAiNote] = useState("");
-  const [aiInput, setAiInput] = useState("");
 
   const { data: cats } = useQuery({ queryKey: ["categories"], queryFn: () => api<any[]>("/categories") });
 
@@ -106,24 +103,6 @@ function Builder() {
       hero_video: firstVideo ? firstVideo.url : null,
     };
   });
-
-  const runAI = async () => {
-    if (aiInput.trim().length < 10) { setError("Tell the assistant a bit more about the cause."); return; }
-    setError(""); setAiLoading(true);
-    try {
-      const res = await api<any>("/ai/campaign-assistant", { method: "POST", body: { raw_text: aiInput } });
-      setForm((f: any) => ({
-        ...f,
-        title: res.title || f.title,
-        summary: res.summary || f.summary,
-        story: res.story || f.story,
-        budget: (res.expense_categories || []).length ? res.expense_categories.map((e: any) => ({ item: e.item, amount: "" })) : f.budget,
-      }));
-      setAiNote(res.review_note || "Please review and edit the AI draft before publishing.");
-    } catch (e: any) {
-      setError(e?.message || "The assistant is unavailable right now.");
-    } finally { setAiLoading(false); }
-  };
 
   const validateStep = (): boolean => {
     setError("");
@@ -199,19 +178,6 @@ function Builder() {
 
         {step === 1 && (
           <StepWrap title="Tell the story" subtitle="Explain what's happening, who it helps, and why it matters.">
-            <View style={styles.aiBox}>
-              <View style={styles.rowBetween}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Feather name="zap" size={16} color={colors.brandPrimary} />
-                  <AppText variant="label" style={{ marginLeft: 6 }}>AI Campaign Assistant</AppText>
-                </View>
-                {!isSubscribed ? <Feather name="star" size={14} color={colors.warning} /> : null}
-              </View>
-              <AppText variant="caption" style={{ marginTop: 4 }}>{"Describe the situation in your own words and we'll draft a title, summary and story for you to review."}</AppText>
-              <TextInput testID="ai-input" value={aiInput} onChangeText={setAiInput} multiline placeholder="e.g. My sister needs surgery for a spinal injury after an accident..." placeholderTextColor={colors.muted} style={styles.aiInput} />
-              <Button title="Draft with AI" icon="zap" small loading={aiLoading} onPress={runAI} style={{ marginTop: spacing.sm, alignSelf: "flex-start", paddingHorizontal: spacing.xl }} testID="ai-draft-button" />
-              {aiNote ? <View style={styles.aiNote}><Feather name="info" size={12} color={colors.info} /><AppText variant="caption" color={colors.onSurfaceSecondary} style={{ marginLeft: 6, flex: 1 }}>{aiNote}</AppText></View> : null}
-            </View>
             <Label text="Your story" />
             <Input value={form.story} onChangeText={(v: string) => set("story", v)} placeholder="Share the full story here..." multiline height={180} testID="input-story" />
           </StepWrap>

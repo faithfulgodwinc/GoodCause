@@ -145,7 +145,7 @@ export default function PrivacyPolicyScreen() {
                 Verifying organizer identity, preventing fraudulent campaigns, and ensuring legal compliance.
               </BulletPoint>
               <BulletPoint title="GoodCause Pro Features">
-                Powering AI assistant features and campaign performance analytics for subscribed organizers.
+                Powering campaign performance analytics and transparent impact reports for subscribed organizers.
               </BulletPoint>
 
               <SectionTitle icon="share-2" title="4. Third-Party Services" />
@@ -155,9 +155,6 @@ export default function PrivacyPolicyScreen() {
               <BulletPoint title="Supabase Cloud">Secure database and file storage infrastructure.</BulletPoint>
               <BulletPoint title="RevenueCat">In-app subscription and entitlement management.</BulletPoint>
               <BulletPoint title="Google & Apple Auth">OAuth authentication providers.</BulletPoint>
-              <BulletPoint title="Third-Party AI Services">
-                Powering AI campaign assistant features (OpenAI / Google Gemini). Inputs provided for AI draft assistance are processed solely to generate draft text suggestions and are not stored or used to train third-party models.
-              </BulletPoint>
 
               <SectionTitle icon="lock" title="5. Data Retention & Security" />
               <Paragraph>

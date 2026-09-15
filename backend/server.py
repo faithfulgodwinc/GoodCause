@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 
 from core import db, get_current_user_optional, track
-import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, ai_assistant, routes_media, routes_payouts, routes_share, routes_impact
+import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, routes_media, routes_payouts, routes_share, routes_impact
 from seed import seed
 from payments import provider_mode
 from storage import init_storage
@@ -53,7 +53,7 @@ async def config():
             "entitlement": "pro",
             "features": [
                 "Advanced campaign analytics", "Run multiple active campaigns",
-                "Advanced supporter management", "AI Campaign Assistant",
+                "Advanced supporter management",
                 "Campaign customization", "Scheduled updates",
                 "Advanced share assets", "Campaign QR kit",
             ],
@@ -78,7 +78,6 @@ app.include_router(routes_campaigns.router)
 app.include_router(routes_donations.router)
 app.include_router(routes_social.router)
 app.include_router(routes_admin.router)
-app.include_router(ai_assistant.router)
 app.include_router(routes_media.router)
 app.include_router(routes_payouts.router)
 app.include_router(routes_share.router)
