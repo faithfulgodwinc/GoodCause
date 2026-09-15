@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "lance-app-manager": {
+      "serverUrl": "https://api.lance.app/mcp",
+      "headers": {
+        "Authorization": "Bearer lance_sk_UcfI64ky5wGSSQtYBqr1fMR4pFqaH6BKs3dof1gb"
+      }
+    }
+  }
+}

@@ -83,6 +83,13 @@ export default function AuthScreen() {
   const [name, setName] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
   const [showPreloader, setShowPreloader] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === "ios") {
+      AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
+    }
+  }, []);
 
   const [emailLoading, setEmailLoading] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
@@ -389,16 +396,26 @@ export default function AuthScreen() {
                   </Pressable>
 
                   {Platform.OS === "ios" && (
-                    <Pressable
-                      onPress={appleSignIn}
-                      disabled={appleLoading}
-                      style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
-                    >
-                      <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
-                      <AppText style={styles.outlineBtnText}>
-                        {appleLoading ? "Connecting…" : "Continue with Apple"}
-                      </AppText>
-                    </Pressable>
+                    appleAvailable ? (
+                      <AppleAuthentication.AppleAuthenticationButton
+                        buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
+                        cornerRadius={26}
+                        style={styles.appleBtn}
+                        onPress={appleSignIn}
+                      />
+                    ) : (
+                      <Pressable
+                        onPress={appleSignIn}
+                        disabled={appleLoading}
+                        style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
+                      >
+                        <Ionicons name="logo-apple" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <AppText style={styles.outlineBtnText}>
+                          {appleLoading ? "Connecting…" : "Continue with Apple"}
+                        </AppText>
+                      </Pressable>
+                    )
                   )}
 
                   <Pressable
@@ -606,6 +623,7 @@ const styles = StyleSheet.create({
   },
   outlineBtnText: { color: "#FFFFFF", fontSize: 16, fontFamily: font.semibold },
   socialIconWrap: { width: 24, alignItems: "center", marginRight: 8 },
+  appleBtn: { width: "100%", height: 52 },
 
   inputBox: {
     backgroundColor: "rgba(255,255,255,0.06)",

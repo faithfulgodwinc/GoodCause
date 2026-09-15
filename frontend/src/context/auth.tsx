@@ -24,6 +24,7 @@ type AuthContextValue = {
   completeGoogleSession: (idToken: string) => Promise<{ isNewUser: boolean }>;
   completeAppleSession: (idToken: string, name?: string) => Promise<{ isNewUser: boolean }>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   refresh: () => Promise<void>;
   updateUser: (u: Partial<User>) => void;
 };
@@ -136,6 +137,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      await api("/auth/account", { method: "DELETE" });
+    } catch (e: any) {
+      console.error("Account deletion API error:", e);
+      throw e;
+    } finally {
+      await setToken(null);
+      setUser(null);
+    }
+  }, []);
+
   const updateUser = useCallback((u: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...u } : prev));
   }, []);
@@ -146,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user, loading,
         sendOtp, verifyOtp,
         completeGoogleSession, completeAppleSession,
-        logout, refresh: bootstrap, updateUser,
+        logout, deleteAccount, refresh: bootstrap, updateUser,
       }}
     >
       {children}

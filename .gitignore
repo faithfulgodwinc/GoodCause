@@ -74,6 +74,9 @@ agenthub/agents/youtube/db
 *.deb
 *.dylib
 
+# Generated comic artwork
+/docs/comic/
+
 # Build caches
 .cache/
 

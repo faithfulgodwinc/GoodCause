@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -100,10 +100,34 @@ function CommitToHelpCard({ onPress }: { onPress: () => void }) {
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const { isSubscribed } = useSubscription();
   const { feedMaxWidth } = useResponsive();
   const { data: impact } = useQuery({ queryKey: ["impact"], queryFn: () => api<Impact>("/impact") });
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account Permanently",
+      "Are you sure you want to permanently delete your account? This action will remove your profile, saved causes, and campaign drafts. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete My Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              Alert.alert("Account Deleted", "Your account has been deleted.", [
+                { text: "OK", onPress: () => router.replace("/auth") },
+              ]);
+            } catch (e: any) {
+              Alert.alert("Error", e?.message || "Could not delete account. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -160,6 +184,7 @@ export default function Profile() {
           <MenuItem icon="shield" label="Admin dashboard" onPress={() => router.push("/admin")} testID="menu-admin" highlight />
         ) : null}
         <MenuItem icon="log-out" label="Sign out" onPress={() => { logout(); router.replace("/auth"); }} testID="menu-logout" danger />
+        <MenuItem icon="trash-2" label="Delete account" onPress={handleDeleteAccount} testID="menu-delete-account" danger />
       </View>
 
       <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl }}>

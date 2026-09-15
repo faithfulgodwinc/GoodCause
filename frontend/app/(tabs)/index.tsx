@@ -162,10 +162,12 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.pledgeBody}>
-              <AppText style={styles.pledgeAmount}>
-                {hasCommitment ? `${committedAmount}` : "Make a Commitment"}
+              <View style={styles.pledgeAmountRow}>
+                <AppText style={styles.pledgeAmount}>
+                  {hasCommitment ? `${committedAmount}` : "Make a Commitment"}
+                </AppText>
                 {hasCommitment ? <AppText style={styles.pledgeSub}> / month</AppText> : null}
-              </AppText>
+              </View>
               <AppText style={styles.pledgeDesc}>
                 {hasCommitment
                   ? "Your membership is active. See GoodCause's confirmed monthly allocations."
@@ -360,17 +362,26 @@ const styles = StyleSheet.create({
   pledgeBody: {
     marginTop: 2,
   },
+  pledgeAmountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 6,
+    paddingTop: 4,
+  },
   pledgeAmount: {
     fontSize: 30,
+    lineHeight: 38,
+    paddingTop: 2,
     fontFamily: font.bold,
     color: "#FFFFFF",
     letterSpacing: -0.6,
-    marginBottom: 6,
   },
   pledgeSub: {
     fontSize: 15,
+    lineHeight: 22,
     fontFamily: font.regular,
     color: "rgba(255, 255, 255, 0.8)",
+    marginLeft: 4,
   },
   pledgeDesc: {
     fontSize: 13,

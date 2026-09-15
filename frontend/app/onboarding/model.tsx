@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   glassTitle: { fontSize: 13, color: "rgba(255,255,255,0.6)", fontFamily: font.bold, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
-  glassAmount: { fontSize: 28, fontFamily: font.bold, color: colors.surface, marginBottom: 8 },
+  glassAmount: { fontSize: 28, lineHeight: 36, paddingTop: 2, fontFamily: font.bold, color: colors.surface, marginBottom: 8 },
   glassDesc: { fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 16 },
 
   /* Heartbeat Button */

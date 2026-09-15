@@ -273,9 +273,8 @@ class AppleSessionIn(BaseModel):
 
 @router.post("/session/apple")
 async def apple_session(body: AppleSessionIn):
-    apple_client_id = os.environ.get("APPLE_CLIENT_ID")
-    if not apple_client_id or "your_" in apple_client_id:
-        raise HTTPException(status_code=501, detail="Apple SSO requires production configuration.")
+    env_apple_client_id = os.environ.get("APPLE_CLIENT_ID", "")
+    allowed_audiences = list(set(filter(None, [env_apple_client_id if "your_" not in env_apple_client_id else "", "com.goodcause.app"])))
 
     try:
         url = "https://appleid.apple.com/auth/keys"
@@ -286,7 +285,7 @@ async def apple_session(body: AppleSessionIn):
             body.id_token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=apple_client_id,
+            audience=allowed_audiences,
             issuer="https://appleid.apple.com"
         )
 
@@ -387,3 +386,34 @@ async def update_profile(body: ProfileUpdate, user: dict = Depends(get_current_u
         await db.users.update_one({"id": user["id"]}, {"$set": updates})
     u = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     return _user_out(u)
+
+
+@router.delete("/account")
+async def delete_account(user: dict = Depends(get_current_user)):
+    """Automated in-app account deletion (Guideline 5.1.1).
+
+    Permanently removes user profile, sessions, and OTP records.
+    Financial donation records are anonymized to maintain audit logs.
+    """
+    user_id = user["id"]
+    user_email = user.get("email")
+
+    # 1. Anonymize donation records for accounting/audit compliance
+    await db.donations.update_many(
+        {"donor_id": user_id},
+        {"$set": {"donor_name": "Anonymous Donor", "donor_email": "deleted@goodcause.app"}}
+    )
+
+    # 2. Delete user sessions & OTP records
+    await db.user_sessions.delete_many({"user_id": user_id})
+    if user_email:
+        await db.email_otps.delete_many({"email": user_email})
+
+    # 3. Track deletion before deleting user record
+    await track("account_deleted", user_id, {"email": user_email})
+
+    # 4. Delete user record
+    await db.users.delete_one({"id": user_id})
+
+    return {"ok": True, "message": "Account deleted successfully."}
+

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "GoodCause",
+    "name": "goodcause",
     "slug": "frontend",
-    "version": "1.0.30",
+    "version": "1.0.36",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "goodcause",
@@ -11,15 +11,18 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodcause.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
+          "audio",
           "audio"
         ],
-        "NSPhotoLibraryUsageDescription": "Add photos to tell your campaign story"
+        "NSPhotoLibraryUsageDescription": "Add photos to tell your campaign story",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "versionCode": 33,
+      "versionCode": 39,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -39,6 +42,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {

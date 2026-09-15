@@ -13,20 +13,33 @@ export default function PrivacyPolicyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { feedMaxWidth } = useResponsive();
-  const { user } = useAuth();
+  const { user, deleteAccount } = useAuth();
   const [activeTab, setActiveTab] = useState<"privacy" | "terms" | "deletion">("privacy");
+  const [deleting, setDeleting] = useState(false);
 
   const handleAccountDeletionRequest = () => {
     Alert.alert(
-      "Request Account Deletion",
-      "Are you sure you want to request permanent account deletion? This action will permanently remove your account profile, campaign drafts, and saved preferences. Historical donation records are retained anonymously for financial auditing.",
+      "Delete Account Permanently",
+      "Are you sure you want to permanently delete your account? This will immediately remove your profile, campaign drafts, and saved items. Historical donation records are retained strictly anonymously for financial audit logs. This action cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Send Deletion Request",
+          text: "Delete My Account",
           style: "destructive",
-          onPress: () => {
-            Linking.openURL("mailto:privacy@goodcause.app?subject=Account%20Deletion%20Request&body=Please%20delete%20my%20GoodCause%20account%20associated%20with%20" + encodeURIComponent(user?.email || ""));
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await deleteAccount();
+              Alert.alert(
+                "Account Deleted",
+                "Your account and associated personal data have been permanently deleted.",
+                [{ text: "OK", onPress: () => router.replace("/auth") }]
+              );
+            } catch (e: any) {
+              Alert.alert("Error", e?.message || "Failed to delete account. Please try again.");
+            } finally {
+              setDeleting(false);
+            }
           },
         },
       ]
@@ -142,6 +155,9 @@ export default function PrivacyPolicyScreen() {
               <BulletPoint title="Supabase Cloud">Secure database and file storage infrastructure.</BulletPoint>
               <BulletPoint title="RevenueCat">In-app subscription and entitlement management.</BulletPoint>
               <BulletPoint title="Google & Apple Auth">OAuth authentication providers.</BulletPoint>
+              <BulletPoint title="Third-Party AI Services">
+                Powering AI campaign assistant features (OpenAI / Google Gemini). Inputs provided for AI draft assistance are processed solely to generate draft text suggestions and are not stored or used to train third-party models.
+              </BulletPoint>
 
               <SectionTitle icon="lock" title="5. Data Retention & Security" />
               <Paragraph>
