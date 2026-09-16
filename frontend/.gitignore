@@ -40,3 +40,10 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Signing Credentials
+credentials.json
+certs/*
+*.keystore
+play-service-account*.json
+.eas-keys/
