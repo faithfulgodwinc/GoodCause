@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { AppText, TypeWriterText } from "@/src/components/ui";
 import { font, colors } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
+import { useAuth } from "@/src/context/auth";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const ONBOARDING_DONE_KEY = "gc_onboarding_done";
@@ -71,11 +72,11 @@ const SLIDES: Slide[] = [
     titleGreen: "goodcause.",
     paragraphs: [
       {
-        text: "Start with a small monthly commitment and watch it change lives in ways you never imagined.",
+        text: "Start or support a cause today and change lives in ways you never imagined.",
         bold: true,
       },
       {
-        text: "And whenever a story deeply touches your heart, you can always reach out and support them directly. Welcome to a space where we take care of each other.",
+        text: "Whenever a story deeply touches your heart, you can reach out and support them directly. Welcome to a space where we take care of each other.",
       },
     ],
     image: require("../../assets/images/onboarding/slide3.jpg"),
@@ -214,6 +215,7 @@ function SlideText({
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const flatRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
@@ -238,9 +240,13 @@ export default function OnboardingScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } else {
       await markDone();
-      router.push("/onboarding/commitment");
+      if (user) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/auth");
+      }
     }
-  }, [activeIndex, markDone, router]);
+  }, [activeIndex, markDone, router, user]);
 
   const isLast = activeIndex === SLIDES.length - 1;
 
@@ -330,7 +336,7 @@ export default function OnboardingScreen() {
       {/* Bottom Area (Button + Dots) */}
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         
-        {/* Animated Action Button (only shows clearly on last slide, or we can crossfade it) */}
+        {/* Animated Action Button */}
         {isLast && (
           <Animated.View style={styles.buttonWrapper}>
             <Pressable
@@ -340,14 +346,9 @@ export default function OnboardingScreen() {
                 pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
               ]}
             >
-              <AppText style={styles.actionBtnText}>Start giving</AppText>
+              <AppText style={styles.actionBtnText}>Start exploring</AppText>
               <Ionicons name="arrow-forward" size={20} color="#000" style={{ marginLeft: 6 }} />
             </Pressable>
-            <AppText style={styles.priceNote}>
-              <AppText style={{ color: "rgba(255,255,255,0.6)" }}>From </AppText>
-              <AppText style={{ fontFamily: font.bold, color: "rgba(255,255,255,0.9)" }}>₦1,000</AppText>
-              <AppText style={{ color: "rgba(255,255,255,0.6)" }}>/month</AppText>
-            </AppText>
           </Animated.View>
         )}
 

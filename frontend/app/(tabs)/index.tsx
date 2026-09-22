@@ -74,6 +74,8 @@ export default function HomeScreen() {
     router.push("/profile");
   };
 
+
+
   const handleSeeAllPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/explore");
@@ -133,7 +135,7 @@ export default function HomeScreen() {
             onPress={() => {
               if (!hasCommitment) {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push("/onboarding/commitment");
+                router.push("/paywall");
               } else {
                 router.push("/impact-commitment");
               }

@@ -167,29 +167,29 @@ export default function Profile() {
             </Card>
           </View>
 
-      {/* Commit to help */}
-      {!isSubscribed ? (
-        <CommitToHelpCard onPress={() => router.push("/onboarding/commitment")} />
-      ) : null}
+          {/* GoodCause Pro banner */}
+          {!isSubscribed ? (
+            <CommitToHelpCard onPress={() => router.push("/paywall")} />
+          ) : null}
 
-      {/* Menu */}
-      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl, gap: spacing.sm }}>
-        <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
-        <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
-        <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
-        <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
-        <MenuItem icon="pie-chart" label="Impact Commitment" onPress={() => router.push("/impact-commitment")} testID="menu-impact" />
-        <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
-        {user?.role === "admin" ? (
-          <MenuItem icon="shield" label="Admin dashboard" onPress={() => router.push("/admin")} testID="menu-admin" highlight />
-        ) : null}
-        <MenuItem icon="log-out" label="Sign out" onPress={() => { logout(); router.replace("/auth"); }} testID="menu-logout" danger />
-        <MenuItem icon="trash-2" label="Delete account" onPress={handleDeleteAccount} testID="menu-delete-account" danger />
-      </View>
+          {/* Menu */}
+          <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl, gap: spacing.sm }}>
+            <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
+            <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
+            <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
+            <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/paywall")} testID="menu-pro" />
+            <MenuItem icon="pie-chart" label="Impact Commitment" onPress={() => router.push("/impact-commitment")} testID="menu-impact" />
+            <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
+            {user?.role === "admin" ? (
+              <MenuItem icon="shield" label="Admin dashboard" onPress={() => router.push("/admin")} testID="menu-admin" highlight />
+            ) : null}
+            <MenuItem icon="log-out" label="Sign out" onPress={() => { logout(); router.replace("/auth"); }} testID="menu-logout" danger />
+            <MenuItem icon="trash-2" label="Delete account" onPress={handleDeleteAccount} testID="menu-delete-account" danger />
+          </View>
 
-      <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl }}>
-        GoodCause · Trust makes generosity go further.
-      </AppText>
+          <AppText variant="caption" style={{ textAlign: "center", marginTop: spacing.xl }}>
+            GoodCause · Trust makes generosity go further.
+          </AppText>
         </View>
       </ScrollView>
     </View>

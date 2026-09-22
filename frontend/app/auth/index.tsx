@@ -138,11 +138,9 @@ export default function AuthScreen() {
   const onAuthSuccess = useCallback(
     async (isNew: boolean) => {
       if (returnTo === "payment" && tier) {
-        router.replace({ pathname: "/onboarding/payment", params: { tier } });
-      } else if (returnTo === "tabs") {
-        router.replace("/(tabs)");
+        router.replace("/paywall");
       } else {
-        router.replace("/onboarding/commitment");
+        router.replace("/(tabs)");
       }
     },
     [router, tier, returnTo]
