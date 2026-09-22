@@ -298,7 +298,7 @@ CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts(user_id);
 
 -- ---------- GoodCause Impact Commitment ----------
 
-+CREATE TABLE IF NOT EXISTS impact_periods (
+CREATE TABLE IF NOT EXISTS impact_periods (
     id VARCHAR(64) PRIMARY KEY,
     period_key VARCHAR(32) UNIQUE NOT NULL,
     status VARCHAR(16) NOT NULL DEFAULT 'DRAFT'
