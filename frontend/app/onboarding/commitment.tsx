@@ -74,6 +74,31 @@ export default function CommitmentScreen() {
     router.push({ pathname: "/onboarding/model", params: { tier: selected } });
   };
 
+  if (Platform.OS === "ios") {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={8}>
+            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
+          </Pressable>
+          <BrandLogo size={20} color={colors.onSurface} />
+          <View style={styles.headerBtn} />
+        </View>
+        <View style={styles.body}>
+          <AppText style={styles.title}>Membership is unavailable on iOS</AppText>
+          <AppText style={styles.subtitle}>
+            GoodCause is currently free to use on iPhone and iPad while we update our membership program.
+          </AppText>
+        </View>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          <Pressable style={styles.continueBtn} onPress={handleSkip}>
+            <AppText style={styles.continueText}>Continue</AppText>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}

@@ -6,6 +6,7 @@ import {
   Pressable,
   Modal,
   Animated,
+  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -119,7 +120,6 @@ export default function Paywall() {
   const [selected, setSelected] = useState<any>(null);
   const [confirm, setConfirm] = useState<any>(null);
   const [msg, setMsg] = useState("");
-
   // Header entrance animation
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerScale = useRef(new Animated.Value(0.85)).current;
@@ -201,6 +201,28 @@ export default function Paywall() {
     : selectedHasTrial
     ? `Start free trial`
     : `Subscribe — ${selected?.product?.priceString || ""}`;
+
+  if (Platform.OS === "ios") {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, justifyContent: "center" }}>
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: 420, alignItems: "center" }}>
+          <Feather name="star" size={36} color={colors.brandPrimary} />
+          <AppText variant="h1" style={{ textAlign: "center", marginTop: spacing.md }}>
+            GoodCause is free on iOS
+          </AppText>
+          <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
+            In-app membership purchases are unavailable on iPhone and iPad while we update the program.
+          </AppText>
+          <Button
+            title="Continue"
+            onPress={() => router.back()}
+            style={{ marginTop: spacing.xl, alignSelf: "stretch" }}
+            testID="ios-paywall-continue"
+          />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#161514" }}>

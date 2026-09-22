@@ -13,10 +13,6 @@
       "bundleIdentifier": "com.goodcause.app",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "audio"
-        ],
         "NSPhotoLibraryUsageDescription": "Add photos to tell your campaign story",
         "ITSAppUsesNonExemptEncryption": false
       }

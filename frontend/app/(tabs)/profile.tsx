@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Alert } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -168,7 +168,7 @@ export default function Profile() {
           </View>
 
       {/* Commit to help */}
-      {!isSubscribed ? (
+      {Platform.OS !== "ios" && !isSubscribed ? (
         <CommitToHelpCard onPress={() => router.push("/onboarding/commitment")} />
       ) : null}
 
@@ -177,7 +177,9 @@ export default function Profile() {
         <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
         <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
         <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
-        <MenuItem icon="heart" label="Commit to Help" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
+        {Platform.OS !== "ios" ? (
+          <MenuItem icon="heart" label="Commit to Help" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
+        ) : null}
         <MenuItem icon="pie-chart" label="Impact Commitment" onPress={() => router.push("/impact-commitment")} testID="menu-impact" />
         <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
         {user?.role === "admin" ? (

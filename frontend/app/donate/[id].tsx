@@ -18,6 +18,9 @@ import { DIRECT_DONATION_DISCLOSURE } from "@/src/constants/impact-commitment";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
 
+const donationWebUrl = (campaignId: string) =>
+  `https://www.goodcause.app/donate/${encodeURIComponent(campaignId)}`;
+
 export default function Donate() {
   const { id, reference } = useLocalSearchParams<{ id: string; reference?: string }>();
   const router = useRouter();
@@ -115,6 +118,48 @@ export default function Donate() {
   };
 
   if (campaign.isLoading || !c) return <View style={styles.full}><LoadingView /></View>;
+
+  if (Platform.OS === "ios") {
+    return (
+      <View style={styles.full}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => router.back()} testID="donate-close"><Feather name="x" size={24} color={colors.onSurface} /></Pressable>
+          <AppText variant="title">Support this cause</AppText>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}>
+          <View style={styles.campRow}>
+            <Image source={{ uri: c.cover_image }} style={styles.thumb} contentFit="cover" />
+            <View style={{ flex: 1, marginLeft: spacing.md }}>
+              <AppText variant="label" numberOfLines={2}>{c.title}</AppText>
+              <AppText variant="caption" style={{ marginTop: 4 }}>{c.percent}% · {formatNaira(c.raised_kobo, { compact: true })} raised</AppText>
+            </View>
+          </View>
+
+          <View style={styles.externalDonationBox}>
+            <Feather name="external-link" size={28} color={colors.brandPrimary} />
+            <AppText variant="h1" style={{ textAlign: "center", marginTop: spacing.md }}>
+              Continue on the GoodCause website
+            </AppText>
+            <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
+              Donations are completed outside the app in Safari. GoodCause is not currently a Benevity or Candid approved nonprofit.
+            </AppText>
+            <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.md }}>
+              {DIRECT_DONATION_DISCLOSURE}
+            </AppText>
+            <Button
+              title="Open donation page"
+              icon="external-link"
+              onPress={() => WebBrowser.openBrowserAsync(donationWebUrl(id))}
+              style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
+              testID="external-donation-button"
+            />
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (success) {
     return (
@@ -332,5 +377,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#BBF7D0",
+  },
+  externalDonationBox: {
+    alignItems: "center",
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.xl,
+    padding: spacing.xl,
   },
 });

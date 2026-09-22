@@ -11,7 +11,7 @@ const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_AP
 
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "pro";
 const hasLiveKeys = !!(REVENUECAT_TEST_API_KEY || REVENUECAT_IOS_API_KEY || REVENUECAT_ANDROID_API_KEY);
-export const rcEnabled = Platform.OS !== "web" || __DEV__;
+export const rcEnabled = Platform.OS === "android";
 
 const DEV_STORAGE_KEY = "@goodcause_pro_subscribed";
 
