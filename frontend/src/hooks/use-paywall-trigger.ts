@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { Platform } from "react-native";
 import { useSubscription } from "@/src/lib/revenuecat";
 
 /**
@@ -24,7 +23,7 @@ export function usePaywallTrigger() {
    * If the user is subscribed, runs `action`. Otherwise opens the paywall.
    */
   const withPro = (action: () => void) => {
-    if (Platform.OS === "ios" || isSubscribed) {
+    if (isSubscribed) {
       action();
     } else {
       triggerPaywall();

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Platform, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, BrandLogo } from "@/src/components/ui";
@@ -14,7 +14,7 @@ import { useAuth } from "@/src/context/auth";
 const TIERS = [
   { id: "tier_1k", amount: 1000, desc: "Essential membership." },
   { id: "tier_2k5", amount: 2500, desc: "Supporting membership." },
-  { id: "tier_5k", amount: 5000, desc: "Impact membership." },
+  { id: "tier_5k", amount: 5000, desc: "Growth toolkit membership." },
   { id: "tier_10k", amount: 10000, desc: "Champion membership." },
 ];
 
@@ -74,31 +74,6 @@ export default function CommitmentScreen() {
     router.push({ pathname: "/onboarding/model", params: { tier: selected } });
   };
 
-  if (Platform.OS === "ios") {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={8}>
-            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
-          </Pressable>
-          <BrandLogo size={20} color={colors.onSurface} />
-          <View style={styles.headerBtn} />
-        </View>
-        <View style={styles.body}>
-          <AppText style={styles.title}>Membership is unavailable on iOS</AppText>
-          <AppText style={styles.subtitle}>
-            GoodCause is currently free to use on iPhone and iPad while we update our membership program.
-          </AppText>
-        </View>
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <Pressable style={styles.continueBtn} onPress={handleSkip}>
-            <AppText style={styles.continueText}>Continue</AppText>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
@@ -115,8 +90,8 @@ export default function CommitmentScreen() {
       {/* Body */}
       <View style={styles.body}>
         <View style={styles.titleWrap}>
-          <AppText style={styles.title}>Choose your GoodCause{"\n"}membership</AppText>
-          <AppText style={styles.subtitle}>Get member benefits and help GoodCause fund verified causes every month.</AppText>
+          <AppText style={styles.title}>Choose your GoodCause{"\n"}Pro plan</AppText>
+          <AppText style={styles.subtitle}>Unlock multiple active campaigns and organizer tools for updates, supporter thank-yous, and QR sharing.</AppText>
         </View>
 
         {/* Tier list */}
@@ -138,16 +113,6 @@ export default function CommitmentScreen() {
 
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-        <Pressable
-          style={styles.customBtn}
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            alert("Custom amounts coming soon!");
-          }}
-        >
-          <AppText style={styles.customText}>Enter a custom amount</AppText>
-        </Pressable>
-
         <Pressable style={styles.continueBtn} onPress={handleContinue}>
           <AppText style={styles.continueText}>Continue</AppText>
         </Pressable>
@@ -255,15 +220,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
     gap: 12,
-  },
-  customBtn: {
-    alignSelf: "center",
-    paddingVertical: 8,
-  },
-  customText: {
-    fontSize: 15,
-    fontFamily: font.medium,
-    color: colors.onSurfaceSecondary,
   },
   continueBtn: {
     backgroundColor: colors.brandPrimary,

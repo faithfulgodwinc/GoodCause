@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { maxContentWidth } = useResponsive();
-  const { isSubscribed, availablePackages } = useSubscription();
+  const { isSubscribed } = useSubscription();
 
   const { data, isRefetching, refetch } = useQuery({
     queryKey: ["home"],
@@ -67,11 +67,6 @@ export default function HomeScreen() {
   else if (hour < 17) timeGreeting = "Good afternoon";
 
   const hasCommitment = isSubscribed;
-  const committedAmount = isSubscribed
-    ? (availablePackages[1]?.product?.priceString || "₦5,000")
-        .replace(/(\d+)\.(\d{3})(?!\d)/g, "$1,$2")
-        .replace(/\.00$/, "")
-    : null;
   const directCauses = [...urgent, ...recommended].slice(0, 5);
 
   const handleProfilePress = () => {
@@ -156,7 +151,7 @@ export default function HomeScreen() {
               <View style={styles.badgePill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.brandPrimary} />
                 <AppText style={styles.badgeText}>
-                  {hasCommitment ? "Active Member" : "Join Community"}
+                  {hasCommitment ? "Active Pro" : "GoodCause Pro"}
                 </AppText>
               </View>
             </View>
@@ -164,14 +159,13 @@ export default function HomeScreen() {
             <View style={styles.pledgeBody}>
               <View style={styles.pledgeAmountRow}>
                 <AppText style={styles.pledgeAmount}>
-                  {hasCommitment ? `${committedAmount}` : "Make a Commitment"}
+                  {hasCommitment ? "Pro tools active" : "Unlock Pro tools"}
                 </AppText>
-                {hasCommitment ? <AppText style={styles.pledgeSub}> / month</AppText> : null}
               </View>
               <AppText style={styles.pledgeDesc}>
                 {hasCommitment
-                  ? "Your membership is active. See GoodCause's confirmed monthly allocations."
-                  : "Join GoodCause for member tools and our published 80% Impact Commitment."}
+                  ? "Run multiple active campaigns and use organizer tools for updates, supporter thank-yous, and QR sharing."
+                  : "Unlock multiple active campaigns, supporter thank-yous, campaign updates, and QR sharing."}
               </AppText>
             </View>
           </Pressable>

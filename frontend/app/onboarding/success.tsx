@@ -55,7 +55,7 @@ export default function SuccessScreen() {
           { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
         ]}
       >
-        {/* Minimalist Apple-style check badge without AI icons */}
+        {/* Minimalist Apple-style check badge */}
         <View style={styles.iconContainer}>
           <View style={styles.checkCircle}>
             <Ionicons name="checkmark" size={32} color="#FFFFFF" />
@@ -63,10 +63,10 @@ export default function SuccessScreen() {
         </View>
 
         {/* Clean, emotional typography without love emojis or extra graphics */}
-        <AppText variant="display" style={styles.title}>Welcome home.</AppText>
+        <AppText variant="display" style={styles.title}>GoodCause Pro is active.</AppText>
         
         <AppText style={styles.subtitle}>
-          Your membership is active. You support the tools behind GoodCause, and 80% of confirmed net membership proceeds is committed to verified causes.
+          Your digital membership unlocks multiple active campaigns and organizer tools for updates, supporter thank-yous, and QR sharing.
         </AppText>
 
         {/* Minimalist Apple-style summary card */}
@@ -80,7 +80,7 @@ export default function SuccessScreen() {
                 {pkg.product.priceString}{" "}
                 <AppText style={styles.cardSub}>/month</AppText>
               </AppText>
-              <AppText style={styles.cardDesc}>Your active GoodCause membership</AppText>
+              <AppText style={styles.cardDesc}>Your active GoodCause Pro membership</AppText>
             </View>
           </View>
         )}
@@ -88,7 +88,7 @@ export default function SuccessScreen() {
         {/* Emotional quote block */}
         <View style={styles.quoteContainer}>
           <AppText style={styles.quoteText}>
-            See confirmed allocations in our transparent monthly Impact Commitment reports.
+            GoodCause Pro is not a donation. You can review our separate Impact Commitment reports anytime.
           </AppText>
         </View>
       </Animated.View>
@@ -102,7 +102,7 @@ export default function SuccessScreen() {
           ]} 
           onPress={handleFinish}
         >
-          <AppText style={styles.primaryBtnText}>Explore verified causes</AppText>
+          <AppText style={styles.primaryBtnText}>Start using Pro</AppText>
         </Pressable>
         
         <Pressable 

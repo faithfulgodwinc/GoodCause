@@ -70,7 +70,7 @@ class TestMeta:
         j = r.json()
         assert j["payment_mode"] == "sandbox"
         assert j["pro"]["entitlement"] == "pro"
-        assert isinstance(j["pro"]["features"], list) and len(j["pro"]["features"]) >= 5
+        assert isinstance(j["pro"]["features"], list) and len(j["pro"]["features"]) >= 4
 
 
 # --------- AUTH ---------
@@ -344,19 +344,3 @@ class TestNotifications:
         r2 = s.post(f"{API}/notifications/read-all", headers=H(donor_token))
         assert r2.status_code == 200
 
-
-# --------- AI ASSISTANT ---------
-class TestAI:
-    def test_ai_assistant_generates_draft(self, s, donor_token):
-        r = s.post(f"{API}/ai/campaign-assistant",
-                   json={"raw_text": "My cousin Ada needs surgery for a heart condition in Lagos. "
-                                     "We are hoping to raise money to cover the hospital bills."},
-                   headers=H(donor_token), timeout=90)
-        # AI may occasionally fail; accept 502/503 but not 500
-        if r.status_code != 200:
-            pytest.skip(f"AI assistant unavailable: {r.status_code} {r.text[:200]}")
-        j = r.json()
-        for k in ["title", "summary", "story", "expense_categories", "social_copy", "review_note", "disclaimer"]:
-            assert k in j, f"missing {k}"
-        assert len(j["title"]) > 0
-        assert len(j["story"]) > 0

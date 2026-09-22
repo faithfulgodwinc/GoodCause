@@ -135,14 +135,14 @@ export default function ModelScreen() {
       <View style={[styles.contentWrapper, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         
         <View style={styles.textWrap}>
-          <AppText style={styles.titleWhite}>You are becoming a</AppText>
-          <AppText style={styles.titleGreen}>lifeline.</AppText>
+          <AppText style={styles.titleWhite}>Build with</AppText>
+          <AppText style={styles.titleGreen}>Pro tools.</AppText>
         </View>
 
         <View style={{ height: 80, justifyContent: "center" }}>
           <TypeWriterText 
             style={styles.storyText}
-            text={`Your ${tierString} monthly membership unlocks GoodCause benefits and supports our published Impact Commitment.`}
+            text={`Your ${tierString} monthly membership unlocks multiple active campaigns and organizer tools for updates, supporter follow-up, and QR sharing.`}
           />
         </View>
 
@@ -154,9 +154,9 @@ export default function ModelScreen() {
                 <Ionicons name="heart" size={24} color={colors.brandPrimary} />
               </View>
               <View style={styles.glassTextCol}>
-                <AppText style={styles.glassTitle}>Your Monthly Membership</AppText>
+                <AppText style={styles.glassTitle}>GoodCause Pro</AppText>
                 <AppText style={styles.glassAmount}>{tierString}</AppText>
-                <AppText style={styles.glassDesc}>80% of confirmed net membership proceeds is allocated to verified causes. Cancel anytime.</AppText>
+                <AppText style={styles.glassDesc}>A digital membership for campaign tools. Not a donation. Cancel anytime.</AppText>
               </View>
             </View>
           </BlurView>

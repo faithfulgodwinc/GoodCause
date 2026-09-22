@@ -434,7 +434,7 @@ export default function CampaignDetail() {
           <View style={styles.shareRow}>
             <ShareBtn icon="message-circle" label="Share" onPress={() => { setShareOpen(false); nativeShare(); }} />
             <ShareBtn icon="copy" label="Copy link" onPress={async () => { await Clipboard.setStringAsync(shareUrl); track("campaign_shared", { via: "copy" }); }} />
-            <ShareBtn icon="grid" label="QR code" onPress={() => {}} qr={<QRCode value={shareUrl} size={44} backgroundColor="transparent" color={colors.onSurface} />} />
+            <ShareBtn icon="grid" label={copied ? "Copied" : "QR code"} onPress={async () => { await Clipboard.setStringAsync(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }} qr={<QRCode value={shareUrl} size={44} backgroundColor="transparent" color={colors.onSurface} />} />
           </View>
         </View>
       </Modal>

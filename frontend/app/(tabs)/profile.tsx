@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -78,15 +78,15 @@ function CommitToHelpCard({ onPress }: { onPress: () => void }) {
       {/* Header Pill */}
       <View style={styles.commitBadgePill}>
         <Ionicons name="sparkles" size={12} color={colors.brandPrimary} />
-        <AppText style={styles.commitBadgeText}>Join Community</AppText>
+        <AppText style={styles.commitBadgeText}>GoodCause Pro</AppText>
       </View>
 
       {/* Content */}
       <View style={styles.commitCardContent}>
         <View style={{ flex: 1 }}>
-          <AppText style={styles.commitCardTitle}>Commit to Help</AppText>
+          <AppText style={styles.commitCardTitle}>Unlock Pro tools</AppText>
           <AppText style={styles.commitCardDesc}>
-            Join over 1,200 monthly givers supporting verified causes across Nigeria.
+            Run multiple active campaigns and use organizer tools for updates, supporter thank-yous, and QR sharing.
           </AppText>
         </View>
         <View style={styles.commitArrowCircle}>
@@ -168,7 +168,7 @@ export default function Profile() {
           </View>
 
       {/* Commit to help */}
-      {Platform.OS !== "ios" && !isSubscribed ? (
+      {!isSubscribed ? (
         <CommitToHelpCard onPress={() => router.push("/onboarding/commitment")} />
       ) : null}
 
@@ -177,9 +177,7 @@ export default function Profile() {
         <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
         <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
         <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
-        {Platform.OS !== "ios" ? (
-          <MenuItem icon="heart" label="Commit to Help" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
-        ) : null}
+        <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/onboarding/commitment")} testID="menu-pro" />
         <MenuItem icon="pie-chart" label="Impact Commitment" onPress={() => router.push("/impact-commitment")} testID="menu-impact" />
         <MenuItem icon="shield-off" label="Legal & Privacy" onPress={() => router.push("/privacy")} testID="menu-privacy" />
         {user?.role === "admin" ? (

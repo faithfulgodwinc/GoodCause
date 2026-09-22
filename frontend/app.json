@@ -2,7 +2,7 @@
   "expo": {
     "name": "goodcause",
     "slug": "frontend",
-    "version": "1.0.38",
+    "version": "1.0.39",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "goodcause",
@@ -18,7 +18,7 @@
       }
     },
     "android": {
-      "versionCode": 41,
+      "versionCode": 42,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

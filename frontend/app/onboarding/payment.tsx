@@ -150,29 +150,6 @@ export default function PaymentScreen() {
     transform: [{ translateY: ctaY.value }],
   }));
 
-  if (Platform.OS === "ios") {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
-          </Pressable>
-        </View>
-        <View style={styles.content}>
-          <AppText style={styles.title}>Membership is unavailable on iOS</AppText>
-          <AppText style={styles.secureDesc}>
-            GoodCause is currently free to use on iPhone and iPad while we update our membership program.
-          </AppText>
-        </View>
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-          <Pressable style={styles.payBtn} onPress={() => router.replace("/(tabs)")}>
-            <AppText style={styles.payText}>Continue</AppText>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const pkg =
     availablePackages.find((p) => p.identifier === tier) ||
     availablePackages[0];
@@ -222,15 +199,15 @@ export default function PaymentScreen() {
             <View style={styles.receipt}>
               <View style={styles.receiptTop}>
                 <View style={styles.iconCircle}>
-                  <Ionicons
-                    name="heart"
+                <Ionicons
+                    name="star"
                     size={20}
                     color={colors.brandPrimary}
                   />
                 </View>
                 <View>
                   <AppText style={styles.receiptTitle}>
-                    GoodCause Membership
+                    GoodCause Pro
                   </AppText>
                   <AppText style={styles.receiptAmount}>
                     {pkg.product.priceString}{" "}
@@ -243,7 +220,7 @@ export default function PaymentScreen() {
 
               <View style={styles.receiptBottom}>
                 <AppText style={styles.firstContribution}>
-                  Membership price
+                  Digital membership price
                 </AppText>
                 <AppText style={styles.totalValue}>
                   {pkg.product.priceString}
@@ -263,11 +240,13 @@ export default function PaymentScreen() {
         {/* Security blurb */}
         <View style={styles.secureSection}>
           <AppText style={styles.secureTitle}>
-            Secured by Google
+            Secured by {Platform.OS === "ios" ? "Apple" : "Google"}
           </AppText>
           <TypeWriterText
             style={styles.secureDesc}
-            text="Your subscription is processed securely by Google. RevenueCat manages your entitlement, and you can cancel anytime in store settings."
+            text={`Your subscription is processed securely by ${
+              Platform.OS === "ios" ? "Apple" : "Google"
+            }. RevenueCat manages your entitlement, and you can cancel anytime in store settings.`}
           />
         </View>
 
@@ -309,7 +288,7 @@ export default function PaymentScreen() {
             size={12}
             color={colors.onSurfaceSecondary}
           />{" "}
-          Secured by Google
+          Secured by {Platform.OS === "ios" ? "Apple" : "Google"}
         </AppText>
       </Animated.View>
     </SafeAreaView>

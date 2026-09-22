@@ -6,7 +6,6 @@ import {
   Pressable,
   Modal,
   Animated,
-  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -21,34 +20,24 @@ import { IMPACT_DISCLOSURE_COMPACT } from "@/src/constants/impact-commitment";
 
 const FEATURES = [
   {
-    icon: "bar-chart-2",
-    title: "Advanced analytics",
-    desc: "Deep insights into donors, reach and growth trends",
-  },
-  {
     icon: "layers",
     title: "Multiple active campaigns",
-    desc: "Run and organize several fundraisers simultaneously",
-  },
-  {
-    icon: "zap",
-    title: "AI Campaign Assistant",
-    desc: "Draft high-converting stories, headlines and budgets",
+    desc: "Run more than one active fundraiser at the same time",
   },
   {
     icon: "users",
-    title: "Advanced supporter management",
-    desc: "Export lists and send custom personalised thank-you notes",
+    title: "Supporter thank-you tools",
+    desc: "Send personal thank-you notes to campaign supporters",
   },
   {
-    icon: "calendar",
-    title: "Scheduled updates",
-    desc: "Plan milestone updates and proof uploads ahead of time",
+    icon: "message-square",
+    title: "Campaign updates",
+    desc: "Post progress updates that keep followers informed",
   },
   {
     icon: "grid",
-    title: "Campaign QR kit",
-    desc: "High-res printable QR codes and social share assets",
+    title: "QR sharing",
+    desc: "Share campaign links with a built-in QR code",
   },
 ];
 
@@ -202,28 +191,6 @@ export default function Paywall() {
     ? `Start free trial`
     : `Subscribe — ${selected?.product?.priceString || ""}`;
 
-  if (Platform.OS === "ios") {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.surface, padding: spacing.lg, justifyContent: "center" }}>
-        <View style={{ alignSelf: "center", width: "100%", maxWidth: 420, alignItems: "center" }}>
-          <Feather name="star" size={36} color={colors.brandPrimary} />
-          <AppText variant="h1" style={{ textAlign: "center", marginTop: spacing.md }}>
-            GoodCause is free on iOS
-          </AppText>
-          <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
-            In-app membership purchases are unavailable on iPhone and iPad while we update the program.
-          </AppText>
-          <Button
-            title="Continue"
-            onPress={() => router.back()}
-            style={{ marginTop: spacing.xl, alignSelf: "stretch" }}
-            testID="ios-paywall-continue"
-          />
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: "#161514" }}>
       <ScrollView
@@ -275,7 +242,7 @@ export default function Paywall() {
                 color="rgba(255,255,255,0.7)"
                 style={styles.proSubtitle}
               >
-                Powerful membership tools—and a transparent commitment to verified causes.
+                Digital tools for organizers who need to run and share more campaigns.
               </AppText>
 
               {/* Social proof */}
@@ -296,7 +263,7 @@ export default function Paywall() {
                   color="rgba(255,255,255,0.65)"
                   style={{ marginLeft: spacing.sm, fontSize: 12 }}
                 >
-                  Membership that powers tools and impact
+                  Membership for digital GoodCause tools
                 </AppText>
               </View>
             </Animated.View>

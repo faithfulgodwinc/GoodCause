@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
-import type { CustomerInfo, PurchasesPackage } from "react-native-purchases";
+import type { CustomerInfo } from "react-native-purchases";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -10,8 +10,7 @@ const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
 const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY;
 
 export const REVENUECAT_ENTITLEMENT_IDENTIFIER = "pro";
-const hasLiveKeys = !!(REVENUECAT_TEST_API_KEY || REVENUECAT_IOS_API_KEY || REVENUECAT_ANDROID_API_KEY);
-export const rcEnabled = Platform.OS === "android";
+export const rcEnabled = Platform.OS !== "web" || __DEV__;
 
 const DEV_STORAGE_KEY = "@goodcause_pro_subscribed";
 
@@ -22,8 +21,8 @@ export const SANDBOX_PACKAGES: any[] = [
     packageType: "MONTHLY",
     product: {
       identifier: "gc_monthly_1k",
-      title: "₦1,000 / month",
-      description: "Small drops make an ocean.",
+      title: "GoodCause Pro Starter",
+      description: "Run multiple active campaigns.",
       priceString: "₦1,000",
       price: 1000,
       currencyCode: "NGN",
@@ -34,8 +33,8 @@ export const SANDBOX_PACKAGES: any[] = [
     packageType: "MONTHLY",
     product: {
       identifier: "gc_monthly_2k5",
-      title: "₦2,500 / month",
-      description: "Steady impact.",
+      title: "GoodCause Pro Plus",
+      description: "Multiple campaigns plus organizer tools.",
       priceString: "₦2,500",
       price: 2500,
       currencyCode: "NGN",
@@ -46,8 +45,8 @@ export const SANDBOX_PACKAGES: any[] = [
     packageType: "MONTHLY",
     product: {
       identifier: "gc_monthly_5k",
-      title: "₦5,000 / month",
-      description: "Significant change.",
+      title: "GoodCause Pro Growth",
+      description: "Organizer tools for active fundraisers.",
       priceString: "₦5,000",
       price: 5000,
       currencyCode: "NGN",
@@ -58,8 +57,8 @@ export const SANDBOX_PACKAGES: any[] = [
     packageType: "MONTHLY",
     product: {
       identifier: "gc_monthly_10k",
-      title: "₦10,000 / month",
-      description: "Community pillar.",
+      title: "GoodCause Pro Champion",
+      description: "Full Pro access for active organizers.",
       priceString: "₦10,000",
       price: 10000,
       currencyCode: "NGN",

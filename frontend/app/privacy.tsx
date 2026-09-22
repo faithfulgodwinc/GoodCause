@@ -145,7 +145,7 @@ export default function PrivacyPolicyScreen() {
                 Verifying organizer identity, preventing fraudulent campaigns, and ensuring legal compliance.
               </BulletPoint>
               <BulletPoint title="GoodCause Pro Features">
-                Powering campaign performance analytics and transparent impact reports for subscribed organizers.
+                Powering GoodCause Pro organizer tools, including multiple active campaigns, supporter thank-yous, campaign updates, and QR sharing.
               </BulletPoint>
 
               <SectionTitle icon="share-2" title="4. Third-Party Services" />

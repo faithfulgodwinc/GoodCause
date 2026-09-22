@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking, Platform, Modal } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ScrollView, Share as RNShare, Linking, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -7,13 +7,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
-import { WebView } from "react-native-webview";
 
 import { api, track } from "@/src/lib/api";
 import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira, formatAmountInput } from "@/src/format";
-import { useResponsive } from "@/src/lib/responsive";
 import { DIRECT_DONATION_DISCLOSURE } from "@/src/constants/impact-commitment";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
@@ -26,7 +24,6 @@ export default function Donate() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
-  const { modalMaxWidth, isMobile } = useResponsive();
 
   const [amount, setAmount] = useState<number>(500000);
   const [custom, setCustom] = useState("");
@@ -35,9 +32,6 @@ export default function Donate() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<null | { prev: number; next: number; test: boolean }>(null);
-  const [paystackUrl, setPaystackUrl] = useState<string | null>(null);
-  const [payRef, setPayRef] = useState<string | null>(null);
-
 
   const campaign = useQuery({ queryKey: ["campaign", id], queryFn: () => api<any>(`/campaigns/${id}`) });
   const c = campaign.data;
@@ -63,6 +57,8 @@ export default function Donate() {
       .catch((e) => setError(e?.message || "Failed to verify payment."))
       .finally(() => setProcessing(false));
   };
+
+
 
   useEffect(() => {
     if (reference && c && !success && !processing) {
@@ -103,8 +99,8 @@ export default function Donate() {
         if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
           window.location.href = init.authorization_url;
         } else {
-          setPayRef(init.reference);
-          setPaystackUrl(init.authorization_url);
+          await WebBrowser.openBrowserAsync(init.authorization_url);
+          verifyPayment(init.reference);
         }
       } else {
         setError("Payments are being set up. Please try again shortly.");
@@ -227,39 +223,8 @@ export default function Donate() {
     );
   }
 
-
-
   return (
     <View style={styles.full}>
-      {paystackUrl && (
-        <Modal visible={true} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => {
-          setPaystackUrl(null);
-          if (payRef) verifyPayment(payRef);
-        }}>
-          <View style={{ flex: 1, backgroundColor: colors.surface, paddingTop: insets.top }}>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Pressable onPress={() => {
-                setPaystackUrl(null);
-                if (payRef) verifyPayment(payRef);
-              }} hitSlop={20}>
-                <Feather name="x" size={24} color={colors.onSurface} />
-              </Pressable>
-            </View>
-            <WebView 
-              source={{ uri: paystackUrl }} 
-              style={{ flex: 1 }}
-              startInLoadingState={true}
-              onNavigationStateChange={(navState) => {
-                if (navState.url.includes("goodcause.app/payment-result")) {
-                  setPaystackUrl(null);
-                  if (payRef) verifyPayment(payRef);
-                }
-              }}
-            />
-          </View>
-        </Modal>
-      )}
-
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable onPress={() => router.back()} testID="donate-close"><Feather name="x" size={24} color={colors.onSurface} /></Pressable>
         <AppText variant="title">Support this cause</AppText>

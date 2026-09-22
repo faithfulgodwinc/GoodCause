@@ -82,6 +82,9 @@ function Builder() {
   const [error, setError] = useState("");
 
   const { data: cats } = useQuery({ queryKey: ["categories"], queryFn: () => api<any[]>("/categories") });
+  const myCampaigns = useQuery({ queryKey: ["myCampaigns"], queryFn: () => api<{ items: any[] }>("/campaigns?mine=true&limit=50") });
+  const activeCampaigns = (myCampaigns.data?.items || []).filter((c) => c.status !== "COMPLETED" && c.status !== "CANCELLED");
+  const hasFreeCampaignLimit = !isSubscribed && activeCampaigns.length >= 1;
 
   const [form, setForm] = useState<any>({
     title: "", summary: "", story: "", category_id: null, goal: "",
@@ -142,6 +145,45 @@ function Builder() {
 
   const next = () => { if (validateStep()) setStep((s) => Math.min(STEPS.length - 1, s + 1)); };
   const back = () => (step === 0 ? router.back() : setStep((s) => s - 1));
+
+  if (hasFreeCampaignLimit) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.surface }}>
+        <View style={{ alignSelf: "center", width: "100%", maxWidth: 680, flex: 1 }}>
+          <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+            <Pressable onPress={() => router.back()} testID="builder-back"><Feather name="x" size={24} color={colors.onSurface} /></Pressable>
+            <AppText variant="title">Start a campaign</AppText>
+            <View style={{ width: 24 }} />
+          </View>
+          <View style={styles.proGate}>
+            <View style={styles.proIcon}>
+              <Feather name="star" size={26} color={colors.brandPrimary} />
+            </View>
+            <AppText variant="h1" style={{ textAlign: "center", marginTop: spacing.md }}>
+              Multiple campaigns are a Pro tool
+            </AppText>
+            <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
+              Free accounts can run one active campaign. GoodCause Pro unlocks multiple active campaigns plus organizer tools for updates, supporter thank-yous, and QR sharing.
+            </AppText>
+            <Button
+              title="Unlock GoodCause Pro"
+              icon="star"
+              onPress={() => router.push("/paywall")}
+              style={{ alignSelf: "stretch", marginTop: spacing.xl }}
+              testID="unlock-pro-campaigns"
+            />
+            <Button
+              title="View my campaigns"
+              variant="outline"
+              onPress={() => router.replace("/campaign/new?tab=mine")}
+              style={{ alignSelf: "stretch", marginTop: spacing.sm }}
+              testID="view-my-campaigns"
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.surface }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -370,4 +412,18 @@ const styles = StyleSheet.create({
   errorBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#FBEBEB", padding: spacing.md, borderRadius: radius.md, marginTop: spacing.md },
   footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, backgroundColor: colors.surfaceSecondary, borderTopWidth: 1, borderTopColor: colors.border },
   statusRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs },
+  proGate: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.xl,
+  },
+  proIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.brandTertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

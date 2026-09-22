@@ -52,10 +52,10 @@ async def config():
         "pro": {
             "entitlement": "pro",
             "features": [
-                "Advanced campaign analytics", "Run multiple active campaigns",
-                "Advanced supporter management",
-                "Campaign customization", "Scheduled updates",
-                "Advanced share assets", "Campaign QR kit",
+                "Run multiple active campaigns",
+                "Supporter thank-you tools",
+                "Campaign updates",
+                "Campaign QR sharing",
             ],
         },
     }
