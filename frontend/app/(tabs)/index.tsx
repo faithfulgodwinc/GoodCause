@@ -27,6 +27,7 @@ type HomeData = {
   almost_funded: Campaign[];
   recently_updated: Campaign[];
   recommended: Campaign[];
+  all_campaigns?: Campaign[];
   categories: { id: string; name: string; slug: string; icon: string; color: string }[];
   greeting_name?: string | null;
   impact_metrics?: {
@@ -48,7 +49,7 @@ export default function HomeScreen() {
     queryFn: () => api<HomeData>("/home"),
   });
 
-  const { urgent = [], recommended = [], greeting_name, impact_metrics } = data || {};
+  const { featured = [], urgent = [], recommended = [], all_campaigns = [], greeting_name, impact_metrics } = data || {};
   const displayName = greeting_name || (user?.name ? user.name.split(" ")[0] : "Friend");
 
   const membersDisplay = impact_metrics?.members_count
@@ -67,7 +68,13 @@ export default function HomeScreen() {
   else if (hour < 17) timeGreeting = "Good afternoon";
 
   const hasCommitment = isSubscribed;
-  const directCauses = [...urgent, ...recommended].slice(0, 5);
+  const directCauses = React.useMemo(() => {
+    const map = new Map<string, Campaign>();
+    [...featured, ...urgent, ...recommended, ...(all_campaigns || [])].forEach((c) => {
+      if (c && c.id && !map.has(c.id)) map.set(c.id, c);
+    });
+    return Array.from(map.values()).slice(0, 10);
+  }, [featured, urgent, recommended, all_campaigns]);
 
   const handleProfilePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

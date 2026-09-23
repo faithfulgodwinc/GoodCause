@@ -81,13 +81,14 @@ async def _section(query: dict, sort, limit=8):
 
 @router.get("/home")
 async def home(user: Optional[dict] = Depends(get_current_user_optional)):
-    live = {"status": "LIVE"}
+    live = {"status": {"$in": ["LIVE", "VERIFIED"]}}
     featured = await _section({**live, "featured": True}, [("published_at", -1)], 6)
     if not featured:
         featured = await _section(live, [("supporters_count", -1)], 6)
     urgent = await _section({**live, "urgent": True}, [("deadline", 1)], 8)
     recent_updates = await _section({**live, "updates_count": {"$gt": 0}}, [("last_update_at", -1)], 8)
     recommended = await _section(live, [("created_at", -1)], 10)
+    all_campaigns = await _section(live, [("created_at", -1)], 20)
 
     # almost funded: 70-99%
     almost = []
@@ -103,7 +104,7 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
 
     # Live Community Impact Metrics
     members_count = await db.users.count_documents({})
-    causes_helped_count = await db.campaigns.count_documents({"status": {"$in": ["LIVE", "COMPLETED"]}})
+    causes_helped_count = await db.campaigns.count_documents({"status": {"$in": ["LIVE", "VERIFIED", "COMPLETED"]}})
     
     pipeline = [{"$group": {"_id": None, "total": {"$sum": "$raised_kobo"}}}]
     raised_agg = await db.campaigns.aggregate(pipeline).to_list(1)
@@ -114,6 +115,7 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
     return {
         "featured": featured, "urgent": urgent, "almost_funded": almost_funded,
         "recently_updated": recent_updates, "recommended": recommended,
+        "all_campaigns": all_campaigns,
         "categories": cats,
         "greeting_name": user["name"].split(" ")[0] if user else None,
         "impact_metrics": {
@@ -142,7 +144,7 @@ async def list_campaigns(
             raise HTTPException(status_code=401, detail="Please sign in to continue.")
         query["organizer_id"] = user["id"]
     else:
-        query["status"] = "LIVE"
+        query["status"] = {"$in": ["LIVE", "VERIFIED"]}
     if status:
         query["status"] = status
     if category and category != "__all" and category != "all":
