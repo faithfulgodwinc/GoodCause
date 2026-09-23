@@ -11,6 +11,7 @@ APP_GOOGLE_WEB_CLIENT_ID = (
 def google_client_ids() -> list[str]:
     """Return every trusted token audience, always including the app audience."""
     candidates = [
+        "121930938754-nl8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
         APP_GOOGLE_WEB_CLIENT_ID,
         os.environ.get("GOOGLE_CLIENT_ID"),
         os.environ.get("GOOGLE_ANDROID_CLIENT_ID"),
