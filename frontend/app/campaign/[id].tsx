@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare, Linking, FlatList, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Modal, Share as RNShare, Linking, FlatList, TextInput, Alert } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -70,6 +70,49 @@ export default function CampaignDetail() {
     }),
     onSuccess: () => { setThankDone(true); qc.invalidateQueries({ queryKey: ["supporters", id] }); },
   });
+
+  const pauseMut = useMutation({
+    mutationFn: () => api(`/campaigns/${id}/pause`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["campaign", id] }),
+  });
+  const resumeMut = useMutation({
+    mutationFn: () => api(`/campaigns/${id}/resume`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["campaign", id] }),
+  });
+
+  const handlePauseToggle = () => {
+    if (c?.status === "PAUSED") {
+      resumeMut.mutate();
+    } else {
+      Alert.alert(
+        "Pause Campaign?",
+        "While paused, supporters will not be able to make new donations to this campaign. You can resume at any time.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Pause Campaign", style: "destructive", onPress: () => pauseMut.mutate() },
+        ]
+      );
+    }
+  };
+
+  const renderPausedBanner = () => {
+    if (c?.status !== "PAUSED") return null;
+    return (
+      <View style={styles.pausedBanner}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Feather name="pause-circle" size={20} color="#D97706" />
+          <AppText variant="title" style={{ marginLeft: spacing.sm, color: "#92400E" }}>
+            Campaign Paused
+          </AppText>
+        </View>
+        <AppText variant="caption" style={{ marginTop: spacing.xs, color: "#B45309", lineHeight: 18 }}>
+          {isOrganizer
+            ? "Your campaign is currently paused. Supporters cannot make new donations until you resume."
+            : "This campaign has been temporarily paused by the organizer and is not accepting donations at this time."}
+        </AppText>
+      </View>
+    );
+  };
 
   if (campaign.isLoading) return <View style={styles.full}><LoadingView /></View>;
   if (campaign.isError || !c) return <View style={styles.full}><ErrorView message="Campaign not found." onRetry={campaign.refetch} /></View>;
@@ -203,11 +246,20 @@ export default function CampaignDetail() {
             testID="detail-organizer-withdraw"
           />
           <Button
+            title={c.status === "PAUSED" ? "Resume" : "Pause"}
+            icon={c.status === "PAUSED" ? "play" : "pause"}
+            variant="outline"
+            loading={pauseMut.isPending || resumeMut.isPending}
+            onPress={handlePauseToggle}
+            style={{ flex: 0.9 }}
+            testID="detail-organizer-pause-toggle"
+          />
+          <Button
             title="Share"
             icon="share-2"
             variant="outline"
             onPress={() => setShareOpen(true)}
-            style={{ flex: 1 }}
+            style={{ flex: 0.9 }}
             testID="detail-organizer-share"
           />
         </View>
@@ -254,6 +306,8 @@ export default function CampaignDetail() {
                 <VerifiedBadge status={c.verification_status} />
               </View>
             </View>
+
+            {renderPausedBanner()}
 
             {/* Mobile Only: Progress Box */}
             {!isDesktop && renderProgressBox()}
@@ -578,4 +632,12 @@ const styles = StyleSheet.create({
   thankBtn: { flexDirection: "row", alignItems: "center", backgroundColor: colors.brandTertiary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill },
   thankedPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 4 },
   thankInput: { minHeight: 90, backgroundColor: colors.surfaceSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md, fontFamily: font.regular, fontSize: 14, color: colors.onSurface, textAlignVertical: "top" },
+  pausedBanner: {
+    marginTop: spacing.md,
+    backgroundColor: "#FEF3C7",
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: "#FCD34D",
+  },
 });

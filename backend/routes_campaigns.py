@@ -376,3 +376,39 @@ async def report(campaign_id: str, body: ReportIn, user: dict = Depends(get_curr
     }
     await db.reports.insert_one(rep)
     return {"ok": True, "message": "Thank you. Our team will review this campaign."}
+
+
+# ---------- pause & resume ----------
+@router.post("/campaigns/{campaign_id}/pause")
+async def pause_campaign(campaign_id: str, user: dict = Depends(get_current_user)):
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found.")
+    if doc["organizer_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Only the organizer can pause this campaign.")
+    if doc.get("status") not in {"LIVE", "VERIFIED"}:
+        raise HTTPException(status_code=400, detail="Only active live campaigns can be paused.")
+    await db.campaigns.update_one({"id": campaign_id}, {"$set": {
+        "status": "PAUSED", "updated_at": now_iso()}})
+    await notify(user["id"], "campaign_paused", "Campaign paused",
+                 f"“{doc['title']}” is now paused and hidden from active donation checkout.", campaign_id)
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    return await serialize_campaign(doc, viewer=user, detail=True)
+
+
+@router.post("/campaigns/{campaign_id}/resume")
+async def resume_campaign(campaign_id: str, user: dict = Depends(get_current_user)):
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found.")
+    if doc["organizer_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Only the organizer can resume this campaign.")
+    if doc.get("status") != "PAUSED":
+        raise HTTPException(status_code=400, detail="Only paused campaigns can be resumed.")
+    await db.campaigns.update_one({"id": campaign_id}, {"$set": {
+        "status": "LIVE", "updated_at": now_iso()}})
+    await notify(user["id"], "campaign_live", "Campaign resumed! 🎉",
+                 f"“{doc['title']}” is back live and accepting donations.", campaign_id)
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    return await serialize_campaign(doc, viewer=user, detail=True)
+
