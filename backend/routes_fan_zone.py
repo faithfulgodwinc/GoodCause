@@ -8,6 +8,7 @@ from core import (db, uid, now_iso, get_current_user, get_current_user_optional,
                   notify, track, public_user)
 from payments import get_provider, provider_mode, PaystackProvider, paystack_configured
 from donation_policy import donation_identity
+import supabase_db
 
 router = APIRouter(prefix="/api", tags=["fan-zone"])
 
@@ -68,11 +69,11 @@ async def my_fan_zone(user: dict = Depends(get_current_user)):
         {"recipient_id": user["id"], "status": "paid"}, {"_id": 0}
     ).sort("paid_at", -1).limit(50).to_list(50)
 
-    total_kobo = await db.fan_gifts.aggregate([
-        {"$match": {"recipient_id": user["id"], "status": "paid"}},
-        {"$group": {"_id": None, "total": {"$sum": "$amount_kobo"}}},
-    ]).to_list(1)
-    total = total_kobo[0]["total"] if total_kobo else 0
+    _total_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(amount_kobo), 0) AS total FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user["id"]
+    )
+    total = int(_total_row["total"]) if _total_row else 0
 
     return {
         "enabled": zone.get("enabled", False) if zone else False,
@@ -130,11 +131,11 @@ async def get_fan_zone(user_id: str):
         {"recipient_id": user_id, "status": "paid"}, {"_id": 0}
     ).sort("paid_at", -1).limit(20).to_list(20)
 
-    total_kobo = await db.fan_gifts.aggregate([
-        {"$match": {"recipient_id": user_id, "status": "paid"}},
-        {"$group": {"_id": None, "total": {"$sum": "$amount_kobo"}}},
-    ]).to_list(1)
-    total = total_kobo[0]["total"] if total_kobo else 0
+    _total_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(amount_kobo), 0) AS total FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user_id
+    )
+    total = int(_total_row["total"]) if _total_row else 0
     supporters_count = await db.fan_gifts.count_documents({"recipient_id": user_id, "status": "paid"})
 
     # Profile picture: fan-zone override takes priority, then user's account picture

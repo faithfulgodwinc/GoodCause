@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 
 from campaign_share import render_campaign_share_html, render_fan_zone_share_html
 from core import db
+import supabase_db
 
 
 router = APIRouter(tags=["sharing"])
@@ -32,12 +33,17 @@ async def fan_zone_share_page(user_id: str):
         raise HTTPException(status_code=404, detail="Fan Zone not found.")
 
     # Fetch live stats so the social card shows real supporter counts
-    supporters_count = await db.fan_gifts.count_documents({"recipient_id": user_id, "status": "paid"})
-    total_agg = await db.fan_gifts.aggregate([
-        {"$match": {"recipient_id": user_id, "status": "paid"}},
-        {"$group": {"_id": None, "total": {"$sum": "$amount_kobo"}}},
-    ]).to_list(1)
-    total_kobo = total_agg[0]["total"] if total_agg else 0
+    count_row = await supabase_db.query_one(
+        "SELECT COUNT(*) AS cnt FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user_id,
+    )
+    supporters_count = int(count_row["cnt"]) if count_row else 0
+
+    total_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(amount_kobo), 0) AS total FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user_id,
+    )
+    total_kobo = int(total_row["total"]) if total_row else 0
 
     zone_data = {
         "headline": zone.get("headline"),

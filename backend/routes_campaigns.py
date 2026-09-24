@@ -5,6 +5,7 @@ from typing import Optional, List
 
 from core import (db, uid, now_iso, get_current_user, get_current_user_optional,
                   serialize_campaign, notify, track, clean)
+import supabase_db
 
 router = APIRouter(prefix="/api", tags=["campaigns"])
 
@@ -106,9 +107,10 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
     members_count = await db.users.count_documents({})
     causes_helped_count = await db.campaigns.count_documents({"status": {"$in": ["LIVE", "VERIFIED", "COMPLETED"]}})
     
-    pipeline = [{"$group": {"_id": None, "total": {"$sum": "$raised_kobo"}}}]
-    raised_agg = await db.campaigns.aggregate(pipeline).to_list(1)
-    given_kobo = raised_agg[0]["total"] if raised_agg and "total" in raised_agg[0] else 0
+    raised_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(raised_kobo), 0) AS total FROM campaigns"
+    )
+    given_kobo = int(raised_row["total"]) if raised_row else 0
 
     cats = await db.categories.find({}, {"_id": 0}).sort("order", 1).to_list(100)
     await track("app_open", user["id"] if user else None)
