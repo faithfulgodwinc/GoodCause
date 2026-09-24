@@ -175,6 +175,7 @@ export default function Profile() {
           {/* Menu */}
           <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl, gap: spacing.sm }}>
             <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
+            <MenuItem icon="coffee" label="Fan Zone" onPress={() => router.push("/fan-zone/setup")} testID="menu-fan-zone" />
             <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
             <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
             <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/paywall")} testID="menu-pro" />

@@ -307,6 +307,21 @@ export default function CampaignDetail() {
               </View>
             </View>
 
+            {/* Fan Zone nudge — shown to non-organizer visitors */}
+            {!isOrganizer && c.organizer?.id ? (
+              <Pressable
+                testID="campaign-fan-zone-link"
+                onPress={() => router.push({ pathname: "/fan-zone/[userId]", params: { userId: c.organizer.id } } as any)}
+                style={styles.fanZoneNudge}
+              >
+                <Feather name="coffee" size={15} color={colors.brandPrimary} />
+                <AppText variant="caption" color={colors.brandPrimary} style={{ marginLeft: spacing.xs }}>
+                  Support {c.organizer?.name} directly via Fan Zone
+                </AppText>
+                <Feather name="chevron-right" size={14} color={colors.brandPrimary} style={{ marginLeft: "auto" }} />
+              </Pressable>
+            ) : null}
+
             {renderPausedBanner()}
 
             {/* Mobile Only: Progress Box */}
@@ -602,6 +617,17 @@ const styles = StyleSheet.create({
   desktopCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.xl, borderWidth: 1, borderColor: colors.border, ...shadow.card },
   catPill: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   orgRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md },
+  fanZoneNudge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.brandTertiary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.sm,
+  },
   progressBox: { marginTop: spacing.lg, backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
   momentumCard: {
     marginTop: spacing.md,

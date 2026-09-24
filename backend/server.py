@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 
 from core import db, get_current_user_optional, track
-import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, routes_media, routes_payouts, routes_share, routes_impact
+import routes_auth, routes_campaigns, routes_donations, routes_social, routes_admin, routes_media, routes_payouts, routes_share, routes_impact, routes_fan_zone
 from seed import seed
 from payments import provider_mode
 from storage import init_storage
@@ -82,6 +82,7 @@ app.include_router(routes_media.router)
 app.include_router(routes_payouts.router)
 app.include_router(routes_share.router)
 app.include_router(routes_impact.router)
+app.include_router(routes_fan_zone.router)
 
 # Compute allowed origins for CORS
 allowed_origins = [
