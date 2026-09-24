@@ -78,6 +78,7 @@ export default function FanZonePage() {
     queryKey: ["fan-zone", userId],
     queryFn: () => api<FanZone>(`/users/${userId}/fan-zone`),
     retry: false, // don't retry 404s — we handle them explicitly
+    refetchOnMount: "always",
   });
   const zone = fanZone.data;
 

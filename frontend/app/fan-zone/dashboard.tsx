@@ -71,6 +71,7 @@ export default function FanZoneDashboard() {
   const { data, isLoading, isError, refetch } = useQuery<Dashboard>({
     queryKey: ["fan-zone-dashboard", page],
     queryFn: () => api(`/users/me/fan-zone/dashboard?page=${page}`),
+    refetchOnMount: "always",
   });
 
   const withdrawMut = useMutation({
