@@ -270,7 +270,8 @@ export default function FanZoneSetup() {
       {/* Save footer */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Button
-          title="Save settings"
+          title={!zone ? "Create Fan Zone" : "Save changes"}
+          icon={!zone ? "coffee" : "check"}
           onPress={() => saveMut.mutate()}
           loading={saveMut.isPending}
           testID="fanzone-save-button"

@@ -19,7 +19,7 @@ import * as WebBrowser from "expo-web-browser";
 import { api, track } from "@/src/lib/api";
 import { AppText, Button, Avatar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { formatNaira, formatAmountInput } from "@/src/format";
+import { formatNaira, formatAmountInput, timeAgo } from "@/src/format";
 
 type FanZone = {
   user: { id: string; name: string; picture?: string; bio?: string; verified_organizer: boolean };
@@ -320,8 +320,72 @@ export default function FanZonePage() {
           ) : null}
         </View>
 
+        {/* ── Supporters wall — shown ABOVE the gift form, like BMaC ── */}
+        <View style={styles.wallSection}>
+          <AppText variant="h2" style={styles.wallTitle}>
+            {zone.recent_gifts.length > 0
+              ? `${zone.supporters_count} supporter${zone.supporters_count !== 1 ? "s" : ""}`
+              : "Be the first to support"}
+          </AppText>
+
+          {zone.recent_gifts.length > 0 ? (
+            <View style={{ gap: spacing.md }}>
+              {zone.recent_gifts.map((g) => (
+                <View key={g.id} style={styles.supporterCard}>
+                  {/* Left: avatar */}
+                  <Avatar name={g.anonymous ? "?" : g.name} size={40} />
+
+                  {/* Middle: name + message */}
+                  <View style={styles.supporterBody}>
+                    <View style={styles.supporterTopRow}>
+                      <AppText variant="label" style={{ flex: 1 }}>
+                        {g.name}
+                      </AppText>
+                      {/* Amount pill — prominent like BMaC */}
+                      <View style={styles.amountPill}>
+                        <AppText variant="label" color={colors.onBrandPrimary}>
+                          {formatNaira(g.amount_kobo, { compact: true })}
+                        </AppText>
+                      </View>
+                    </View>
+
+                    {g.message ? (
+                      <View style={styles.messageBubble}>
+                        <AppText variant="body" color={colors.onSurfaceSecondary} style={{ lineHeight: 20 }}>
+                          {g.message}
+                        </AppText>
+                      </View>
+                    ) : null}
+
+                    <AppText variant="caption" style={{ marginTop: spacing.xs }}>
+                      {timeAgo(g.paid_at)}
+                    </AppText>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            /* Empty state */
+            <View style={styles.wallEmpty}>
+              <Feather name="heart" size={32} color={colors.brandPrimary} style={{ opacity: 0.4 }} />
+              <AppText variant="body" color={colors.onSurfaceSecondary} style={{ textAlign: "center", marginTop: spacing.sm }}>
+                No gifts yet — yours could be the first! 💛
+              </AppText>
+            </View>
+          )}
+        </View>
+
+        {/* ── Gift form ── */}
+        <View style={styles.formDivider}>
+          <View style={styles.dividerLine} />
+          <AppText variant="caption" color={colors.muted} style={{ marginHorizontal: spacing.sm }}>
+            Send a gift
+          </AppText>
+          <View style={styles.dividerLine} />
+        </View>
+
         {/* Amount picker */}
-        <AppText variant="h2" style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+        <AppText variant="h2" style={{ marginBottom: spacing.md }}>
           Choose an amount
         </AppText>
         <View style={styles.grid}>
@@ -393,29 +457,6 @@ export default function FanZonePage() {
             <AppText variant="caption" color={colors.error} style={{ marginLeft: 6, flex: 1 }}>
               {error}
             </AppText>
-          </View>
-        ) : null}
-
-        {/* Recent gifts wall */}
-        {zone.recent_gifts.length > 0 ? (
-          <View style={{ marginTop: spacing.xxl }}>
-            <AppText variant="h2" style={{ marginBottom: spacing.md }}>Recent supporters</AppText>
-            <View style={{ gap: spacing.sm }}>
-              {zone.recent_gifts.slice(0, 6).map((g) => (
-                <View key={g.id} style={styles.giftRow}>
-                  <Avatar name={g.anonymous ? "A" : g.name} size={32} />
-                  <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                    <AppText variant="label">{g.name}</AppText>
-                    {g.message ? (
-                      <AppText variant="caption" numberOfLines={2}>{g.message}</AppText>
-                    ) : null}
-                  </View>
-                  <AppText variant="label" color={colors.brandPrimary}>
-                    {formatNaira(g.amount_kobo, { compact: true })}
-                  </AppText>
-                </View>
-              ))}
-            </View>
           </View>
         ) : null}
       </ScrollView>
@@ -532,6 +573,63 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
+  },
+  wallSection: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xs,
+  },
+  wallTitle: {
+    marginBottom: spacing.md,
+  },
+  supporterCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  supporterBody: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: spacing.md,
+  },
+  supporterTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  amountPill: {
+    backgroundColor: colors.brandPrimary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 3,
+  },
+  messageBubble: {
+    backgroundColor: colors.surfaceTertiary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  wallEmpty: {
+    alignItems: "center",
+    paddingVertical: spacing.xxl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderStyle: "dashed",
+  },
+  formDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xxl,
+    marginBottom: spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
   },
   footer: {
     paddingHorizontal: spacing.lg,
