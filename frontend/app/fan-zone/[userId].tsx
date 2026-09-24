@@ -46,11 +46,12 @@ type FanZone = {
   }>;
 };
 
+// Direct app URL — supporters land on the gift form.
+// WhatsApp will still fetch og: tags from the page (Vercel serves index.html,
+// which Expo Router will render; for richer crawler previews the separate
+// /share/fan-zone/:id endpoint exists but is not the link we hand to humans).
 const fanZoneAppUrl = (userId: string) =>
   `https://www.goodcause.app/fan-zone/${encodeURIComponent(userId)}`;
-
-const fanZoneShareUrl = (userId: string) =>
-  `https://www.goodcause.app/share/fan-zone/${encodeURIComponent(userId)}`;
 
 export default function FanZonePage() {
   const { userId, reference } = useLocalSearchParams<{ userId: string; reference?: string }>();
@@ -234,14 +235,14 @@ export default function FanZonePage() {
             </AppText>
             <Button title="Share to WhatsApp" icon="share-2"
               onPress={() => {
-                const msg = encodeURIComponent(`I just sent a gift to ${zone.user.name} on GoodCause to support their work. Check them out: ${fanZoneShareUrl(userId)}`);
+                const msg = encodeURIComponent(`I just sent a gift to ${zone.user.name} on GoodCause to support their work. Check them out: ${fanZoneAppUrl(userId)}`);
                 Linking.openURL(`whatsapp://send?text=${msg}`).catch(() => {
-                  RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneShareUrl(userId)}` }).catch(() => {});
+                  RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneAppUrl(userId)}` }).catch(() => {});
                 });
               }}
               style={{ marginTop: spacing.md, alignSelf: "stretch" }} testID="gift-whatsapp-button" />
             <Button title="More share options" variant="outline"
-              onPress={() => RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneShareUrl(userId)}` }).catch(() => {})}
+              onPress={() => RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneAppUrl(userId)}` }).catch(() => {})}
               style={{ marginTop: spacing.xs, alignSelf: "stretch" }} testID="gift-share-button" />
           </View>
 
@@ -392,7 +393,7 @@ export default function FanZonePage() {
               <AppText variant="bodyMedium" style={{ marginLeft: spacing.sm, flex: 1 }}>
                 Share your Fan Zone link to start receiving gifts
               </AppText>
-              <Pressable onPress={() => RNShare.share({ message: `Support my work on GoodCause 💛 ${fanZoneShareUrl(userId)}` }).catch(() => {})}
+              <Pressable onPress={() => RNShare.share({ message: `Support my work on GoodCause 💛 ${fanZoneAppUrl(userId)}` }).catch(() => {})}
                 style={styles.shareIconBtn}>
                 <Feather name="share-2" size={18} color={colors.brandPrimary} />
               </Pressable>

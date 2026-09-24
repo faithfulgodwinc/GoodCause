@@ -147,7 +147,9 @@ export default function FanZoneSetup() {
     },
   });
 
-  const shareUrl = user ? `https://www.goodcause.app/share/fan-zone/${user.id}` : "";
+  // App page URL — supporters land directly on the gift form.
+  // The /share/fan-zone/:id URL is only for social crawlers (WhatsApp preview etc.)
+  const shareUrl = user ? `https://www.goodcause.app/fan-zone/${user.id}` : "";
 
   const copyLink = async () => {
     await Clipboard.setStringAsync(shareUrl);
