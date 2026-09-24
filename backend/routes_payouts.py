@@ -98,6 +98,33 @@ async def resolve_bank_account(body: BankResolveIn, user: dict = Depends(get_cur
         "account_name": user_name.upper(),
         "bank_code": bank_code,
         "verified": True,
+@router.post("/users/me/bank-account")
+async def save_user_bank_account(body: BankAccountIn, user: dict = Depends(get_current_user)):
+    existing = await db.bank_accounts.find_one({"user_id": user["id"]})
+    bank_id = existing["id"] if existing else uid("bnk_")
+    now_str = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": bank_id,
+        "user_id": user["id"],
+        "bank_name": body.bank_name.strip(),
+        "bank_code": body.bank_code.strip(),
+        "account_number": body.account_number.strip(),
+        "account_name": body.account_name.strip().upper(),
+        "created_at": existing.get("created_at") if existing else now_str,
+        "updated_at": now_str,
+    }
+    if existing:
+        await db.bank_accounts.update_one({"user_id": user["id"]}, {"$set": doc})
+    else:
+        await db.bank_accounts.insert_one(doc)
+
+    return {
+        "ok": True,
+        "bank_account_id": bank_id,
+        "bank_name": body.bank_name.strip(),
+        "bank_code": body.bank_code.strip(),
+        "account_number": body.account_number.strip(),
+        "account_name": body.account_name.strip().upper(),
     }
 
 

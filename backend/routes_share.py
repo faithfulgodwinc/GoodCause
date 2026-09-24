@@ -47,6 +47,8 @@ async def fan_zone_share_page(user_id: str):
 
     zone_data = {
         "headline": zone.get("headline"),
+        "cover_image": zone.get("cover_image"),
+        "profile_picture": zone.get("profile_picture"),
         "supporters_count": supporters_count,
         "total_received_kobo": total_kobo,
     }

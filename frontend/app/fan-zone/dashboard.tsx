@@ -7,6 +7,7 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -67,6 +68,61 @@ export default function FanZoneDashboard() {
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawSuccess, setWithdrawSuccess] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+
+  // Bank editing state
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<{ name: string; code: string } | null>(null);
+  const [accountNumber, setAccountNumber] = useState("");
+  const [resolvedName, setResolvedName] = useState("");
+  const [resolving, setResolving] = useState(false);
+  const [bankError, setBankError] = useState("");
+  const [showBankPicker, setShowBankPicker] = useState(false);
+
+  const banksQuery = useQuery({
+    queryKey: ["banks"],
+    queryFn: () => api<Array<{ name: string; code: string }>>("/banks"),
+    enabled: showBankModal,
+  });
+
+  const handleResolveAccount = async (accNum: string, bankCode: string) => {
+    if (accNum.length !== 10) return;
+    setResolving(true);
+    setBankError("");
+    try {
+      const res = await api<any>("/banks/resolve", {
+        method: "POST",
+        body: { account_number: accNum, bank_code: bankCode },
+      });
+      setResolvedName(res.account_name || "");
+    } catch (e: any) {
+      setBankError(e?.message || "Could not verify account details.");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const saveBankMut = useMutation({
+    mutationFn: () =>
+      api("/users/me/bank-account", {
+        method: "POST",
+        body: {
+          bank_name: selectedBank!.name,
+          bank_code: selectedBank!.code,
+          account_number: accountNumber.trim(),
+          account_name: resolvedName,
+        },
+      }),
+    onSuccess: () => {
+      setShowBankModal(false);
+      setAccountNumber("");
+      setResolvedName("");
+      setSelectedBank(null);
+      qc.invalidateQueries({ queryKey: ["fan-zone-dashboard"] });
+    },
+    onError: (e: any) => {
+      setBankError(e?.message || "Could not save bank account.");
+    },
+  });
 
   const { data, isLoading, isError, refetch } = useQuery<Dashboard>({
     queryKey: ["fan-zone-dashboard", page],
@@ -180,9 +236,16 @@ export default function FanZoneDashboard() {
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <AppText variant="bodyMedium">No bank account linked</AppText>
                 <AppText variant="caption" style={{ marginTop: 2 }}>
-                  Link a bank account from any campaign payout page to enable withdrawals.
+                  Link a bank account to withdraw your Fan Zone earnings.
                 </AppText>
               </View>
+              <Pressable
+                onPress={() => setShowBankModal(true)}
+                style={{ backgroundColor: colors.brandPrimary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md }}
+                testID="dashboard-link-bank-btn"
+              >
+                <AppText variant="caption" color="#fff" style={{ fontFamily: font.bold }}>Link bank</AppText>
+              </Pressable>
             </View>
           ) : (
             <>
@@ -195,6 +258,13 @@ export default function FanZoneDashboard() {
                     {data.bank_account!.bank_name} · ****{data.bank_account!.account_number.slice(-4)}
                   </AppText>
                 </View>
+                <Pressable
+                  onPress={() => setShowBankModal(true)}
+                  style={{ backgroundColor: "rgba(192, 92, 61, 0.12)", paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill }}
+                  testID="dashboard-edit-bank-btn"
+                >
+                  <AppText variant="caption" color={colors.brandPrimary} style={{ fontFamily: font.semibold }}>Change</AppText>
+                </Pressable>
               </View>
 
               {/* Withdraw input */}
@@ -373,6 +443,117 @@ export default function FanZoneDashboard() {
           </View>
         ) : null}
       </ScrollView>
+
+      {/* ── Bank Account Modal ── */}
+      <Modal
+        visible={showBankModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBankModal(false)}
+      >
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: spacing.md }}>
+              <AppText variant="h2">Link Bank Account</AppText>
+              <Pressable onPress={() => setShowBankModal(false)}>
+                <Feather name="x" size={20} color={colors.onSurface} />
+              </Pressable>
+            </View>
+
+            {/* Bank Selector */}
+            <AppText variant="label" style={{ alignSelf: "flex-start", marginBottom: spacing.xs }}>Bank Name</AppText>
+            <Pressable
+              onPress={() => setShowBankPicker(!showBankPicker)}
+              style={styles.modalSelect}
+            >
+              <AppText variant="body" color={selectedBank ? colors.onSurface : colors.muted}>
+                {selectedBank ? selectedBank.name : "Select your bank"}
+              </AppText>
+              <Feather name="chevron-down" size={18} color={colors.muted} />
+            </Pressable>
+
+            {showBankPicker && (
+              <View style={styles.bankListDropdown}>
+                <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
+                  {(banksQuery.data || []).map((b) => (
+                    <Pressable
+                      key={b.code}
+                      onPress={() => {
+                        setSelectedBank(b);
+                        setShowBankPicker(false);
+                        if (accountNumber.length === 10) {
+                          handleResolveAccount(accountNumber, b.code);
+                        }
+                      }}
+                      style={styles.bankDropdownItem}
+                    >
+                      <AppText variant="body">{b.name}</AppText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Account Number Input */}
+            <AppText variant="label" style={{ alignSelf: "flex-start", marginTop: spacing.md, marginBottom: spacing.xs }}>10-Digit Account Number</AppText>
+            <TextInput
+              value={accountNumber}
+              onChangeText={(v) => {
+                const cleaned = v.replace(/\D/g, "").slice(0, 10);
+                setAccountNumber(cleaned);
+                if (cleaned.length === 10 && selectedBank) {
+                  handleResolveAccount(cleaned, selectedBank.code);
+                } else {
+                  setResolvedName("");
+                }
+              }}
+              placeholder="0123456789"
+              placeholderTextColor={colors.muted}
+              keyboardType="number-pad"
+              maxLength={10}
+              style={styles.modalInput}
+            />
+
+            {/* Resolved Name verification */}
+            {resolving ? (
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: spacing.sm, alignSelf: "flex-start" }}>
+                <ActivityIndicator size="small" color={colors.brandPrimary} />
+                <AppText variant="caption" style={{ marginLeft: spacing.xs }}>Verifying account details…</AppText>
+              </View>
+            ) : resolvedName ? (
+              <View style={styles.verifiedBadge}>
+                <Feather name="check-circle" size={14} color={colors.success} />
+                <AppText variant="label" color={colors.success} style={{ marginLeft: spacing.xs }}>
+                  {resolvedName}
+                </AppText>
+              </View>
+            ) : null}
+
+            {bankError ? (
+              <AppText variant="caption" color={colors.error} style={{ marginTop: spacing.xs, alignSelf: "flex-start" }}>
+                {bankError}
+              </AppText>
+            ) : null}
+
+            {/* Action buttons */}
+            <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.xl, width: "100%" }}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                onPress={() => setShowBankModal(false)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Save Bank"
+                onPress={() => saveBankMut.mutate()}
+                loading={saveBankMut.isPending}
+                disabled={!selectedBank || accountNumber.length !== 10 || !resolvedName}
+                style={{ flex: 1, backgroundColor: colors.brandPrimary }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -586,5 +767,72 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+  },
+
+  // Modal
+  modalBg: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    width: "100%",
+    maxWidth: 380,
+    alignItems: "center",
+    ...shadow.card,
+  },
+  modalSelect: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    backgroundColor: colors.surfaceTertiary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  modalInput: {
+    width: "100%",
+    backgroundColor: colors.surfaceTertiary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontFamily: font.semibold,
+    fontSize: 16,
+    color: colors.onSurface,
+  },
+  bankListDropdown: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 4,
+    ...shadow.soft,
+  },
+  bankDropdownItem: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginTop: spacing.sm,
+    backgroundColor: colors.brandTertiary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
   },
 });

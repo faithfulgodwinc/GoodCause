@@ -44,30 +44,36 @@ def render_campaign_share_html(campaign: dict) -> str:
 def render_fan_zone_share_html(user: dict, zone: dict) -> str:
     """Social card for a user's Fan Zone page — shown by WhatsApp/Twitter/iMessage crawlers."""
     user_id = quote(str(user["id"]), safe="")
-    name = str(user.get("name") or "Someone on GoodCause")
+    name = str(user.get("name") or "Someone")
     headline = str(zone.get("headline") or f"Support {name}")
-    bio = str(user.get("bio") or "")
+    bio = str(user.get("bio") or "").strip()
     supporters = int(zone.get("supporters_count", 0))
     total_kobo = int(zone.get("total_received_kobo", 0))
 
-    # Build a punchy description like BMaC cards
-    desc_parts = [headline]
+    # Prefer fan zone custom profile_picture, then user account picture, then cover_image
+    picture_raw = zone.get("profile_picture") or user.get("picture") or zone.get("cover_image")
+    picture = _safe_image_url(picture_raw)
+    image = escape(picture, quote=True)
+
+    title_text = f"Support {name} on GoodCause"
+    if headline and headline.lower() != f"support {name.lower()}":
+        title_text = f"{name} — {headline}"
+    title_escaped = escape(title_text[:120], quote=True)
+
+    desc_parts = []
+    if headline:
+        desc_parts.append(headline)
     if bio:
-        desc_parts.append(bio[:120])
+        desc_parts.append(bio[:140])
     if supporters > 0:
         received_str = f"₦{total_kobo // 100:,}" if total_kobo else ""
         supporter_str = f"{supporters} supporter{'s' if supporters != 1 else ''}"
         if received_str:
-            desc_parts.append(f"{supporter_str} · {received_str} received")
+            desc_parts.append(f"{supporter_str} · {received_str} raised")
         else:
             desc_parts.append(supporter_str)
-    desc_parts.append("Send a small gift on GoodCause — no goal, no pressure.")
+    desc_parts.append("Send a direct gift on GoodCause.")
     description = escape(" · ".join(desc_parts)[:280], quote=True)
-
-    # Prefer profile picture; fall back to default
-    picture = _safe_image_url(user.get("picture"))
-    image = escape(picture, quote=True)
-    title_escaped = escape(headline, quote=True)
 
     canonical_url = f"{PUBLIC_WEB_ORIGIN}/share/fan-zone/{user_id}"
     destination_url = f"{PUBLIC_WEB_ORIGIN}/fan-zone/{user_id}"
@@ -78,8 +84,7 @@ def render_fan_zone_share_html(user: dict, zone: dict) -> str:
         image=image,
         canonical_url=canonical_url,
         destination_url=destination_url,
-        # Use summary (square) card so a round profile photo looks good in iMessage/Telegram
-        card_type="summary",
+        card_type="summary_large_image",
     )
 
 

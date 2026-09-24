@@ -43,7 +43,7 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   </Svg>
 );
 
-const DEFAULT_GOOGLE_WEB_CLIENT_ID = "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com";
+const DEFAULT_GOOGLE_WEB_CLIENT_ID = "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com";
 
 // Native Google Sign-in loader
 let GoogleSignin: any = null;
@@ -119,7 +119,7 @@ export default function AuthScreen() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     responseType: "id_token",
     clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
-    redirectUri: makeRedirectUri(),
+    redirectUri: Platform.OS === "web" && typeof window !== "undefined" ? window.location.origin : makeRedirectUri(),
   });
 
   useEffect(() => {
@@ -254,6 +254,33 @@ export default function AuthScreen() {
       }
 
       if (Platform.OS === "web") {
+        const g = typeof window !== "undefined" ? (window as any).google : null;
+        const clientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID;
+
+        if (g?.accounts?.id) {
+          g.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (res: any) => {
+              if (res?.credential) {
+                await handleGoogleSession(res.credential);
+              } else {
+                setError("Google sign-in failed. Please try again.");
+                setGoogleLoading(false);
+              }
+            },
+          });
+          g.accounts.id.prompt(async (notification: any) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+              if (request) {
+                await promptAsync();
+              } else {
+                setGoogleLoading(false);
+              }
+            }
+          });
+          return;
+        }
+
         if (!request) {
           setError("Google sign-in is initializing. Please try again in a moment.");
           setGoogleLoading(false);
