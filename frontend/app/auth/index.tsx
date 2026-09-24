@@ -43,7 +43,7 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   </Svg>
 );
 
-const DEFAULT_GOOGLE_WEB_CLIENT_ID = "121930938754-nl8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com";
+const DEFAULT_GOOGLE_WEB_CLIENT_ID = "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com";
 
 // Native Google Sign-in loader
 let GoogleSignin: any = null;

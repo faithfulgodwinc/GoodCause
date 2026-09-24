@@ -7,7 +7,6 @@ import {
   Pressable,
   Switch,
   Share as RNShare,
-  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -49,11 +48,23 @@ export default function FanZoneSetup() {
   const [thankYouMsg, setThankYouMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(false);
+  // Track whether this is the very first save (so we navigate to preview after)
+  const [isNew, setIsNew] = useState(false);
 
   const { data: zone, isLoading } = useQuery<MyFanZone>({
     queryKey: ["my-fan-zone"],
     queryFn: () => api("/users/me/fan-zone"),
   });
+
+  // Once loaded, decide if this is a brand-new setup
+  useEffect(() => {
+    if (zone !== undefined) {
+      // zone.enabled === false AND no headline means never customised — treat as new
+      const neverSetUp = !zone.enabled && !zone.headline;
+      setIsNew(neverSetUp);
+    }
+  }, [zone]);
 
   // Seed form from server state once loaded
   useEffect(() => {
@@ -69,15 +80,24 @@ export default function FanZoneSetup() {
       api("/users/me/fan-zone", {
         method: "POST",
         body: {
-          enabled,
+          enabled: true,   // always enable on create/save
           headline: headline.trim() || null,
           thank_you_message: thankYouMsg.trim() || null,
         },
       }),
     onSuccess: () => {
       setDirty(false);
+      setSaved(true);
       qc.invalidateQueries({ queryKey: ["my-fan-zone"] });
-      Alert.alert("Saved", "Your Fan Zone settings have been saved.");
+      // After creating for the first time, navigate straight to the public preview
+      if (isNew && user) {
+        router.replace({
+          pathname: "/fan-zone/[userId]",
+          params: { userId: user.id },
+        } as any);
+      } else {
+        setTimeout(() => setSaved(false), 3000);
+      }
     },
   });
 
@@ -202,12 +222,12 @@ export default function FanZoneSetup() {
           <AppText variant="caption" style={styles.charCount}>{thankYouMsg.length}/500</AppText>
         </View>
 
-        {/* Share link */}
-        {zone?.enabled && (
+        {/* Share link — always visible once logged in */}
+        {user ? (
           <View style={styles.section}>
-            <AppText variant="label" style={styles.fieldLabel}>Share your Fan Zone</AppText>
+            <AppText variant="label" style={styles.fieldLabel}>Your Fan Zone link</AppText>
             <AppText variant="caption" style={styles.fieldHint}>
-              Paste this link in your social media bio, WhatsApp status, or anywhere.
+              Share this link on social media, WhatsApp status, or your bio so people can send you gifts.
             </AppText>
             <View style={styles.linkBox}>
               <AppText variant="caption" color={colors.brandPrimary} style={{ flex: 1 }} numberOfLines={1}>
@@ -226,15 +246,15 @@ export default function FanZoneSetup() {
               testID="fanzone-share-button"
             />
             <Button
-              title="Preview my Fan Zone"
+              title="Preview as supporter"
               icon="eye"
               variant="ghost"
-              onPress={() => router.push({ pathname: "/fan-zone/[userId]", params: { userId: user!.id } } as any)}
+              onPress={() => router.push({ pathname: "/fan-zone/[userId]", params: { userId: user.id } } as any)}
               style={{ marginTop: spacing.xs }}
               testID="fanzone-preview-button"
             />
           </View>
-        )}
+        ) : null}
 
         {/* Recent gifts */}
         {zone?.recent_gifts && zone.recent_gifts.length > 0 ? (
@@ -269,9 +289,17 @@ export default function FanZoneSetup() {
 
       {/* Save footer */}
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        {saved ? (
+          <View style={styles.savedBanner}>
+            <Feather name="check-circle" size={16} color={colors.success} />
+            <AppText variant="label" color={colors.success} style={{ marginLeft: spacing.sm }}>
+              Changes saved!
+            </AppText>
+          </View>
+        ) : null}
         <Button
-          title={!zone ? "Create Fan Zone" : "Save changes"}
-          icon={!zone ? "coffee" : "check"}
+          title={isNew ? "Create Fan Zone" : "Save changes"}
+          icon={isNew ? "coffee" : "check"}
           onPress={() => saveMut.mutate()}
           loading={saveMut.isPending}
           testID="fanzone-save-button"
@@ -371,5 +399,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  savedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
   },
 });

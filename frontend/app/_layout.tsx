@@ -78,6 +78,8 @@ export default function RootLayout() {
                   <Stack.Screen name="circles/index" />
                   <Stack.Screen name="circles/[id]" />
                   <Stack.Screen name="update/[id]" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+                  <Stack.Screen name="fan-zone/setup" options={{ animation: "slide_from_right" }} />
+                  <Stack.Screen name="fan-zone/[userId]" options={{ animation: "slide_from_right" }} />
                   <Stack.Screen name="admin/index" />
                   <Stack.Screen name="admin/impact" />
                 </Stack>

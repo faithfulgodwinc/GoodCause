@@ -3,15 +3,15 @@
 import os
 
 
+# Web OAuth 2.0 client used by the GoodCause web app
 APP_GOOGLE_WEB_CLIENT_ID = (
-    "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com"
+    "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com"
 )
 
 
 def google_client_ids() -> list[str]:
     """Return every trusted token audience, always including the app audience."""
     candidates = [
-        "121930938754-nl8j2do29bevndokl82prr5fe1dgq7du.apps.googleusercontent.com",
         APP_GOOGLE_WEB_CLIENT_ID,
         os.environ.get("GOOGLE_CLIENT_ID"),
         os.environ.get("GOOGLE_ANDROID_CLIENT_ID"),

@@ -54,44 +54,9 @@ class GiftIn(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Public: view a user's fan zone page
-# ---------------------------------------------------------------------------
-
-@router.get("/users/{user_id}/fan-zone")
-async def get_fan_zone(user_id: str):
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
-    zone = await _get_fan_zone(user_id)
-    if not zone or not zone.get("enabled", True):
-        raise HTTPException(status_code=404, detail="This user hasn't set up a Fan Zone yet.")
-
-    # Recent paid gifts (public wall)
-    gifts = await db.fan_gifts.find(
-        {"recipient_id": user_id, "status": "paid"}, {"_id": 0}
-    ).sort("paid_at", -1).limit(20).to_list(20)
-
-    total_kobo = await db.fan_gifts.aggregate([
-        {"$match": {"recipient_id": user_id, "status": "paid"}},
-        {"$group": {"_id": None, "total": {"$sum": "$amount_kobo"}}},
-    ]).to_list(1)
-    total = total_kobo[0]["total"] if total_kobo else 0
-    supporters_count = await db.fan_gifts.count_documents({"recipient_id": user_id, "status": "paid"})
-
-    return {
-        "user": public_user(user),
-        "headline": zone.get("headline") or f"Support {user['name']}",
-        "thank_you_message": zone.get("thank_you_message") or "Your support means the world — thank you! 💛",
-        "presets": FAN_GIFT_PRESETS,
-        "total_received_kobo": total,
-        "supporters_count": supporters_count,
-        "recent_gifts": [_public_gift(g) for g in gifts],
-    }
-
-
-# ---------------------------------------------------------------------------
 # Authenticated: setup / update my fan zone
+# NOTE: these /me routes MUST be declared before /users/{user_id}/... so that
+# FastAPI matches the literal "me" before the dynamic {user_id} wildcard.
 # ---------------------------------------------------------------------------
 
 @router.get("/users/me/fan-zone")
@@ -138,6 +103,43 @@ async def setup_fan_zone(body: FanZoneSetupIn, user: dict = Depends(get_current_
     else:
         await db.fan_zones.insert_one({"user_id": user["id"], "created_at": now_iso(), **doc})
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Public: view a user's fan zone page
+# ---------------------------------------------------------------------------
+
+@router.get("/users/{user_id}/fan-zone")
+async def get_fan_zone(user_id: str):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    zone = await _get_fan_zone(user_id)
+    if not zone or not zone.get("enabled", True):
+        raise HTTPException(status_code=404, detail="This user hasn't set up a Fan Zone yet.")
+
+    # Recent paid gifts (public wall)
+    gifts = await db.fan_gifts.find(
+        {"recipient_id": user_id, "status": "paid"}, {"_id": 0}
+    ).sort("paid_at", -1).limit(20).to_list(20)
+
+    total_kobo = await db.fan_gifts.aggregate([
+        {"$match": {"recipient_id": user_id, "status": "paid"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount_kobo"}}},
+    ]).to_list(1)
+    total = total_kobo[0]["total"] if total_kobo else 0
+    supporters_count = await db.fan_gifts.count_documents({"recipient_id": user_id, "status": "paid"})
+
+    return {
+        "user": public_user(user),
+        "headline": zone.get("headline") or f"Support {user['name']}",
+        "thank_you_message": zone.get("thank_you_message") or "Your support means the world — thank you! 💛",
+        "presets": FAN_GIFT_PRESETS,
+        "total_received_kobo": total,
+        "supporters_count": supporters_count,
+        "recent_gifts": [_public_gift(g) for g in gifts],
+    }
 
 
 # ---------------------------------------------------------------------------
