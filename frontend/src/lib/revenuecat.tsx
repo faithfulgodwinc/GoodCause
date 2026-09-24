@@ -14,7 +14,7 @@ export const rcEnabled = Platform.OS !== "web" || __DEV__;
 
 const DEV_STORAGE_KEY = "@goodcause_pro_subscribed";
 
-// Built-in sandbox packages for development and testing
+// Built-in sandbox packages for development and testing without live RevenueCat keys
 export const SANDBOX_PACKAGES: any[] = [
   {
     identifier: "tier_1k",
@@ -27,6 +27,7 @@ export const SANDBOX_PACKAGES: any[] = [
       price: 1000,
       currencyCode: "NGN",
     },
+    isSandboxMock: true,
   },
   {
     identifier: "tier_2k5",
@@ -39,6 +40,7 @@ export const SANDBOX_PACKAGES: any[] = [
       price: 2500,
       currencyCode: "NGN",
     },
+    isSandboxMock: true,
   },
   {
     identifier: "tier_5k",
@@ -51,6 +53,7 @@ export const SANDBOX_PACKAGES: any[] = [
       price: 5000,
       currencyCode: "NGN",
     },
+    isSandboxMock: true,
   },
   {
     identifier: "tier_10k",
@@ -63,6 +66,7 @@ export const SANDBOX_PACKAGES: any[] = [
       price: 10000,
       currencyCode: "NGN",
     },
+    isSandboxMock: true,
   },
 ];
 
@@ -102,13 +106,14 @@ function useSubscriptionContext() {
       if (!key) return null;
       try {
         return await Purchases.getCustomerInfo();
-      } catch {
+      } catch (err) {
+        console.warn("Error getting CustomerInfo:", err);
         return null;
       }
     },
     enabled: rcEnabled && !!key,
     staleTime: 60 * 1000,
-    retry: false,
+    retry: 1,
   });
 
   const offeringsQuery = useQuery({
@@ -117,13 +122,14 @@ function useSubscriptionContext() {
       if (!key) return null;
       try {
         return await Purchases.getOfferings();
-      } catch {
+      } catch (err) {
+        console.warn("Error getting RevenueCat offerings:", err);
         return null;
       }
     },
     enabled: rcEnabled && !!key,
-    staleTime: 300 * 1000,
-    retry: false,
+    staleTime: 120 * 1000,
+    retry: 2,
   });
 
   useEffect(() => {
@@ -140,14 +146,23 @@ function useSubscriptionContext() {
 
   const purchaseMutation = useMutation({
     mutationFn: async (pkg: any) => {
-      if (!key) {
-        // Sandbox simulation
+      // Dev / Sandbox simulation mode when no key or when package is a mock object
+      if (!key || pkg?.isSandboxMock || !pkg?.product?.storeProduct) {
         await AsyncStorage.setItem(DEV_STORAGE_KEY, "true");
         setDevSubscribed(true);
         return { active: true };
       }
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
-      return customerInfo;
+      try {
+        const { customerInfo } = await Purchases.purchasePackage(pkg);
+        return customerInfo;
+      } catch (error: any) {
+        if (error?.userCancelled) {
+          const cancelErr = new Error("User cancelled purchase");
+          (cancelErr as any).userCancelled = true;
+          throw cancelErr;
+        }
+        throw error;
+      }
     },
   });
 
@@ -158,7 +173,16 @@ function useSubscriptionContext() {
         setDevSubscribed(true);
         return { active: true };
       }
-      return await Purchases.restorePurchases();
+      try {
+        return await Purchases.restorePurchases();
+      } catch (error: any) {
+        if (error?.userCancelled) {
+          const cancelErr = new Error("User cancelled restore");
+          (cancelErr as any).userCancelled = true;
+          throw cancelErr;
+        }
+        throw error;
+      }
     },
   });
 
@@ -168,9 +192,15 @@ function useSubscriptionContext() {
   const originalAppUserId = customerInfoQuery.data?.originalAppUserId;
   const identityReady = !key || (!!originalAppUserId && !originalAppUserId.startsWith("$RCAnonymousID:"));
 
-  // If live offerings are present, use them. Otherwise fallback to sandbox packages.
+  // If live packages from RevenueCat are available, use them.
   const livePackages = offeringsQuery.data?.current?.availablePackages || [];
-  const availablePackages = livePackages.length > 0 ? livePackages : SANDBOX_PACKAGES;
+  // Only fall back to SANDBOX_PACKAGES if no API key is set or in dev mode
+  const availablePackages =
+    livePackages.length > 0
+      ? livePackages
+      : !key || __DEV__
+      ? SANDBOX_PACKAGES
+      : [];
 
   return {
     customerInfo: customerInfoQuery.data,
@@ -180,7 +210,7 @@ function useSubscriptionContext() {
     identityReady,
     rcEnabled,
     isLoading: key ? (customerInfoQuery.isLoading || offeringsQuery.isLoading) : false,
-    offeringsError: false,
+    offeringsError: key ? offeringsQuery.isError || (offeringsQuery.isSuccess && !offeringsQuery.data?.current) : false,
     purchase: purchaseMutation.mutateAsync,
     restore: restoreMutation.mutateAsync,
     isPurchasing: purchaseMutation.isPending,
@@ -201,3 +231,4 @@ export function useSubscription() {
   if (!ctx) throw new Error("useSubscription must be used within a SubscriptionProvider");
   return ctx;
 }
+

@@ -43,6 +43,8 @@ class FanZoneSetupIn(BaseModel):
     enabled: bool = True
     headline: Optional[str] = Field(default=None, max_length=160)
     thank_you_message: Optional[str] = Field(default=None, max_length=500)
+    cover_image: Optional[str] = None       # hero banner URL
+    profile_picture: Optional[str] = None  # fan-zone-specific avatar override
 
 
 class GiftIn(BaseModel):
@@ -76,6 +78,8 @@ async def my_fan_zone(user: dict = Depends(get_current_user)):
         "enabled": zone.get("enabled", False) if zone else False,
         "headline": zone.get("headline") if zone else None,
         "thank_you_message": zone.get("thank_you_message") if zone else None,
+        "cover_image": zone.get("cover_image") if zone else None,
+        "profile_picture": zone.get("profile_picture") if zone else None,
         "total_received_kobo": total,
         "supporters_count": len(gifts),
         "recent_gifts": [
@@ -96,6 +100,8 @@ async def setup_fan_zone(body: FanZoneSetupIn, user: dict = Depends(get_current_
         "enabled": body.enabled,
         "headline": body.headline,
         "thank_you_message": body.thank_you_message,
+        "cover_image": body.cover_image,
+        "profile_picture": body.profile_picture,
         "updated_at": now_iso(),
     }
     if existing:
@@ -131,10 +137,14 @@ async def get_fan_zone(user_id: str):
     total = total_kobo[0]["total"] if total_kobo else 0
     supporters_count = await db.fan_gifts.count_documents({"recipient_id": user_id, "status": "paid"})
 
+    # Profile picture: fan-zone override takes priority, then user's account picture
+    profile_pic = zone.get("profile_picture") or user.get("picture")
+
     return {
-        "user": public_user(user),
+        "user": {**public_user(user), "picture": profile_pic},
         "headline": zone.get("headline") or f"Support {user['name']}",
         "thank_you_message": zone.get("thank_you_message") or "Your support means the world — thank you! 💛",
+        "cover_image": zone.get("cover_image"),
         "presets": FAN_GIFT_PRESETS,
         "total_received_kobo": total,
         "supporters_count": supporters_count,

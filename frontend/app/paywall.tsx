@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSubscription } from "@/src/lib/revenuecat";
@@ -100,6 +101,7 @@ export default function Paywall() {
   const {
     availablePackages,
     isSubscribed,
+    isLoading,
     purchase,
     restore,
     isPurchasing,
@@ -165,7 +167,7 @@ export default function Paywall() {
       await purchase(pkg);
       setMsg("You're now a GoodCause Pro member! 🎉");
     } catch (e: any) {
-      if (e?.userCancelled || String(e).includes("cancel")) return;
+      if (e?.userCancelled || String(e?.message || e).toLowerCase().includes("cancel")) return;
       setMsg("Purchase could not be completed. Please try again.");
     }
   };

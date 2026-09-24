@@ -6,9 +6,15 @@ CREATE TABLE IF NOT EXISTS fan_zones (
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     headline VARCHAR(160),
     thank_you_message VARCHAR(500),
+    cover_image TEXT,
+    profile_picture TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- If upgrading an existing installation:
+ALTER TABLE fan_zones ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE fan_zones ADD COLUMN IF NOT EXISTS profile_picture TEXT;
 
 CREATE TABLE IF NOT EXISTS fan_gifts (
     id VARCHAR(64) PRIMARY KEY,
