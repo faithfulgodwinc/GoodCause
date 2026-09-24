@@ -318,7 +318,25 @@ export default function Paywall() {
                 CHOOSE YOUR PLAN
               </AppText>
 
-              <View style={{ gap: spacing.sm }}>
+              {isLoading ? (
+                <View style={{ padding: spacing.xl, alignItems: "center" }}>
+                  <ActivityIndicator size="large" color={colors.brandPrimary} />
+                  <AppText variant="caption" color="rgba(255,255,255,0.6)" style={{ marginTop: spacing.md }}>
+                    Loading subscription plans…
+                  </AppText>
+                </View>
+              ) : packages.length === 0 ? (
+                <View style={{ padding: spacing.lg, alignItems: "center", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: radius.md, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}>
+                  <Feather name="alert-circle" size={24} color="rgba(255,255,255,0.6)" />
+                  <AppText variant="label" color="#fff" style={{ marginTop: spacing.sm, textAlign: "center" }}>
+                    Subscription options updating
+                  </AppText>
+                  <AppText variant="caption" color="rgba(255,255,255,0.6)" style={{ marginTop: spacing.xs, textAlign: "center" }}>
+                    Please check back shortly or restore existing purchases below.
+                  </AppText>
+                </View>
+              ) : (
+                <View style={{ gap: spacing.sm }}>
                 {packages.map((pkg) => {
                   const active = selected?.identifier === pkg.identifier;
                   const isAnnual = pkg.packageType === "ANNUAL";
@@ -381,6 +399,7 @@ export default function Paywall() {
                   );
                 })}
               </View>
+              )}
 
               {/* Status message */}
               {msg ? (

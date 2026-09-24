@@ -306,8 +306,8 @@ export default function FanZoneSetup() {
             <AppText variant="caption" style={styles.charCount}>{thankYouMsg.length}/500</AppText>
           </View>
 
-          {/* Share link */}
-          {user ? (
+          {/* Share link — only after fan zone has been created once */}
+          {user && !isNew ? (
             <View style={styles.section}>
               <AppText variant="label" style={styles.fieldLabel}>Your Fan Zone link</AppText>
               <AppText variant="caption" style={styles.fieldHint}>

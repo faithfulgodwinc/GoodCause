@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -104,6 +104,14 @@ export default function Profile() {
   const { isSubscribed } = useSubscription();
   const { feedMaxWidth } = useResponsive();
   const { data: impact } = useQuery({ queryKey: ["impact"], queryFn: () => api<Impact>("/impact") });
+  // Used to decide whether Fan Zone tap goes to preview or setup
+  const { data: myFanZone } = useQuery({
+    queryKey: ["my-fan-zone"],
+    queryFn: () => api<{ enabled: boolean }>("/users/me/fan-zone"),
+    retry: false,
+    staleTime: 1000 * 60,
+  });
+  const fanZoneExists = !!myFanZone?.enabled || (myFanZone !== undefined && !!myFanZone);
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -175,7 +183,18 @@ export default function Profile() {
           {/* Menu */}
           <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl, gap: spacing.sm }}>
             <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
-            <MenuItem icon="coffee" label="Fan Zone" onPress={() => router.push("/fan-zone/setup")} testID="menu-fan-zone" />
+            <MenuItem
+              icon="coffee"
+              label="Fan Zone"
+              onPress={() => {
+                if (fanZoneExists && user) {
+                  router.push({ pathname: "/fan-zone/[userId]", params: { userId: user.id } } as any);
+                } else {
+                  router.push("/fan-zone/setup");
+                }
+              }}
+              testID="menu-fan-zone"
+            />
             <MenuItem icon="bookmark" label="Saved causes" onPress={() => router.push("/explore")} testID="menu-saved" />
             <MenuItem icon="users" label="My Circles" onPress={() => router.push("/circles")} testID="menu-circles" />
             <MenuItem icon="star" label="GoodCause Pro" onPress={() => router.push("/paywall")} testID="menu-pro" />
