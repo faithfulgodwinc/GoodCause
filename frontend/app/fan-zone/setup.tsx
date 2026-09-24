@@ -81,7 +81,12 @@ export default function FanZoneSetup() {
     },
   });
 
-  const shareUrl = user ? `https://www.goodcause.app/fan-zone/${user.id}` : "";
+  /**
+   * Social share URL — the /share/fan-zone/ endpoint returns a server-rendered
+   * page with full OG + Twitter card meta tags (picture, headline, supporter count)
+   * so WhatsApp, iMessage, Telegram and Twitter all show a rich link preview.
+   */
+  const shareUrl = user ? `https://www.goodcause.app/share/fan-zone/${user.id}` : "";
 
   const copyLink = async () => {
     await Clipboard.setStringAsync(shareUrl);
@@ -91,7 +96,7 @@ export default function FanZoneSetup() {
 
   const shareLink = () => {
     RNShare.share({
-      message: `Support my work on GoodCause — send a small gift: ${shareUrl}`,
+      message: `Support my work on GoodCause — send a small gift 💛 ${shareUrl}`,
     }).catch(() => {});
   };
 

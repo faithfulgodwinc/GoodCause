@@ -38,8 +38,17 @@ type FanZone = {
   }>;
 };
 
-const fanZoneWebUrl = (userId: string) =>
+/** Deep-link into the app (used for redirects after payment). */
+const fanZoneAppUrl = (userId: string) =>
   `https://www.goodcause.app/fan-zone/${encodeURIComponent(userId)}`;
+
+/**
+ * Social share URL — points at the server-rendered OG/Twitter card endpoint
+ * so WhatsApp, iMessage, Twitter, Telegram all show a rich preview with
+ * the user's picture, headline and supporter count.
+ */
+const fanZoneShareUrl = (userId: string) =>
+  `https://www.goodcause.app/share/fan-zone/${encodeURIComponent(userId)}`;
 
 export default function FanZonePage() {
   const { userId, reference } = useLocalSearchParams<{ userId: string; reference?: string }>();
@@ -183,7 +192,7 @@ export default function FanZonePage() {
             <Button
               title="Open gift page"
               icon="external-link"
-              onPress={() => WebBrowser.openBrowserAsync(fanZoneWebUrl(userId))}
+              onPress={() => WebBrowser.openBrowserAsync(fanZoneAppUrl(userId))}
               style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
               testID="external-gift-button"
             />
@@ -233,10 +242,10 @@ export default function FanZonePage() {
               icon="share-2"
               onPress={() => {
                 const msg = encodeURIComponent(
-                  `I just sent a gift to ${zone.user.name} on GoodCause to support their work. Check them out: ${fanZoneWebUrl(userId)}`
+                  `I just sent a gift to ${zone.user.name} on GoodCause to support their work. Check them out: ${fanZoneShareUrl(userId)}`
                 );
                 Linking.openURL(`whatsapp://send?text=${msg}`).catch(() => {
-                  RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneWebUrl(userId)}` }).catch(() => {});
+                  RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneShareUrl(userId)}` }).catch(() => {});
                 });
               }}
               style={{ marginTop: spacing.md, alignSelf: "stretch" }}
@@ -246,7 +255,7 @@ export default function FanZonePage() {
               title="More share options"
               variant="outline"
               onPress={() =>
-                RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneWebUrl(userId)}` }).catch(() => {})
+                RNShare.share({ message: `I just supported ${zone.user.name} on GoodCause: ${fanZoneShareUrl(userId)}` }).catch(() => {})
               }
               style={{ marginTop: spacing.xs, alignSelf: "stretch" }}
               testID="gift-share-button"
