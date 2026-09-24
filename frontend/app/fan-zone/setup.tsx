@@ -20,7 +20,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 
 import { api, uploadMedia } from "@/src/lib/api";
 import { useAuth } from "@/src/context/auth";
-import { AppText, Button, Avatar, Card } from "@/src/components/ui";
+import { AppText, Button, Avatar } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
 import { formatNaira } from "@/src/format";
 
@@ -253,22 +253,28 @@ export default function FanZoneSetup() {
         ) : null}
 
         <View style={{ paddingHorizontal: spacing.lg }}>
-          {/* Stats — only shown if fan zone exists and has data */}
-          {zone && (zone.supporters_count > 0 || zone.total_received_kobo > 0) ? (
-            <Card style={styles.statsCard}>
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <AppText variant="h1" color={colors.brandPrimary}>{zone.supporters_count}</AppText>
-                  <AppText variant="caption">supporters</AppText>
+          {/* Earnings dashboard entry — shown once zone exists */}
+          {zone && !isNew ? (
+            <Pressable
+              onPress={() => router.push("/fan-zone/dashboard" as any)}
+              style={styles.dashboardBanner}
+              testID="fanzone-dashboard-btn"
+            >
+              <View style={styles.dashboardBannerLeft}>
+                <View style={styles.dashboardIconWrap}>
+                  <Feather name="trending-up" size={18} color={colors.onBrandPrimary} />
                 </View>
-                <View style={[styles.statItem, styles.statBorder]}>
-                  <AppText variant="h1" color={colors.brandPrimary}>
-                    {formatNaira(zone.total_received_kobo, { compact: true })}
+                <View style={{ marginLeft: spacing.md }}>
+                  <AppText variant="bodyMedium" color={colors.onSurface}>Earnings & withdrawals</AppText>
+                  <AppText variant="caption" color={colors.onSurfaceSecondary}>
+                    {zone.supporters_count > 0
+                      ? `${zone.supporters_count} supporter${zone.supporters_count !== 1 ? "s" : ""} · ${formatNaira(zone.total_received_kobo, { compact: true })} received`
+                      : "Track gifts and withdraw your earnings"}
                   </AppText>
-                  <AppText variant="caption">total received</AppText>
                 </View>
               </View>
-            </Card>
+              <Feather name="chevron-right" size={18} color={colors.muted} />
+            </Pressable>
           ) : null}
 
           {/* Headline */}
@@ -492,10 +498,26 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
 
-  statsCard: { padding: spacing.xl, marginBottom: spacing.xl },
-  statsRow: { flexDirection: "row" },
-  statItem: { flex: 1, alignItems: "center" },
-  statBorder: { borderLeftWidth: 1, borderLeftColor: colors.border },
+  dashboardBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.surfaceTertiary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  dashboardBannerLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
+  dashboardIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.brandPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   section: { marginBottom: spacing.xl },
   fieldLabel: { marginBottom: spacing.xs },

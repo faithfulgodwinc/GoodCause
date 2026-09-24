@@ -206,6 +206,36 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Fan Zone Banner */}
+          <View style={styles.section}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (user) {
+                  router.push("/fan-zone/setup" as any);
+                } else {
+                  router.push("/auth");
+                }
+              }}
+              style={styles.fanZoneHomeCard}
+            >
+              <View style={styles.fanZoneCardLeft}>
+                <View style={styles.fanZoneIconWrap}>
+                  <Feather name="coffee" size={20} color={colors.brandPrimary} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <AppText variant="label" style={{ fontSize: 15, color: colors.onSurface }}>
+                    GoodCause Fan Zone
+                  </AppText>
+                  <AppText variant="caption" style={{ color: colors.onSurfaceSecondary, marginTop: 2 }}>
+                    Support your favorite organizers with direct micro-gifts.
+                  </AppText>
+                </View>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.muted} />
+            </Pressable>
+          </View>
+
           {/* Causes List Section */}
           {directCauses.length > 0 && (
             <View style={styles.section}>
@@ -459,5 +489,29 @@ const styles = StyleSheet.create({
   causeCardItem: {
     borderRadius: 18,
     overflow: "hidden",
+  },
+  fanZoneHomeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    marginHorizontal: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  fanZoneCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  fanZoneIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.brandTertiary,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

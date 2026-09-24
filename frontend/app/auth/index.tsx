@@ -379,19 +379,21 @@ export default function AuthScreen() {
               {/* Step 0: Main options */}
               {step === "main" && (
                 <View style={styles.formGroup}>
-                  <Pressable
-                    onPress={googleSignIn}
-                    disabled={googleLoading}
-                    style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
-                    testID="auth-google-button"
-                  >
-                    <View style={styles.socialIconWrap}>
-                      <GoogleIcon size={20} />
-                    </View>
-                    <AppText style={styles.outlineBtnText}>
-                      {googleLoading ? "Connecting…" : "Continue with Google"}
-                    </AppText>
-                  </Pressable>
+                  {Platform.OS !== "ios" && (
+                    <Pressable
+                      onPress={googleSignIn}
+                      disabled={googleLoading}
+                      style={({ pressed }) => [styles.outlineBtn, pressed && { opacity: 0.8 }]}
+                      testID="auth-google-button"
+                    >
+                      <View style={styles.socialIconWrap}>
+                        <GoogleIcon size={20} />
+                      </View>
+                      <AppText style={styles.outlineBtnText}>
+                        {googleLoading ? "Connecting…" : "Continue with Google"}
+                      </AppText>
+                    </Pressable>
+                  )}
 
                   {Platform.OS === "ios" && (
                     appleAvailable ? (

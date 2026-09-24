@@ -185,12 +185,13 @@ export default function Profile() {
             <MenuItem icon="flag" label="My campaigns" onPress={() => router.push("/campaign/new?tab=mine")} testID="menu-my-campaigns" />
             <MenuItem
               icon="coffee"
-              label="Fan Zone"
+              label={fanZoneExists ? "Fan Zone (Active)" : "Set up Fan Zone"}
+              highlight={true}
               onPress={() => {
                 if (fanZoneExists && user) {
                   router.push({ pathname: "/fan-zone/[userId]", params: { userId: user.id } } as any);
                 } else {
-                  router.push("/fan-zone/setup");
+                  router.push("/fan-zone/setup" as any);
                 }
               }}
               testID="menu-fan-zone"

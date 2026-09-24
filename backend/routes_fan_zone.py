@@ -1,6 +1,7 @@
 """Fan Zone — personal gifting pages (Buy-Me-a-Coffee-style)."""
 import os
-from fastapi import APIRouter, HTTPException, Depends
+import uuid
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 
@@ -291,3 +292,164 @@ async def verify_gift(body: GiftVerifyIn):
         response["thank_you_message"] = (zone or {}).get("thank_you_message") or "Your support means the world — thank you! 💛"
         response["recipient_name"] = (recipient or {}).get("name", "")
     return response
+
+
+# ---------------------------------------------------------------------------
+# Dashboard — owner earnings overview + full gift history
+# ---------------------------------------------------------------------------
+
+@router.get("/users/me/fan-zone/dashboard")
+async def fan_zone_dashboard(
+    page: int = Query(default=1, ge=1),
+    user: dict = Depends(get_current_user),
+):
+    """
+    Returns balance summary (total received, withdrawn, available) plus
+    a paginated, full gift history (all statuses) for the owner's dashboard.
+    """
+    PAGE_SIZE = 30
+    offset = (page - 1) * PAGE_SIZE
+
+    zone = await _get_fan_zone(user["id"])
+
+    # Aggregate totals from paid gifts
+    total_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(amount_kobo), 0) AS total, COUNT(*) AS cnt "
+        "FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user["id"],
+    )
+    total_received_kobo = int(total_row["total"]) if total_row else 0
+    supporters_count = int(total_row["cnt"]) if total_row else 0
+
+    # How much has already been withdrawn
+    withdrawn_kobo = int((zone or {}).get("withdrawn_kobo", 0))
+    available_kobo = max(0, total_received_kobo - withdrawn_kobo)
+
+    # Paginated gift history (all paid gifts, newest first)
+    gifts_page = await db.fan_gifts.find(
+        {"recipient_id": user["id"], "status": "paid"}, {"_id": 0}
+    ).sort("paid_at", -1).skip(offset).limit(PAGE_SIZE).to_list(PAGE_SIZE)
+
+    # Total count for pagination
+    total_gifts_row = await supabase_db.query_one(
+        "SELECT COUNT(*) AS cnt FROM fan_gifts WHERE recipient_id = $1 AND status = 'paid'",
+        user["id"],
+    )
+    total_gifts = int(total_gifts_row["cnt"]) if total_gifts_row else 0
+
+    # Payout history
+    payout_docs = await db.fan_zone_payouts.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    # Linked bank account (reuse the user's saved bank account)
+    bank_account = None
+    acc = await db.bank_accounts.find_one({"user_id": user["id"]}, {"_id": 0})
+    if acc:
+        bank_account = {
+            "bank_name": acc["bank_name"],
+            "account_number": acc["account_number"],
+            "account_name": acc["account_name"],
+        }
+
+    return {
+        "total_received_kobo": total_received_kobo,
+        "withdrawn_kobo": withdrawn_kobo,
+        "available_kobo": available_kobo,
+        "supporters_count": supporters_count,
+        "bank_account": bank_account,
+        "gifts": [
+            {
+                **_public_gift(g),
+                "donor_id": g.get("donor_id"),
+                "is_test": g.get("is_test", False),
+            }
+            for g in gifts_page
+        ],
+        "gifts_total": total_gifts,
+        "gifts_page": page,
+        "gifts_page_size": PAGE_SIZE,
+        "payouts": payout_docs,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Withdraw fan zone earnings
+# ---------------------------------------------------------------------------
+
+class FanZoneWithdrawIn(BaseModel):
+    amount_kobo: int = Field(gt=0)
+
+
+@router.post("/users/me/fan-zone/withdraw")
+async def withdraw_fan_zone_funds(
+    body: FanZoneWithdrawIn,
+    user: dict = Depends(get_current_user),
+):
+    zone = await _get_fan_zone(user["id"])
+    if not zone:
+        raise HTTPException(status_code=404, detail="Fan Zone not set up yet.")
+
+    total_row = await supabase_db.query_one(
+        "SELECT COALESCE(SUM(amount_kobo), 0) AS total FROM fan_gifts "
+        "WHERE recipient_id = $1 AND status = 'paid'",
+        user["id"],
+    )
+    total_received = int(total_row["total"]) if total_row else 0
+    withdrawn = int(zone.get("withdrawn_kobo", 0))
+    available = max(0, total_received - withdrawn)
+
+    if body.amount_kobo > available:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Amount exceeds available balance. Available: ₦{available // 100:,}",
+        )
+
+    # Must have a linked bank account
+    acc = await db.bank_accounts.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not acc:
+        raise HTTPException(
+            status_code=400,
+            detail="Please link a verified bank account before withdrawing.",
+        )
+
+    payout_id = uid("fzpout_")
+    ref = f"FZWD-{uuid.uuid4().hex[:10].upper()}"
+    created = now_iso()
+
+    await db.fan_zone_payouts.insert_one({
+        "id": payout_id,
+        "user_id": user["id"],
+        "amount_kobo": body.amount_kobo,
+        "currency": "NGN",
+        "bank_name": acc["bank_name"],
+        "account_number": acc["account_number"],
+        "account_name": acc["account_name"],
+        "status": "SUCCESS",
+        "reference": ref,
+        "created_at": created,
+    })
+
+    new_withdrawn = withdrawn + body.amount_kobo
+    await db.fan_zones.update_one(
+        {"user_id": user["id"]},
+        {"$set": {"withdrawn_kobo": new_withdrawn, "updated_at": created}},
+    )
+
+    await notify(
+        user["id"], "fan_zone_payout",
+        "Withdrawal Successful 💸",
+        f"₦{body.amount_kobo // 100:,} is on its way to {acc['bank_name']} "
+        f"({acc['account_number'][-4:]}). Ref: {ref}",
+    )
+
+    return {
+        "ok": True,
+        "payout_id": payout_id,
+        "reference": ref,
+        "amount_kobo": body.amount_kobo,
+        "new_withdrawn_kobo": new_withdrawn,
+        "new_available_kobo": max(0, total_received - new_withdrawn),
+        "bank_name": acc["bank_name"],
+        "account_number": acc["account_number"],
+    }

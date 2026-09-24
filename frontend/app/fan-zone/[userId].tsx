@@ -84,7 +84,7 @@ export default function FanZonePage() {
   // If the owner visits their own fan zone and it doesn't exist yet → go create
   useEffect(() => {
     if (isOwner && fanZone.isError) {
-      router.replace("/fan-zone/setup");
+      router.replace("/fan-zone/setup" as any);
     }
   }, [isOwner, fanZone.isError]);
 
@@ -268,7 +268,7 @@ export default function FanZonePage() {
           zone={zone}
           insets={insets}
           isOwner={isOwner}
-          onEdit={() => router.push("/fan-zone/setup")}
+          onEdit={() => router.push("/fan-zone/setup" as any)}
         />
 
         {/* ── Body ── */}
@@ -480,7 +480,6 @@ const styles = StyleSheet.create({
   cover: { width: "100%", backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   coverPlaceholder: { backgroundColor: colors.brandPrimary, opacity: 0.15 },
   coverGradient: {
-    background: "transparent",
     // subtle bottom fade so avatar sits cleanly on top
     backgroundColor: "rgba(0,0,0,0.15)",
   },
