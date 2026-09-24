@@ -6,6 +6,10 @@
       "destination": "https://goodcause.onrender.com/share/campaign/:campaignId"
     },
     {
+      "source": "/share/fan-zone/:userId",
+      "destination": "https://goodcause.onrender.com/share/fan-zone/:userId"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
