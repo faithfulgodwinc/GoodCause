@@ -99,7 +99,11 @@ export default function Donate() {
         if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
           window.location.href = init.authorization_url;
         } else {
-          await WebBrowser.openBrowserAsync(init.authorization_url);
+          await WebBrowser.openBrowserAsync(init.authorization_url, {
+            dismissButtonStyle: "close",
+            enableBarCollapsing: true,
+            readerMode: false,
+          });
           verifyPayment(init.reference);
         }
       } else {

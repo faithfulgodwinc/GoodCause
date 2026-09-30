@@ -24,8 +24,8 @@ export default function TabLayout() {
           backgroundColor: "#FFFFFF",
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: Platform.OS === "ios" ? 84 : 64 + (isMobile ? insets.bottom : 0),
-          paddingBottom: Platform.OS === "ios" ? insets.bottom : 8,
+          height: Platform.OS === "ios" ? 84 : 64 + Math.max(insets.bottom, 8),
+          paddingBottom: Platform.OS === "ios" ? insets.bottom : Math.max(insets.bottom, 8),
           paddingTop: 8,
           elevation: 0,
           ...(isWideWeb

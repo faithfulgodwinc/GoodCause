@@ -2,12 +2,11 @@
   "expo": {
     "name": "goodcause",
     "slug": "frontend",
-    "version": "1.0.48",
+    "version": "1.0.51",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "goodcause",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goodcause.app",
@@ -18,13 +17,12 @@
       }
     },
     "android": {
-      "versionCode": 51,
+      "versionCode": 54,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.goodcause.app",
       "permissions": [
         "android.permission.READ_MEDIA_IMAGES",
@@ -55,7 +53,12 @@
         }
       ],
       "expo-video",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-font",
+      "expo-image",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
