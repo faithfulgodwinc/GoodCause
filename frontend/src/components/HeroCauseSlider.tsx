@@ -9,6 +9,7 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -50,11 +51,16 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
   if (!causes || causes.length === 0) {
     return (
       <View style={[styles.heroCard, { width: cardWidth }]}>
-        <View style={styles.gradientOverlay} />
+        <LinearGradient
+          colors={["#0F172A", "#064E3B", "#022C22"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
         <View style={styles.heroContent}>
           <View style={styles.badgeRow}>
             <View style={styles.featuredBadge}>
-              <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+              <Ionicons name="sparkles" size={13} color="#10B981" />
               <AppText variant="caption" style={styles.badgeText}>Start a Cause</AppText>
             </View>
           </View>
@@ -65,7 +71,7 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
             Launch a verified campaign today to raise funds for medical bills, education, emergency relief, or community projects.
           </AppText>
           <Pressable
-            style={styles.heroCtaBtn}
+            style={({ pressed }) => [styles.heroCtaBtn, pressed && { opacity: 0.9 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               if (onStartCampaign) onStartCampaign();
@@ -73,7 +79,7 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
             }}
           >
             <AppText variant="label" style={styles.heroCtaText}>Start Fundraising</AppText>
-            <Feather name="arrow-right" size={16} color={colors.brandPrimary} />
+            <Feather name="arrow-right" size={16} color="#0F172A" />
           </Pressable>
         </View>
       </View>
@@ -122,7 +128,12 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
               ) : null}
 
               {/* Dark Gradient Overlay for Readability */}
-              <View style={styles.darkGradient} />
+              <LinearGradient
+                colors={["rgba(15, 23, 42, 0.3)", "rgba(15, 23, 42, 0.88)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
 
               <View style={styles.heroInnerContainer}>
                 {/* Top Badge Row */}
@@ -218,14 +229,15 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: radius.xl,
     overflow: "hidden",
-    backgroundColor: "#1E293B",
+    backgroundColor: "#0F172A",
     position: "relative",
-    ...shadow.card,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    ...shadow.raised,
   },
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.brandPrimary,
-    opacity: 0.9,
+    backgroundColor: "#0F172A",
   },
   darkGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -238,28 +250,32 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
     marginBottom: spacing.xs,
   },
   heroDesc: {
-    color: "rgba(255, 255, 255, 0.85)",
+    color: "rgba(255, 255, 255, 0.82)",
     fontSize: 14,
+    lineHeight: 20,
     marginBottom: spacing.lg,
   },
   heroCtaBtn: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: 11,
     borderRadius: radius.pill,
     alignSelf: "flex-start",
     gap: 8,
+    ...shadow.soft,
   },
   heroCtaText: {
-    color: colors.brandPrimary,
+    color: "#0F172A",
     fontWeight: "700",
+    fontSize: 14,
   },
   heroInnerContainer: {
     flex: 1,
@@ -274,12 +290,13 @@ const styles = StyleSheet.create({
   featuredBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: radius.pill,
     gap: 6,
-    backdropFilter: "blur(10px)" as any,
   },
   badgeText: {
     color: "#FFFFFF",

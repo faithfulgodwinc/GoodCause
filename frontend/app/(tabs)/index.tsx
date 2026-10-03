@@ -57,8 +57,8 @@ export default function HomeScreen() {
     ? impact_metrics.members_count.toLocaleString()
     : "0";
   const givenDisplay = impact_metrics?.given_this_month_kobo
-    ? `₦${(impact_metrics.given_this_month_kobo / 10000000).toFixed(1)}M`
-    : "₦0";
+    ? `$${(impact_metrics.given_this_month_kobo / 10000000).toFixed(1)}M`
+    : "$0";
   const causesDisplay = impact_metrics?.causes_helped_count
     ? impact_metrics.causes_helped_count.toLocaleString()
     : "0";
