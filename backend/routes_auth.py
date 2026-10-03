@@ -280,6 +280,9 @@ async def google_session(body: SessionIn):
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
     except HTTPException:
         raise
+    except (OSError, ConnectionError) as e:
+        logger.exception("Google session database or network failure")
+        raise HTTPException(status_code=503, detail=f"Google sign-in could not reach the database: {type(e).__name__}")
     except Exception as e:
         logger.exception("Google session failed")
         raise HTTPException(status_code=500, detail=f"Google sign-in failed on the server: {type(e).__name__}")

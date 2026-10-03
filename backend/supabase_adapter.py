@@ -128,11 +128,8 @@ class SupabaseCollection:
     async def find_one(self, filter_dict: Optional[Dict[str, Any]] = None, projection: Optional[Dict] = None) -> Optional[Dict[str, Any]]:
         where_str, params = self._build_where(filter_dict)
         sql = f"SELECT * FROM {self.name} {where_str} LIMIT 1"
-        try:
-            row = await supabase_db.query_one(sql, *params)
-            return _from_row(self.name, row) if row else None
-        except Exception:
-            return None
+        row = await supabase_db.query_one(sql, *params)
+        return _from_row(self.name, row) if row else None
 
     def find(self, filter_dict: Optional[Dict[str, Any]] = None, projection: Optional[Dict] = None) -> AsyncCursor:
         return AsyncCursor(self, filter_dict, projection)
