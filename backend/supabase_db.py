@@ -12,9 +12,17 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
+_EXPLICIT_DATABASE_URL = os.environ.get("DATABASE_URL")
+_EXPLICIT_SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL")
 load_dotenv(ROOT_DIR / ".env")
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause")
+DATABASE_URL = (
+    _EXPLICIT_DATABASE_URL
+    or _EXPLICIT_SUPABASE_DB_URL
+    or os.environ.get("DATABASE_URL")
+    or os.environ.get("SUPABASE_DB_URL")
+    or "postgresql://postgres:postgres@localhost:5432/goodcause"
+)
 JWT_SECRET = os.environ.get("JWT_SECRET", "goodcause_super_secret_jwt_key_2026_nigeria_trusted")
 
 _pool: Optional[asyncpg.Pool] = None
