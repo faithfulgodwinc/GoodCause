@@ -35,9 +35,10 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Content width for card calculation
-  const containerWidth = Math.min(width - spacing.lg * 2, maxContentWidth || 1160);
+  // Content width and height for card calculation
+  const containerWidth = Math.min(width - (isDesktop ? spacing.lg * 2 : spacing.md * 2), maxContentWidth || 1160);
   const cardWidth = containerWidth;
+  const cardHeight = isDesktop ? 220 : 190;
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
@@ -50,38 +51,40 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
   // If no causes available, render fallback inspiration card
   if (!causes || causes.length === 0) {
     return (
-      <View style={[styles.heroCard, { width: cardWidth }]}>
-        <LinearGradient
-          colors={["#0F172A", "#064E3B", "#022C22"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View style={styles.heroContent}>
-          <AppText variant="h1" style={styles.heroTitle}>
-            Turn kindness into real community impact
-          </AppText>
-          <AppText variant="body" style={styles.heroDesc} numberOfLines={2}>
-            Launch a verified campaign today to raise funds for medical bills, education, emergency relief, or community projects.
-          </AppText>
-          <Pressable
-            style={({ pressed }) => [styles.heroCtaBtn, pressed && { opacity: 0.9 }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              if (onStartCampaign) onStartCampaign();
-              else router.push("/campaign/new");
-            }}
-          >
-            <AppText variant="label" style={styles.heroCtaText}>Start Fundraising</AppText>
-            <Feather name="arrow-right" size={16} color="#0F172A" />
-          </Pressable>
+      <View style={{ width: "100%", alignItems: "center", marginBottom: spacing.md }}>
+        <View style={[styles.heroCard, { width: cardWidth, height: cardHeight, alignSelf: "center" }]}>
+          <LinearGradient
+            colors={["#0F172A", "#064E3B", "#022C22"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={[styles.heroContent, { padding: isDesktop ? spacing.xl : spacing.lg }]}>
+            <AppText variant="h1" style={[styles.heroTitle, !isDesktop && { fontSize: 18, lineHeight: 23 }]}>
+              Turn kindness into real community impact
+            </AppText>
+            <AppText variant="body" style={[styles.heroDesc, !isDesktop && { fontSize: 12.5, lineHeight: 17, marginBottom: spacing.md }]} numberOfLines={2}>
+              Launch a verified campaign today to raise funds for medical bills, education, emergency relief, or community projects.
+            </AppText>
+            <Pressable
+              style={({ pressed }) => [styles.heroCtaBtn, !isDesktop && { paddingHorizontal: spacing.lg, paddingVertical: 8 }, pressed && { opacity: 0.9 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                if (onStartCampaign) onStartCampaign();
+                else router.push("/campaign/new");
+              }}
+            >
+              <AppText variant="label" style={[styles.heroCtaText, !isDesktop && { fontSize: 13 }]}>Start Fundraising</AppText>
+              <Feather name="arrow-right" size={isDesktop ? 16 : 14} color="#0F172A" />
+            </Pressable>
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { alignItems: "center" }]}>
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -91,7 +94,7 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { alignItems: "center" }]}
       >
         {causes.map((c, i) => {
           const raised = c.raised_kobo || 0;
@@ -107,7 +110,7 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
               }}
               style={({ pressed }) => [
                 styles.heroCard,
-                { width: cardWidth },
+                { width: cardWidth, height: cardHeight, alignSelf: "center" },
                 pressed && { opacity: 0.96 },
               ]}
             >
@@ -220,7 +223,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   heroCard: {
-    height: 260,
     borderRadius: radius.xl,
     overflow: "hidden",
     backgroundColor: "#0F172A",
