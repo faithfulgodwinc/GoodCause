@@ -148,28 +148,24 @@ export default function HomeScreen() {
           />
 
 
-{false && <View style={styles.pledgeHeader}>
-              <View style={styles.badgePill}>
-                <Ionicons name="shield-checkmark" size={13} color={colors.brandPrimary} />
-                <AppText style={styles.badgeText}>
-                  {hasCommitment ? "Active Pro" : "GoodCause Pro"}
-                </AppText>
-              </View>
-            </View>
 
-            <View style={styles.pledgeBody}>
-              <View style={styles.pledgeAmountRow}>
-                <AppText style={styles.pledgeAmount}>
-                  {hasCommitment ? "Pro tools active" : "Unlock Pro tools"}
-                </AppText>
-              </View>
-              <AppText style={styles.pledgeDesc}>
-                {hasCommitment
-                  ? "Run multiple active campaigns and use organizer tools for updates, supporter thank-yous, and QR sharing."
-                  : "Unlock multiple active campaigns, supporter thank-yous, campaign updates, and QR sharing."}
-              </AppText>
-            </View>
-          </View>}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
           {/* Apple Native Style Impact Metrics */}
           <View style={styles.section}>
