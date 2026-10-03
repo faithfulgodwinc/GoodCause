@@ -59,8 +59,17 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
           />
-          <View style={[styles.heroContent, { padding: isDesktop ? spacing.xl : spacing.lg, justifyContent: "space-between" }]}>
-            <AppText variant="h1" style={[styles.heroTitle, !isDesktop && { fontSize: 18, lineHeight: 23, marginBottom: 4 }]}>
+          <View
+            style={[
+              styles.heroContent,
+              {
+                padding: isDesktop ? spacing.xl : spacing.lg,
+                justifyContent: isDesktop ? "space-between" : "center",
+                gap: isDesktop ? 0 : spacing.md,
+              },
+            ]}
+          >
+            <AppText variant="h1" style={[styles.heroTitle, !isDesktop && { fontSize: 18, lineHeight: 23, marginBottom: 0 }]}>
               Turn kindness into real community impact
             </AppText>
             {isDesktop ? (
