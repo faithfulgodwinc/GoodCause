@@ -20,6 +20,7 @@ import { CampaignCard, Campaign } from "@/src/components/CampaignCard";
 import { useResponsive } from "@/src/lib/responsive";
 import { colors, spacing, radius, font } from "@/src/theme";
 import { useSubscription } from "@/src/lib/revenuecat";
+import { HeroCauseSlider } from "@/src/components/HeroCauseSlider";
 
 type HomeData = {
   featured: Campaign[];
@@ -139,26 +140,15 @@ export default function HomeScreen() {
       >
         <View style={{ alignSelf: "center", width: "100%", maxWidth: maxContentWidth }}>
           
-          {/* Apple-Style Community Pledge Card */}
-          <Pressable 
-            onPress={() => {
-              if (!hasCommitment) {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push("/paywall");
-              } else {
-                router.push("/impact-commitment");
-              }
-            }}
-            style={styles.pledgeCard}
-          >
-            {/* Background side design */}
-            <View style={styles.pledgeBgCircle1} />
-            <View style={styles.pledgeBgCircle2} />
-            <View style={styles.pledgeWatermark}>
-              <Ionicons name="shield-checkmark" size={110} color="rgba(255, 255, 255, 0.12)" />
-            </View>
+          {/* Active Causes Hero Carousel Slider */}
+          <HeroCauseSlider
+            causes={directCauses}
+            onSelectCause={(id) => router.push(`/campaign/${id}` as any)}
+            onStartCampaign={() => router.push("/campaign/new" as any)}
+          />
 
-            <View style={styles.pledgeHeader}>
+
+{false && <View style={styles.pledgeHeader}>
               <View style={styles.badgePill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.brandPrimary} />
                 <AppText style={styles.badgeText}>
@@ -179,7 +169,7 @@ export default function HomeScreen() {
                   : "Unlock multiple active campaigns, supporter thank-yous, campaign updates, and QR sharing."}
               </AppText>
             </View>
-          </Pressable>
+          </View>}
 
           {/* Apple Native Style Impact Metrics */}
           <View style={styles.section}>
