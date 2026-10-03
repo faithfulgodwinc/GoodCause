@@ -23,7 +23,7 @@ def _from_row(table_name: str, row: Dict[str, Any]) -> Dict[str, Any]:
     for k, v in d.items():
         if isinstance(v, datetime):
             d[k] = v.isoformat()
-        elif k in ("location", "beneficiary", "verification", "gallery", "budget", "milestones_reached", "metadata", "props"):
+        elif k in ("location", "beneficiary", "verification", "gallery", "budget", "milestones_reached", "metadata", "props", "payout_bank"):
             if isinstance(v, str):
                 try:
                     d[k] = json.loads(v)
@@ -214,6 +214,9 @@ class SupabaseCollection:
         all_params = set_params + where_params
         sql = f"UPDATE {self.name} SET {', '.join(set_clauses)} {where_str}"
         await supabase_db.execute(sql, *all_params)
+
+    async def update_many(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> Any:
+        await self.update_one(filter_dict, update_dict)
 
     async def delete_one(self, filter_dict: Dict[str, Any]) -> Any:
         where_str, params = self._build_where(filter_dict)

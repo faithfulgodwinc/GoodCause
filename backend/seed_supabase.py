@@ -4,9 +4,10 @@ import json
 import uuid
 import bcrypt
 from datetime import datetime, timezone, timedelta
+import os
 import psycopg
 
-DATABASE_URL = "postgresql://postgres.rbxoajdceezxcyqfbylj:Thisisfaithful2006.@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause")
 
 def now():
     return datetime.now(timezone.utc)

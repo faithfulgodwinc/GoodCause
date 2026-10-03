@@ -4,6 +4,7 @@ import json
 import uuid
 import bcrypt
 import jwt
+import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
 import asyncpg
@@ -13,14 +14,24 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres.rbxoajdceezxcyqfbylj:Thisisfaithful2006.@aws-0-eu-central-1.pooler.supabase.com:6543/postgres")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause")
 JWT_SECRET = os.environ.get("JWT_SECRET", "goodcause_super_secret_jwt_key_2026_nigeria_trusted")
 
 _pool: Optional[asyncpg.Pool] = None
 
 async def get_pool() -> asyncpg.Pool:
     global _pool
-    if _pool is None:
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if _pool is None or _pool._loop.is_closed() or (current_loop and _pool._loop is not current_loop):
+        if _pool is not None and not _pool._loop.is_closed():
+            try:
+                await _pool.close()
+            except Exception:
+                pass
         _pool = await asyncpg.create_pool(
             DATABASE_URL,
             min_size=1,
@@ -64,18 +75,54 @@ def create_jwt(user_id: str) -> str:
 
 # Database Query Helper
 async def query(sql: str, *args) -> List[Dict[str, Any]]:
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        records = await conn.fetch(sql, *args)
-        return [dict(r) for r in records]
+    global _pool
+    for attempt in range(2):
+        try:
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                records = await conn.fetch(sql, *args)
+                return [dict(r) for r in records]
+        except (asyncpg.exceptions.ConnectionDoesNotExistError, ConnectionResetError, OSError):
+            if _pool:
+                try:
+                    await _pool.close()
+                except Exception:
+                    pass
+                _pool = None
+            if attempt == 1:
+                raise
 
 async def query_one(sql: str, *args) -> Optional[Dict[str, Any]]:
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        record = await conn.fetchrow(sql, *args)
-        return dict(record) if record else None
+    global _pool
+    for attempt in range(2):
+        try:
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                record = await conn.fetchrow(sql, *args)
+                return dict(record) if record else None
+        except (asyncpg.exceptions.ConnectionDoesNotExistError, ConnectionResetError, OSError):
+            if _pool:
+                try:
+                    await _pool.close()
+                except Exception:
+                    pass
+                _pool = None
+            if attempt == 1:
+                raise
 
 async def execute(sql: str, *args) -> str:
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        return await conn.execute(sql, *args)
+    global _pool
+    for attempt in range(2):
+        try:
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                return await conn.execute(sql, *args)
+        except (asyncpg.exceptions.ConnectionDoesNotExistError, ConnectionResetError, OSError):
+            if _pool:
+                try:
+                    await _pool.close()
+                except Exception:
+                    pass
+                _pool = None
+            if attempt == 1:
+                raise

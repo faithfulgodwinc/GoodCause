@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from core import db, get_current_user, uid
+import supabase_db
 
 router = APIRouter(prefix="/api", tags=["payouts"])
 
@@ -98,6 +99,7 @@ async def resolve_bank_account(body: BankResolveIn, user: dict = Depends(get_cur
         "account_name": user_name.upper(),
         "bank_code": bank_code,
         "verified": True,
+    }
 @router.post("/users/me/bank-account")
 async def save_user_bank_account(body: BankAccountIn, user: dict = Depends(get_current_user)):
     existing = await db.bank_accounts.find_one({"user_id": user["id"]})
@@ -246,15 +248,16 @@ async def withdraw_campaign_funds(id: str, body: WithdrawIn, user: dict = Depend
 
     if body.amount_kobo <= 0:
         raise HTTPException(status_code=400, detail="Withdrawal amount must be greater than zero.")
-    if body.amount_kobo > available:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Amount exceeds available balance. Available: ₦{available / 100:,.2f}"
-        )
 
     # Check bank account
     bank_info = camp.get("payout_bank")
-    if not bank_info:
+    if isinstance(bank_info, str):
+        try:
+            bank_info = json.loads(bank_info)
+        except Exception:
+            bank_info = {}
+
+    if not bank_info or not isinstance(bank_info, dict) or not bank_info.get("bank_name"):
         acc = await db.bank_accounts.find_one({"user_id": user["id"]})
         if acc:
             bank_info = {
@@ -263,8 +266,29 @@ async def withdraw_campaign_funds(id: str, body: WithdrawIn, user: dict = Depend
                 "account_number": acc["account_number"],
                 "account_name": acc["account_name"],
             }
-    if not bank_info:
+
+    if not bank_info or not isinstance(bank_info, dict) or not bank_info.get("bank_name"):
         raise HTTPException(status_code=400, detail="Please link a verified bank account before withdrawing.")
+
+    # Atomically deduct available balance to prevent race conditions (TC-WD-07)
+    res = await supabase_db.query_one(
+        "UPDATE campaigns SET withdrawn_kobo = withdrawn_kobo + $1, updated_at = NOW() "
+        "WHERE id = $2 AND (raised_kobo - withdrawn_kobo) >= $1 "
+        "RETURNING withdrawn_kobo, raised_kobo",
+        body.amount_kobo, id
+    )
+    if not res:
+        current_camp = await db.campaigns.find_one({"id": id})
+        gross = current_camp.get("raised_kobo", 0) if current_camp else 0
+        w_curr = current_camp.get("withdrawn_kobo", 0) if current_camp else 0
+        avail = max(0, gross - w_curr)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Amount exceeds available balance. Available: ₦{avail / 100:,.2f}"
+        )
+
+    new_withdrawn = res["withdrawn_kobo"]
+    gross_raised = res["raised_kobo"]
 
     payout_id = uid("pout_")
     ref = f"WD-{uuid.uuid4().hex[:10].upper()}"
@@ -284,13 +308,6 @@ async def withdraw_campaign_funds(id: str, body: WithdrawIn, user: dict = Depend
         "reference": ref,
         "created_at": now_iso,
     })
-
-    # Increment withdrawn amount on campaign
-    new_withdrawn = withdrawn + body.amount_kobo
-    await db.campaigns.update_one(
-        {"id": id},
-        {"$set": {"withdrawn_kobo": new_withdrawn}}
-    )
 
     # Create organizer notification
     await db.notifications.insert_one({

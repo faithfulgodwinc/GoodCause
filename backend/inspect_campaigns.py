@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres.rbxoajdceezxcyqfbylj:Thisisfaithful2006.@aws-0-eu-central-1.pooler.supabase.com:6543/postgres")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause")
 
 async def inspect():
     conn = await asyncpg.connect(DATABASE_URL)

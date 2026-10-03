@@ -5,9 +5,7 @@ import asyncpg
 import psycopg
 
 POOLER_URLS = [
-    "postgresql://postgres.rbxoajdceezxcyqfbylj:Thisisfaithful2006.@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
-    "postgresql://postgres.rbxoajdceezxcyqfbylj:Thisisfaithful2006.@aws-0-eu-central-1.pooler.supabase.com:5432/postgres",
-    "postgresql://postgres:Thisisfaithful2006.@db.rbxoajdceezxcyqfbylj.supabase.co:5432/postgres",
+    os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause"),
 ]
 
 def run():

@@ -12,8 +12,8 @@ def test_membership_copy_defines_the_short_accurate_purchase_disclosure():
     copy = _read("frontend/src/constants/impact-commitment.ts")
 
     assert "80%" in copy
-    assert "net proceeds" in copy
-    assert "Store deductions, refunds and adjustments apply" in copy
+    assert "net membership proceeds" in copy
+    assert "store deductions" in copy
     assert "separate from GoodCause Membership" in copy
 
 

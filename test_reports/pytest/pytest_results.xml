@@ -1,8 +1,154 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="26" time="14.651" timestamp="2026-08-23T10:57:44.912135+00:00" hostname="agent-env-ab68ea1e-9a4d-4556-9956-733e68f0ebe5"><testcase classname="tests.backend_test.TestHomeExplore" name="test_home_sections" time="0.481" /><testcase classname="tests.backend_test.TestAuth" name="test_register_and_login" time="0.472"><failure message="AssertionError: assert ('token' in {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfNjA2ZTQ3MWNjNzI0NGJhZiIsImlhdCI6MTc4NzQ4MjY2NSwiZXhwIjoxNzg4MDg3NDY1fQ.TbPm15AoJScAV1sLcUrS29rjAR_c6R1xEGvGwWLpth4', 'user': {'id': 'usr_606e471cc7244baf', 'email': 'test_u_69dd41db@t.com', 'name': 'T', 'picture': None, ...}} and 'test_u_69dd41db@t.com' == 'TEST_u_69dd41db@t.com'&#10;  &#10;  - TEST_u_69dd41db@t.com&#10;  ? ^^^^&#10;  + test_u_69dd41db@t.com&#10;  ? ^^^^)">tests/backend_test.py:83: in test_register_and_login
-    assert "token" in data and data["user"]["email"] == email
-E   AssertionError: assert ('token' in {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfNjA2ZTQ3MWNjNzI0NGJhZiIsImlhdCI6MTc4NzQ4MjY2NSwiZXhwIjoxNzg4MDg3NDY1fQ.TbPm15AoJScAV1sLcUrS29rjAR_c6R1xEGvGwWLpth4', 'user': {'id': 'usr_606e471cc7244baf', 'email': 'test_u_69dd41db@t.com', 'name': 'T', 'picture': None, ...}} and 'test_u_69dd41db@t.com' == 'TEST_u_69dd41db@t.com'
-E     
-E     - TEST_u_69dd41db@t.com
-E     ? ^^^^
-E     + test_u_69dd41db@t.com
-E     ? ^^^^)</failure></testcase><testcase classname="tests.backend_test.TestHomeExplore" name="test_categories" time="0.047" /><testcase classname="tests.backend_test.TestAuth" name="test_login_wrong_password" time="0.269" /><testcase classname="tests.backend_test.TestHomeExplore" name="test_campaigns_list" time="0.236" /><testcase classname="tests.backend_test.TestHomeExplore" name="test_campaigns_search" time="0.265" /><testcase classname="tests.backend_test.TestHomeExplore" name="test_campaigns_by_category" time="0.093" /><testcase classname="tests.backend_test.TestAuth" name="test_me" time="0.395" /><testcase classname="tests.backend_test.TestAuth" name="test_me_unauthorized" time="0.237" /><testcase classname="tests.backend_test.TestAuth" name="test_logout" time="0.045" /><testcase classname="tests.backend_test.TestAdmin" name="test_admin_stats" time="0.361" /><testcase classname="tests.backend_test.TestMeta" name="test_root" time="0.044" /><testcase classname="tests.backend_test.TestMeta" name="test_config_sandbox" time="0.043" /><testcase classname="tests.backend_test.TestCampaignDetail" name="test_campaign_detail" time="0.275" /><testcase classname="tests.backend_test.TestAdmin" name="test_admin_requires_admin_role" time="0.320" /><testcase classname="tests.backend_test.TestCampaignDetail" name="test_campaign_404" time="0.041" /><testcase classname="tests.backend_test.TestDonationFlow" name="test_full_donation_flow" time="0.618" /><testcase classname="tests.backend_test.TestAdmin" name="test_admin_moderation_flow" time="0.481" /><testcase classname="tests.backend_test.TestAdmin" name="test_admin_reports_and_transactions" time="0.162" /><testcase classname="tests.backend_test.TestCircles" name="test_circles_create_join_get" time="0.541" /><testcase classname="tests.backend_test.TestDonationFlow" name="test_my_donations_and_impact" time="0.091" /><testcase classname="tests.backend_test.TestSocial" name="test_follow_save_report" time="0.557" /><testcase classname="tests.backend_test.TestCircles" name="test_list_circles" time="0.088" /><testcase classname="tests.backend_test.TestCampaignBuilder" name="test_create_and_submit" time="0.231" /><testcase classname="tests.backend_test.TestNotifications" name="test_list_and_read_all" time="0.129" /><testcase classname="tests.backend_test.TestAI" name="test_ai_assistant_generates_draft" time="11.065" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="57" time="335.435" timestamp="2026-10-02T22:36:21.203679-07:00" hostname="FJ"><testcase classname="tests.test_report_cases" name="test_tc_wh_01_valid_signature_credits_donation" time="16.435" /><testcase classname="tests.test_report_cases" name="test_tc_wh_02_invalid_signature_rejected" time="0.018" /><testcase classname="tests.test_report_cases" name="test_tc_wh_03_missing_signature_header" time="0.020" /><testcase classname="tests.test_report_cases" name="test_tc_wh_04_non_charge_event_ignored_safely" time="0.017" /><testcase classname="tests.test_report_cases" name="test_tc_wh_05_webhook_replay_is_idempotent" time="21.303" /><testcase classname="tests.test_report_cases" name="test_tc_auth_01_otp_send_success" time="6.635" /><testcase classname="tests.test_report_cases" name="test_tc_auth_02_otp_verify_reviewer_code" time="3.789" /><testcase classname="tests.test_report_cases" name="test_tc_auth_03_otp_verify_invalid_code" time="2.368" /><testcase classname="tests.test_report_cases" name="test_tc_auth_04_apple_session_invalid_token" time="0.017" /><testcase classname="tests.test_report_cases" name="test_tc_rls_01_public_categories_readable" time="3.572" /><testcase classname="tests.test_report_cases" name="test_tc_rls_02_donations_table_protected_anon_read" time="2.551" /><testcase classname="tests.test_report_cases" name="test_tc_rls_03_donations_table_protected_anon_write" time="2.532" /><testcase classname="tests.test_report_cases" name="test_tc_rls_04_sensitive_tables_protected_anon_read" time="2.793" /><testcase classname="tests.test_report_cases" name="test_tc_led_03_concurrent_atomic_donations" time="16.172" /><testcase classname="tests.test_report_cases" name="test_tc_led_04_concurrent_duplicate_reference_settlement" time="8.402" /><testcase classname="tests.test_report_cases" name="test_tc_wd_01_bank_resolution" time="11.435" /><testcase classname="tests.test_report_cases" name="test_tc_wd_02_withdrawal_insufficient_funds" time="9.452" /><testcase classname="tests.test_report_cases" name="test_tc_wd_03_successful_withdrawal" time="10.950" /><testcase classname="tests.test_report_cases" name="test_tc_adm_01_non_admin_forbidden" time="4.170" /><testcase classname="tests.test_report_cases" name="test_tc_adm_02_admin_stats_access" time="8.947" /><testcase classname="tests.test_report_cases" name="test_tc_adm_03_admin_campaign_verification" time="13.399" /><testcase classname="tests.test_report_cases" name="test_tc_wd_04_withdrawal_ownership_check" time="7.372" /><testcase classname="tests.test_report_cases" name="test_tc_wd_07_withdrawal_race_condition" time="9.418" /><testcase classname="tests.test_report_cases" name="test_tc_auth_05_otp_cooldown_rate_limit" time="7.991" /><testcase classname="tests.test_report_cases" name="test_tc_rls_05_rest_api_rls_isolation" time="2.666" /><testcase classname="tests.test_report_cases" name="test_tc_auth_06_google_session_invalid_token" time="2.145" /><testcase classname="tests.test_report_cases" name="test_tc_auth_07_user_registration_deprecated_notice" time="0.008" /><testcase classname="tests.test_report_cases" name="test_tc_auth_08_user_login_deprecated_notice" time="0.008" /><testcase classname="tests.test_report_cases" name="test_tc_auth_09_user_logout" time="4.170" /><testcase classname="tests.test_report_cases" name="test_tc_auth_10_get_current_user_profile" time="4.098" /><testcase classname="tests.test_report_cases" name="test_tc_auth_11_update_user_profile" time="9.012" /><testcase classname="tests.test_report_cases" name="test_tc_auth_12_delete_account" time="7.673" /><testcase classname="tests.test_report_cases" name="test_tc_auth_13_unauthorized_profile_access" time="0.010" /><testcase classname="tests.test_report_cases" name="test_tc_led_01_initialize_donation" time="8.496" /><testcase classname="tests.test_report_cases" name="test_tc_wd_05_campaign_payout_history" time="6.878" /><testcase classname="tests.test_report_cases" name="test_tc_rls_06_users_password_hash_isolated" time="2.534" /><testcase classname="tests.test_report_cases" name="test_tc_rls_07_payouts_table_isolated" time="2.861" /><testcase classname="tests.test_report_cases" name="test_tc_rls_08_notifications_table_isolated" time="3.688" /><testcase classname="tests.test_report_cases" name="test_tc_rls_09_reports_table_isolated" time="2.961" /><testcase classname="tests.test_report_cases" name="test_tc_rls_10_verification_checks_isolated" time="2.897" /><testcase classname="tests.test_report_cases" name="test_tc_rls_11_public_campaigns_readable" time="2.829" /><testcase classname="tests.test_report_cases" name="test_tc_auth_14_otp_cooldown_expiry" time="21.666" /><testcase classname="tests.test_report_cases" name="test_tc_auth_15_apple_token_valid" time="10.384" /><testcase classname="tests.test_report_cases" name="test_tc_auth_16_apple_token_wrong_audience" time="2.566" /><testcase classname="tests.test_report_cases" name="test_tc_auth_17_apple_token_key_not_in_jwks" time="0.015" /><testcase classname="tests.test_report_cases" name="test_tc_auth_18_apple_token_expired" time="0.007" /><testcase classname="tests.test_report_cases" name="test_tc_auth_19_apple_signin_twice_same_sub" time="12.052" /><testcase classname="tests.test_report_cases" name="test_tc_auth_20_protected_endpoint_invalid_tokens" time="2.368"><failure message="NameError: name 'jwt' is not defined">@pytest.mark.asyncio
+    async def test_tc_auth_20_protected_endpoint_invalid_tokens():
+        """TC-AUTH-20: Protected endpoint with (a) no token (b) random token (c) expired session -&gt; 401 each."""
+        # (a) no token
+        r1 = client.get("/api/auth/me")
+        assert r1.status_code == 401
+    
+        # (b) random token
+        r2 = client.get("/api/auth/me", headers={"Authorization": "Bearer random_invalid_garbage_token"})
+        assert r2.status_code == 401
+    
+        # (c) expired session JWT token
+        expired_payload = {
+            "sub": uid("usr_exp_"),
+            "iat": int((datetime.now(timezone.utc) - timedelta(days=10)).timestamp()),
+            "exp": int((datetime.now(timezone.utc) - timedelta(days=2)).timestamp()),
+        }
+&gt;       expired_jwt = jwt.encode(expired_payload, "goodcause_super_secret_jwt_key_2026_nigeria_trusted", algorithm="HS256")
+                      ^^^
+E       NameError: name 'jwt' is not defined
+
+tests\test_report_cases.py:902: NameError</failure></testcase><testcase classname="tests.test_report_cases" name="test_tc_auth_21_signout_invalidates_token" time="2.927"><failure message="asyncpg.exceptions.UndefinedColumnError: column &quot;id&quot; of relation &quot;user_sessions&quot; does not exist">@pytest.mark.asyncio
+    async def test_tc_auth_21_signout_invalidates_token():
+        """TC-AUTH-21: Sign out, then call protected endpoint with old token -&gt; 401."""
+        user_id = await _get_or_create_user("donor")
+        session_token = uid("sess_")
+&gt;       await db.user_sessions.insert_one({
+            "id": uid("s_"),
+            "user_id": user_id,
+            "session_token": session_token,
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        })
+
+tests\test_report_cases.py:912: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+supabase_adapter.py:180: in insert_one
+    await supabase_db.execute(sql, *vals)
+supabase_db.py:119: in execute
+    return await conn.execute(sql, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:357: in execute
+    _, status, _ = await self._execute(
+..\..\..\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:1873: in _execute
+    result, _ = await self.__execute(
+..\..\..\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:1970: in __execute
+    result, stmt = await self._do_execute(
+..\..\..\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:2021: in _do_execute
+    stmt = await self._get_statement(
+..\..\..\AppData\Local\Programs\Python\Python311\Lib\site-packages\asyncpg\connection.py:443: in _get_statement
+    statement = await self._protocol.prepare(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+&gt;   ???
+E   asyncpg.exceptions.UndefinedColumnError: column "id" of relation "user_sessions" does not exist
+
+asyncpg/protocol/protocol.pyx:165: UndefinedColumnError</failure></testcase><testcase classname="tests.test_report_cases" name="test_tc_wd_08_admin_withdraws_on_organizer_campaign" time="12.539" /><testcase classname="tests.test_report_cases" name="test_tc_wd_06_organizer_no_bank_account_withdraw" time="6.060" /><testcase classname="tests.test_report_cases" name="test_tc_rls_12_anon_select_payout_bank_null_or_protected" time="2.361"><failure message="assert ('{&quot;bank_code&quot;: &quot;058&quot;, &quot;bank_name&quot;: &quot;GTBank&quot;, &quot;account_name&quot;: &quot;ORG 3&quot;, &quot;account_number&quot;: &quot;0123456789&quot;}' is None or '{&quot;bank_code&quot;...&quot;0123456789&quot;}' == '{}'&#10;  &#10;  - {}&#10;  + {&quot;bank_code&quot;: &quot;058&quot;, &quot;bank_name&quot;: &quot;GTBank&quot;, &quot;account_name&quot;: &quot;ORG 3&quot;, &quot;account_number&quot;: &quot;0123456789&quot;} or 'account_number' not in '{&quot;bank_code...0123456789&quot;}'&#10;  &#10;  'account_number' is contained here:&#10;    {&quot;bank_code&quot;: &quot;058&quot;, &quot;bank_name&quot;: &quot;GTBank&quot;, &quot;account_name&quot;: &quot;ORG 3&quot;, &quot;account_number&quot;: &quot;0123456789&quot;}&#10;  ?                                                                       ++++++++++++++)">@pytest.mark.asyncio
+    async def test_tc_rls_12_anon_select_payout_bank_null_or_protected():
+        """TC-RLS-12: Anon role SELECT payout_bank from campaigns -&gt; 0 sensitive details exposed."""
+        conn = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
+        try:
+            await conn.execute("SET ROLE anon;")
+            rows = await conn.fetch("SELECT payout_bank FROM campaigns WHERE payout_bank IS NOT NULL LIMIT 10;")
+            for r in rows:
+&gt;               assert r["payout_bank"] is None or r["payout_bank"] == '{}' or "account_number" not in str(r["payout_bank"])
+E               assert ('{"bank_code": "058", "bank_name": "GTBank", "account_name": "ORG 3", "account_number": "0123456789"}' is None or '{"bank_code"..."0123456789"}' == '{}'
+E                 
+E                 - {}
+E                 + {"bank_code": "058", "bank_name": "GTBank", "account_name": "ORG 3", "account_number": "0123456789"} or 'account_number' not in '{"bank_code...0123456789"}'
+E                 
+E                 'account_number' is contained here:
+E                   {"bank_code": "058", "bank_name": "GTBank", "account_name": "ORG 3", "account_number": "0123456789"}
+E                 ?                                                                       ++++++++++++++)
+
+tests\test_report_cases.py:991: AssertionError</failure></testcase><testcase classname="tests.test_report_cases" name="test_tc_rls_13_anon_draft_impact_allocations_protected" time="2.623" /><testcase classname="tests.test_report_cases" name="test_tc_rls_14_anon_categories_write_rejected" time="5.025" /><testcase classname="tests.test_report_cases" name="test_tc_rls_15_anon_patch_campaign_raised_kobo_rejected" time="4.704"><failure message="Failed: DID NOT RAISE InsufficientPrivilegeError">@pytest.mark.asyncio
+    async def test_tc_rls_15_anon_patch_campaign_raised_kobo_rejected():
+        """TC-RLS-15: Anon PATCH/UPDATE campaigns raised_kobo -&gt; rejected, value unchanged."""
+        cmp_id = uid("cmp_rls15_")
+        org_id = await _get_or_create_user("donor")
+        await db.campaigns.insert_one({
+            "id": cmp_id, "organizer_id": org_id, "title": "Tamper Test",
+            "goal_kobo": 5000000, "raised_kobo": 100000, "status": "LIVE"
+        })
+    
+        conn = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
+        try:
+            await conn.execute("SET ROLE anon;")
+&gt;           with pytest.raises(asyncpg.exceptions.InsufficientPrivilegeError):
+E           Failed: DID NOT RAISE InsufficientPrivilegeError
+
+tests\test_report_cases.py:1047: Failed</failure></testcase><testcase classname="tests.test_report_cases" name="test_tc_wh_06_modified_body_signature_mismatch" time="3.995"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">@pytest.mark.asyncio
+    async def test_tc_wh_06_modified_body_signature_mismatch():
+        """TC-WH-06: Valid signature, but payload body modified after signing -&gt; HTTP 401 Unauthorized, nothing credited."""
+        cmp_id = uid("cmp_wh6_")
+        org_id = await _get_or_create_user("donor")
+        await db.campaigns.insert_one({
+            "id": cmp_id, "organizer_id": org_id, "title": "Tamper Signature Cause",
+            "goal_kobo": 5000000, "raised_kobo": 0, "status": "LIVE"
+        })
+    
+        original_payload = {
+            "event": "charge.success",
+            "data": {"reference": "ref_orig_123", "amount": 100000, "currency": "NGN", "status": "success"}
+        }
+        raw_orig = json.dumps(original_payload).encode('utf-8')
+        sig = hmac.new(WEBHOOK_SECRET.encode('utf-8'), raw_orig, hashlib.sha512).hexdigest()
+    
+        # Modify payload body after signing!
+        tampered_payload = {
+            "event": "charge.success",
+            "data": {"reference": "ref_orig_123", "amount": 5000000, "currency": "NGN", "status": "success"}
+        }
+    
+        resp = client.post(
+            "/api/donations/paystack/webhook",
+            json=tampered_payload,
+            headers={"x-paystack-signature": sig}
+        )
+&gt;       assert resp.status_code == 401
+E       assert 404 == 401
+E        +  where 404 = &lt;Response [404 Not Found]&gt;.status_code
+
+tests\test_report_cases.py:1087: AssertionError</failure></testcase><testcase classname="tests.test_report_cases" name="test_tc_wh_07_failed_transaction_webhook_not_credited" time="11.025"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">@pytest.mark.asyncio
+    async def test_tc_wh_07_failed_transaction_webhook_not_credited():
+        """TC-WH-07: Webhook payload with failed transaction status -&gt; 200 OK ignored, donation not credited."""
+        cmp_id = uid("cmp_wh7_")
+        org_id = await _get_or_create_user("donor")
+        await db.campaigns.insert_one({
+            "id": cmp_id, "organizer_id": org_id, "title": "Failed Pay Cause",
+            "goal_kobo": 5000000, "raised_kobo": 0, "status": "LIVE"
+        })
+    
+        ref = uid("ref_wh7_")
+        await db.donations.insert_one({
+            "id": uid("dnt_wh7_"), "reference": ref, "campaign_id": cmp_id,
+            "amount_kobo": 100000, "status": "pending", "provider": "paystack", "created_at": now_iso()
+        })
+    
+        failed_payload = {
+            "event": "charge.success",
+            "data": {"reference": ref, "amount": 100000, "currency": "NGN", "status": "failed"}
+        }
+        raw = json.dumps(failed_payload).encode('utf-8')
+        sig = hmac.new(WEBHOOK_SECRET.encode('utf-8'), raw, hashlib.sha512).hexdigest()
+    
+        resp = client.post(
+            "/api/donations/paystack/webhook",
+            json=failed_payload,
+            headers={"x-paystack-signature": sig}
+        )
+&gt;       assert resp.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;Response [404 Not Found]&gt;.status_code
+
+tests\test_report_cases.py:1119: AssertionError</failure></testcase></testsuite></testsuites>

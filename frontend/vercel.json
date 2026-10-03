@@ -2,6 +2,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/.well-known/apple-developer-merchantid-domain-association",
+      "destination": "/.well-known/apple-developer-merchantid-domain-association"
+    },
+    {
       "source": "/c/:campaignId",
       "destination": "https://goodcause.onrender.com/share/campaign/:campaignId"
     },
