@@ -58,12 +58,6 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.heroContent}>
-          <View style={styles.badgeRow}>
-            <View style={styles.featuredBadge}>
-              <Ionicons name="sparkles" size={13} color="#10B981" />
-              <AppText variant="caption" style={styles.badgeText}>Start a Cause</AppText>
-            </View>
-          </View>
           <AppText variant="h1" style={styles.heroTitle}>
             Turn kindness into real community impact
           </AppText>
