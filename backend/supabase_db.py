@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any
 import asyncpg
 from dotenv import load_dotenv
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT_DIR = Path(__file__).parent
 _EXPLICIT_DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -22,6 +23,13 @@ DATABASE_URL = (
     or os.environ.get("DATABASE_URL")
     or os.environ.get("SUPABASE_DB_URL")
     or "postgresql://postgres:postgres@localhost:5432/goodcause"
+)
+DATABASE_URL_SOURCE = (
+    "DATABASE_URL"
+    if _EXPLICIT_DATABASE_URL or os.environ.get("DATABASE_URL")
+    else "SUPABASE_DB_URL"
+    if _EXPLICIT_SUPABASE_DB_URL or os.environ.get("SUPABASE_DB_URL")
+    else "fallback"
 )
 JWT_SECRET = os.environ.get("JWT_SECRET", "goodcause_super_secret_jwt_key_2026_nigeria_trusted")
 
@@ -134,3 +142,15 @@ async def execute(sql: str, *args) -> str:
                 _pool = None
             if attempt == 1:
                 raise
+
+def database_url_metadata() -> Dict[str, Any]:
+    parsed = urlparse(DATABASE_URL)
+    host = parsed.hostname or ""
+    return {
+        "source": DATABASE_URL_SOURCE,
+        "host": host,
+        "port": parsed.port,
+        "database": parsed.path.lstrip("/") if parsed.path else "",
+        "is_pooler": "pooler.supabase.com" in host,
+        "is_localhost": host in {"localhost", "127.0.0.1"},
+    }

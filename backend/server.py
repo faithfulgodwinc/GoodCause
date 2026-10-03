@@ -14,6 +14,7 @@ from google_oauth_config import google_client_ids
 import os
 from urllib.parse import urlparse
 from contextlib import asynccontextmanager
+import supabase_db
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -22,6 +23,15 @@ logger = logging.getLogger("goodcause")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import supabase_db
+    db_meta = supabase_db.database_url_metadata()
+    logger.info(
+        "Database config: source=%s host=%s port=%s is_pooler=%s is_localhost=%s",
+        db_meta["source"],
+        db_meta["host"],
+        db_meta["port"],
+        db_meta["is_pooler"],
+        db_meta["is_localhost"],
+    )
     try:
         await supabase_db.get_pool()
         logger.info("Supabase PostgreSQL pool connected successfully.")
