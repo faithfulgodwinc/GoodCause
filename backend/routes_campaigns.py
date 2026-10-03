@@ -106,7 +106,7 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
     causes_helped_count = await db.campaigns.count_documents({"status": {"$in": ["LIVE", "VERIFIED", "COMPLETED"]}})
     
     raised_row = await supabase_db.query_one(
-        "SELECT COALESCE(SUM(raised_kobo), 0) AS total FROM campaigns"
+        "SELECT COALESCE(SUM(raised_kobo), 0) AS total FROM campaigns WHERE status IN ('LIVE', 'VERIFIED', 'COMPLETED')"
     )
     given_kobo = int(raised_row["total"]) if raised_row else 0
 
