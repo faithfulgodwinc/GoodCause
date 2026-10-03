@@ -7,6 +7,7 @@ import os
 import random
 import string
 import httpx
+import logging
 from fastapi import APIRouter, HTTPException, Header, Depends
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
@@ -23,6 +24,7 @@ from google.auth.transport import requests as google_requests
 from google_oauth_config import google_client_ids
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 OTP_TTL_MINUTES = 10
 OTP_RATE_LIMIT_SECONDS = 60  # Minimum gap between OTP sends to same email
@@ -39,6 +41,20 @@ def _user_out(u: dict) -> dict:
         "bio": u.get("bio"), "verified_organizer": u.get("verified_organizer", False),
         "created_at": u.get("created_at"),
     }
+
+
+async def _safe_track(event: str, user_id: Optional[str] = None, props: Optional[dict] = None):
+    try:
+        await track(event, user_id, props)
+    except Exception as e:
+        logger.warning("Ignoring analytics failure for %s: %s", event, e)
+
+
+def _safe_send_welcome_email(email: str, name: str = ""):
+    try:
+        send_welcome_email(email, name)
+    except Exception as e:
+        logger.warning("Ignoring welcome email failure for %s: %s", email, e)
 
 
 def _gen_otp() -> str:
@@ -211,7 +227,7 @@ async def google_session(body: SessionIn):
                     body.id_token, google_requests.Request(), client_id
                 )
                 break
-            except ValueError as e:
+            except Exception as e:
                 last_error = str(e)
 
         if not idinfo:
@@ -237,8 +253,8 @@ async def google_session(body: SessionIn):
                 "auth_provider": "google", "created_at": now_iso(),
             }
             await db.users.insert_one(user)
-            await track("signup", user["id"], {"provider": "google"})
-            send_welcome_email(email, name)
+            await _safe_track("signup", user["id"], {"provider": "google"})
+            _safe_send_welcome_email(email, name)
             is_new = True
         else:
             updates = {}
@@ -255,13 +271,18 @@ async def google_session(body: SessionIn):
                 user["verified_organizer"] = True
             if updates:
                 await db.users.update_one({"id": user["id"]}, {"$set": updates})
-            await track("login", user["id"], {"provider": "google"})
+            await _safe_track("login", user["id"], {"provider": "google"})
             is_new = False
 
         return {"token": create_jwt(user["id"]), "user": _user_out(user), "is_new_user": is_new}
 
     except ValueError as e:
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Google session failed")
+        raise HTTPException(status_code=500, detail=f"Google sign-in failed on the server: {type(e).__name__}")
 
 
 # ─── Apple SSO ────────────────────────────────────────────────────────────────
@@ -416,4 +437,3 @@ async def delete_account(user: dict = Depends(get_current_user)):
     await db.users.delete_one({"id": user_id})
 
     return {"ok": True, "message": "Account deleted successfully."}
-
