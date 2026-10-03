@@ -16,6 +16,7 @@ def test_google_token_validation_always_accepts_the_app_web_client(monkeypatch):
         "GOOGLE_CLIENT_ID",
         "legacy-client.apps.googleusercontent.com",
     )
+    monkeypatch.delenv("GOOGLE_CLIENT_IDS", raising=False)
     monkeypatch.delenv("GOOGLE_ANDROID_CLIENT_ID", raising=False)
     monkeypatch.delenv("GOOGLE_IOS_CLIENT_ID", raising=False)
 
@@ -27,6 +28,25 @@ def test_google_token_validation_always_accepts_the_app_web_client(monkeypatch):
     assert google_oauth_config.google_client_ids() == [
         APP_WEB_CLIENT_ID,
         "legacy-client.apps.googleusercontent.com",
+    ]
+
+
+def test_google_token_validation_accepts_comma_separated_client_ids(monkeypatch):
+    monkeypatch.setenv(
+        "GOOGLE_CLIENT_IDS",
+        "first-client.apps.googleusercontent.com, second-client.apps.googleusercontent.com\nthird-client.apps.googleusercontent.com",
+    )
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_ANDROID_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_IOS_CLIENT_ID", raising=False)
+
+    google_oauth_config = importlib.import_module("google_oauth_config")
+
+    assert google_oauth_config.google_client_ids() == [
+        APP_WEB_CLIENT_ID,
+        "first-client.apps.googleusercontent.com",
+        "second-client.apps.googleusercontent.com",
+        "third-client.apps.googleusercontent.com",
     ]
 
 
