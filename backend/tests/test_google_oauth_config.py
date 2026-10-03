@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 APP_WEB_CLIENT_ID = (
-    "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com"
+    "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com"
 )
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 

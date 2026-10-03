@@ -9,7 +9,7 @@
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=8192",
         "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY",
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_HjfJywfxOUrxDywMzSyjKlOLGSA"
       }
@@ -25,7 +25,7 @@
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=8192",
         "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY",
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_HjfJywfxOUrxDywMzSyjKlOLGSA"
       }
@@ -37,7 +37,7 @@
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=8192",
         "EXPO_PUBLIC_BACKEND_URL": "https://goodcause.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_BMpLBLMxZCHhFkmpzgCQjxRuxXY",
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_HjfJywfxOUrxDywMzSyjKlOLGSA"
       }
