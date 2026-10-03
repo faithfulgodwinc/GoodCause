@@ -105,42 +105,44 @@ async def otp_send(body: OtpSendIn):
     """Generate and email a 6-digit OTP to the user. Rate-limited to 1 per 60s."""
     email = body.email.lower().strip()
 
-    # Rate limit: check if we sent one recently
-    recent = await db.email_otps.find_one({
-        "email": email,
-        "used": False,
-        "expires_at": {"$gte": (now() - timedelta(seconds=OTP_RATE_LIMIT_SECONDS - OTP_TTL_MINUTES * 60)).isoformat()},
-    })
-    # A simpler check: look for any OTP created in the last 60 seconds
-    recent_otps = await db.email_otps.find(
-        {"email": email}
-    ).sort("created_at", -1).limit(1).to_list(1)
-    if recent_otps:
-        last = recent_otps[0]
-        created = aware(last.get("created_at"))
-        if created and (now() - created).total_seconds() < OTP_RATE_LIMIT_SECONDS:
-            wait = int(OTP_RATE_LIMIT_SECONDS - (now() - created).total_seconds())
-            raise HTTPException(
-                status_code=429,
-                detail=f"Please wait {wait} seconds before requesting another code."
-            )
+    try:
+        # Rate limit: check if we sent one recently
+        await db.email_otps.find_one({
+            "email": email,
+            "used": False,
+            "expires_at": {"$gte": (now() - timedelta(seconds=OTP_RATE_LIMIT_SECONDS - OTP_TTL_MINUTES * 60)).isoformat()},
+        })
+        # A simpler check: look for any OTP created in the last 60 seconds
+        recent_otps = await db.email_otps.find(
+            {"email": email}
+        ).sort("created_at", -1).limit(1).to_list(1)
+        if recent_otps:
+            last = recent_otps[0]
+            created = aware(last.get("created_at"))
+            if created and (now() - created).total_seconds() < OTP_RATE_LIMIT_SECONDS:
+                wait = int(OTP_RATE_LIMIT_SECONDS - (now() - created).total_seconds())
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Please wait {wait} seconds before requesting another code."
+                )
 
-    # Invalidate any previously unused OTPs for this email
-    # (We do this via the `used` flag — we don't delete, for audit trail)
-    # Just insert a new one; verification always uses the latest unused one.
+        code = _gen_otp()
+        code_hash = hash_password(code)
+        expires_at = (now() + timedelta(minutes=OTP_TTL_MINUTES)).isoformat()
 
-    code = _gen_otp()
-    code_hash = hash_password(code)
-    expires_at = (now() + timedelta(minutes=OTP_TTL_MINUTES)).isoformat()
-
-    await db.email_otps.insert_one({
-        "id": uid("otp_"),
-        "email": email,
-        "code_hash": code_hash,
-        "expires_at": expires_at,
-        "used": False,
-        "created_at": now_iso(),
-    })
+        await db.email_otps.insert_one({
+            "id": uid("otp_"),
+            "email": email,
+            "code_hash": code_hash,
+            "expires_at": expires_at,
+            "used": False,
+            "created_at": now_iso(),
+        })
+    except HTTPException:
+        raise
+    except (OSError, ConnectionError) as e:
+        logger.exception("OTP send database or network failure")
+        raise HTTPException(status_code=503, detail=f"Email sign-in could not reach the database: {type(e).__name__}")
 
     send_otp_email(email, code)  # fire — falls back to console log on failure
 

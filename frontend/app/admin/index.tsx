@@ -11,7 +11,7 @@ import { AppText, Button, LoadingView, EmptyState } from "@/src/components/ui";
 import { colors, spacing, radius, shadow } from "@/src/theme";
 import { formatNaira, timeAgo } from "@/src/format";
 
-type Tab = "review" | "reports" | "transactions";
+type Tab = "review" | "campaigns" | "reports" | "transactions";
 
 export default function Admin() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function Admin() {
 
   const stats = useQuery({ queryKey: ["adminStats"], queryFn: () => api<any>("/admin/stats") });
   const review = useQuery({ queryKey: ["adminReview"], queryFn: () => api<any[]>("/admin/campaigns?status=SUBMITTED"), enabled: tab === "review" });
+  const allCampaigns = useQuery({ queryKey: ["adminAllCampaigns"], queryFn: () => api<any[]>("/admin/campaigns"), enabled: tab === "campaigns" });
   const reports = useQuery({ queryKey: ["adminReports"], queryFn: () => api<any[]>("/admin/reports"), enabled: tab === "reports" });
   const txns = useQuery({ queryKey: ["adminTxns"], queryFn: () => api<any[]>("/admin/transactions"), enabled: tab === "transactions" });
 
@@ -37,8 +38,10 @@ export default function Admin() {
     },
     onSuccess: () => { 
       qc.invalidateQueries({ queryKey: ["adminReview"] }); 
+      qc.invalidateQueries({ queryKey: ["adminAllCampaigns"] }); 
       qc.invalidateQueries({ queryKey: ["adminStats"] }); 
       qc.invalidateQueries({ queryKey: ["campaigns"] });
+      qc.invalidateQueries({ queryKey: ["home"] });
     },
   });
 
@@ -68,7 +71,7 @@ export default function Admin() {
         </View>
 
         <View style={styles.seg}>
-          {(["review", "reports", "transactions"] as Tab[]).map((t) => (
+          {(["review", "campaigns", "reports", "transactions"] as Tab[]).map((t) => (
             <Pressable key={t} testID={`admin-tab-${t}`} onPress={() => setTab(t)} style={[styles.segItem, tab === t && styles.segItemActive]}>
               <AppText variant="label" color={tab === t ? colors.onSurface : colors.onSurfaceTertiary} style={{ textTransform: "capitalize" }}>{t}</AppText>
             </Pressable>
@@ -107,6 +110,52 @@ export default function Admin() {
               </View>
             </View>
           )) : <EmptyState icon="check-circle" title="All caught up" message="No campaigns awaiting review." />))}
+
+          {tab === "campaigns" && (allCampaigns.isLoading ? <LoadingView /> : (allCampaigns.data?.length ? allCampaigns.data.map((c) => (
+            <View key={c.id} style={styles.card}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                  <AppText variant="label" numberOfLines={1}>{c.title}</AppText>
+                  <AppText variant="caption" style={{ marginTop: 2 }}>
+                    by {c.organizer?.name || "Unknown"} · {formatNaira(c.goal_kobo, { compact: true })}
+                  </AppText>
+                </View>
+                <View style={[styles.statusPill, { backgroundColor: c.status === "LIVE" ? "#EAF4EF" : c.status === "SUSPENDED" ? "#FEEBEB" : colors.surfaceTertiary }]}>
+                  <AppText variant="caption" color={c.status === "LIVE" ? colors.success : c.status === "SUSPENDED" ? colors.error : colors.onSurfaceTertiary}>
+                    {c.status}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.actionRow}>
+                <Button 
+                  title="View" 
+                  small 
+                  variant="outline" 
+                  onPress={() => router.push(`/campaign/${c.id}`)} 
+                  style={{ flex: 1 }} 
+                />
+                {c.status === "LIVE" || c.status === "VERIFIED" ? (
+                  <Button 
+                    title="Suspend / Hide" 
+                    small 
+                    variant="outline" 
+                    onPress={() => {
+                      Alert.alert(
+                        "Suspend Campaign",
+                        `Are you sure you want to hide "${c.title}" from production?`,
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Hide / Suspend", style: "destructive", onPress: () => act.mutate({ id: c.id, action: "suspend" }) }
+                        ]
+                      );
+                    }} 
+                    style={{ flex: 1, borderColor: colors.error }} 
+                    textStyle={{ color: colors.error }} 
+                  />
+                ) : null}
+              </View>
+            </View>
+          )) : <EmptyState icon="folder" title="No campaigns found" />))}
 
           {tab === "reports" && (reports.isLoading ? <LoadingView /> : (reports.data?.length ? reports.data.map((r) => (
             <View key={r.id} style={styles.card}>

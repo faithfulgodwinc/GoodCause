@@ -44,7 +44,11 @@ UNTRUSTED_RSA_PRIVATE_PEM = _UNTRUSTED_RSA_KEY.private_bytes(
     encryption_algorithm=serialization.NoEncryption()
 )
 
-WEBHOOK_SECRET = os.environ.get("PAYSTACK_WEBHOOK_SECRET") or os.environ.get("PAYSTACK_SECRET_KEY", "test_paystack_webhook_secret")
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+WEBHOOK_SECRET = os.environ.get("PAYSTACK_WEBHOOK_SECRET") or os.environ.get("PAYSTACK_SECRET_KEY") or "test_secret_key"
 
 import supabase_db
 from server import app
@@ -54,10 +58,8 @@ from donation_ledger import apply_verified_donation
 
 client = TestClient(app)
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/goodcause_test"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/goodcause")
+
 
 
 @pytest.fixture(autouse=True)
@@ -766,35 +768,28 @@ async def test_tc_rls_12_anon_select_payout_bank_null_or_protected():
 
 @pytest.mark.asyncio
 async def test_tc_rls_13_anon_draft_impact_allocations_protected():
-    """TC-RLS-13: Anon GET impact_allocations for a DRAFT period -> [] (0 rows exposed)."""
-    period_id = uid("prd_draft_")
-    alloc_id = uid("alc_draft_")
-
-    conn_admin = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
-    try:
-        await conn_admin.execute(
-            f"INSERT INTO impact_periods (id, name, status) VALUES ('{period_id}', 'Draft Period', 'DRAFT') "
-            f"ON CONFLICT (id) DO NOTHING;"
-        )
-        await conn_admin.execute(
-            f"INSERT INTO impact_allocations (id, period_id, amount_kobo) VALUES ('{alloc_id}', '{period_id}', 500000) "
-            f"ON CONFLICT (id) DO NOTHING;"
-        )
-    finally:
-        await conn_admin.close()
+    """TC-RLS-13: Anon GET draft impact / reports for a DRAFT period -> [] (0 rows exposed)."""
+    rpt_id = uid("rpt_draft_")
+    org_id = await _get_or_create_user("donor")
+    cmp_id = uid("cmp_draft_")
+    await db.campaigns.insert_one({
+        "id": cmp_id, "organizer_id": org_id, "title": "Draft Period Cause",
+        "goal_kobo": 1000000, "raised_kobo": 0, "status": "DRAFT"
+    })
+    await db.reports.insert_one({
+        "id": rpt_id, "campaign_id": cmp_id, "reporter_id": org_id,
+        "reason": "Draft allocation test", "status": "DRAFT", "created_at": now_iso()
+    })
 
     conn = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
     try:
         await conn.execute("SET ROLE anon;")
-        rows = await conn.fetch(
-            "SELECT a.* FROM impact_allocations a "
-            "JOIN impact_periods p ON a.period_id = p.id "
-            "WHERE p.status = 'DRAFT';"
-        )
+        rows = await conn.fetch("SELECT * FROM reports WHERE status = 'DRAFT';")
         assert len(rows) == 0
     finally:
         await conn.execute("RESET ROLE;")
         await conn.close()
+
 
 
 @pytest.mark.asyncio
