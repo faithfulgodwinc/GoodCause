@@ -16,6 +16,7 @@ import {
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -43,6 +44,13 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
 );
 
 const DEFAULT_GOOGLE_WEB_CLIENT_ID = "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com";
+
+const getGoogleRedirectUri = () => {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}/auth`;
+  }
+  return makeRedirectUri();
+};
 
 // Native Google Sign-in loader
 let GoogleSignin: any = null;
@@ -118,6 +126,8 @@ export default function AuthScreen() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     responseType: "id_token",
     clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
+    redirectUri: getGoogleRedirectUri(),
+    scopes: ["openid", "profile", "email"],
   });
 
   useEffect(() => {
@@ -252,32 +262,12 @@ export default function AuthScreen() {
       }
 
       if (Platform.OS === "web") {
-        const g = typeof window !== "undefined" ? (window as any).google : null;
-        const clientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID;
-
-        if (g?.accounts?.id) {
-          g.accounts.id.initialize({
-            client_id: clientId,
-            callback: async (res: any) => {
-              if (res?.credential) {
-                await handleGoogleSession(res.credential);
-              } else {
-                setError("Google sign-in failed. Please try again.");
-                setGoogleLoading(false);
-              }
-            },
-          });
-          g.accounts.id.prompt((notification: any) => {
-            if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-              setError("Google sign-in could not open. Check that popups are allowed, then try again.");
-              setGoogleLoading(false);
-            }
-          });
+        if (!request) {
+          setError("Google sign-in is initializing. Please try again in a moment.");
+          setGoogleLoading(false);
           return;
         }
-
-        setError("Google sign-in is initializing. Please try again in a moment.");
-        setGoogleLoading(false);
+        await promptAsync();
         return;
       }
 
