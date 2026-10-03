@@ -5,7 +5,7 @@ import os
 
 # Web OAuth 2.0 client used by the GoodCause web app
 APP_GOOGLE_WEB_CLIENT_ID = (
-    "41685285658-qss2q8eqeldj3mnega5mnovoo1i4qgb0.apps.googleusercontent.com"
+    "121930938754-9hkno5bktltbrbj18b4m1jrvd1319l99.apps.googleusercontent.com"
 )
 
 
