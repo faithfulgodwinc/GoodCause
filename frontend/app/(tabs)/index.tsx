@@ -70,12 +70,8 @@ export default function HomeScreen() {
 
   const hasCommitment = isSubscribed;
   const directCauses = React.useMemo(() => {
-    const map = new Map<string, Campaign>();
-    [...featured, ...urgent, ...recommended, ...(all_campaigns || [])].forEach((c) => {
-      if (c && c.id && !map.has(c.id)) map.set(c.id, c);
-    });
-    return Array.from(map.values()).slice(0, 10);
-  }, [featured, urgent, recommended, all_campaigns]);
+    return (featured || []).filter((c) => c && c.id);
+  }, [featured]);
 
   const handleProfilePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

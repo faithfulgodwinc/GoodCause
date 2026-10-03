@@ -84,8 +84,6 @@ async def _section(query: dict, sort, limit=8):
 async def home(user: Optional[dict] = Depends(get_current_user_optional)):
     live = {"status": {"$in": ["LIVE", "VERIFIED"]}}
     featured = await _section({**live, "featured": True}, [("published_at", -1)], 6)
-    if not featured:
-        featured = await _section(live, [("supporters_count", -1)], 6)
     urgent = await _section({**live, "urgent": True}, [("deadline", 1)], 8)
     recent_updates = await _section({**live, "updates_count": {"$gt": 0}}, [("last_update_at", -1)], 8)
     recommended = await _section(live, [("created_at", -1)], 10)

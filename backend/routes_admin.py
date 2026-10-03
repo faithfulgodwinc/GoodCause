@@ -109,6 +109,31 @@ async def suspend_campaign(campaign_id: str, admin: dict = Depends(require_admin
     return await serialize_campaign(doc, detail=True)
 
 
+@router.post("/campaigns/{campaign_id}/toggle-featured")
+async def toggle_featured_campaign(campaign_id: str, admin: dict = Depends(require_admin)):
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found.")
+    new_featured = not doc.get("featured", False)
+    await db.campaigns.update_one({"id": campaign_id}, {"$set": {
+        "featured": new_featured, "updated_at": now_iso()}})
+    doc = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    return await serialize_campaign(doc, detail=True)
+
+
+@router.post("/campaigns/clear-test-causes")
+async def clear_test_causes(admin: dict = Depends(require_admin)):
+    docs = await db.campaigns.find({}, {"_id": 0}).to_list(1000)
+    count = 0
+    keywords = ["test", "demo", "concurrency", "tc-led", "dummy", "sample"]
+    for c in docs:
+        title = (c.get("title") or "").lower()
+        if any(k in title for k in keywords):
+            await db.campaigns.update_one({"id": c["id"]}, {"$set": {"status": "SUSPENDED", "updated_at": now_iso()}})
+            count += 1
+    return {"ok": True, "suspended_count": count}
+
+
 @router.get("/reports")
 async def admin_reports(admin: dict = Depends(require_admin)):
     rows = await db.reports.find({}, {"_id": 0}).sort("created_at", -1).limit(100).to_list(100)

@@ -34,6 +34,10 @@ export default function Admin() {
         await api(`/admin/campaigns/${id}/reject`, { method: "POST", body: { reason: "Needs more information before it can go live." } });
       } else if (action === "suspend") {
         await api(`/admin/campaigns/${id}/suspend`, { method: "POST" });
+      } else if (action === "toggle-featured") {
+        await api(`/admin/campaigns/${id}/toggle-featured`, { method: "POST" });
+      } else if (action === "clear-test-causes") {
+        await api(`/admin/campaigns/clear-test-causes`, { method: "POST" });
       }
     },
     onSuccess: () => { 
@@ -57,7 +61,7 @@ export default function Admin() {
       <View style={{ alignSelf: "center", width: "100%", maxWidth: 960, flex: 1 }}>
         <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
           <Pressable onPress={() => router.back()}><Feather name="arrow-left" size={24} color={colors.onSurface} /></Pressable>
-          <AppText variant="title">Admin</AppText>
+          <AppText variant="title">Admin Panel</AppText>
           <Pressable onPress={() => router.push("/admin/impact")}><Feather name="pie-chart" size={22} color={colors.brandPrimary} /></Pressable>
         </View>
 
@@ -111,51 +115,87 @@ export default function Admin() {
             </View>
           )) : <EmptyState icon="check-circle" title="All caught up" message="No campaigns awaiting review." />))}
 
-          {tab === "campaigns" && (allCampaigns.isLoading ? <LoadingView /> : (allCampaigns.data?.length ? allCampaigns.data.map((c) => (
-            <View key={c.id} style={styles.card}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <View style={{ flex: 1, paddingRight: spacing.sm }}>
-                  <AppText variant="label" numberOfLines={1}>{c.title}</AppText>
-                  <AppText variant="caption" style={{ marginTop: 2 }}>
-                    by {c.organizer?.name || "Unknown"} · {formatNaira(c.goal_kobo, { compact: true })}
-                  </AppText>
+          {tab === "campaigns" && (
+            <View style={{ gap: spacing.md }}>
+              <Button
+                title="Clear All Test Causes From Production"
+                small
+                variant="outline"
+                onPress={() => {
+                  Alert.alert(
+                    "Clear Test Causes",
+                    "This will suspend all test and sample campaigns so production displays only real causes.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Clear Test Causes", style: "destructive", onPress: () => act.mutate({ id: "", action: "clear-test-causes" }) }
+                    ]
+                  );
+                }}
+                style={{ borderColor: colors.error, marginBottom: spacing.xs }}
+                textStyle={{ color: colors.error }}
+              />
+
+              {allCampaigns.isLoading ? <LoadingView /> : (allCampaigns.data?.length ? allCampaigns.data.map((c) => (
+                <View key={c.id} style={styles.card}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flex: 1, paddingRight: spacing.sm }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <AppText variant="label" numberOfLines={1} style={{ flex: 1 }}>{c.title}</AppText>
+                        {c.featured ? (
+                          <View style={[styles.statusPill, { backgroundColor: "#FEF3C7" }]}>
+                            <AppText variant="caption" color="#D97706" style={{ fontWeight: "700" }}>⭐ Featured</AppText>
+                          </View>
+                        ) : null}
+                      </View>
+                      <AppText variant="caption" style={{ marginTop: 2 }}>
+                        by {c.organizer?.name || "Unknown"} · {formatNaira(c.goal_kobo, { compact: true })}
+                      </AppText>
+                    </View>
+                    <View style={[styles.statusPill, { backgroundColor: c.status === "LIVE" ? "#EAF4EF" : c.status === "SUSPENDED" ? "#FEEBEB" : colors.surfaceTertiary }]}>
+                      <AppText variant="caption" color={c.status === "LIVE" ? colors.success : c.status === "SUSPENDED" ? colors.error : colors.onSurfaceTertiary}>
+                        {c.status}
+                      </AppText>
+                    </View>
+                  </View>
+                  <View style={styles.actionRow}>
+                    <Button 
+                      title="View" 
+                      small 
+                      variant="outline" 
+                      onPress={() => router.push(`/campaign/${c.id}`)} 
+                      style={{ flex: 1 }} 
+                    />
+                    <Button 
+                      title={c.featured ? "Unfeature" : "⭐ Feature"} 
+                      small 
+                      variant={c.featured ? "outline" : "primary"} 
+                      onPress={() => act.mutate({ id: c.id, action: "toggle-featured" })} 
+                      style={{ flex: 1 }} 
+                    />
+                    {c.status !== "SUSPENDED" ? (
+                      <Button 
+                        title="Suspend / Hide" 
+                        small 
+                        variant="outline" 
+                        onPress={() => {
+                          Alert.alert(
+                            "Suspend Campaign",
+                            `Are you sure you want to hide "${c.title}" from production?`,
+                            [
+                              { text: "Cancel", style: "cancel" },
+                              { text: "Hide / Suspend", style: "destructive", onPress: () => act.mutate({ id: c.id, action: "suspend" }) }
+                            ]
+                          );
+                        }} 
+                        style={{ flex: 1, borderColor: colors.error }} 
+                        textStyle={{ color: colors.error }} 
+                      />
+                    ) : null}
+                  </View>
                 </View>
-                <View style={[styles.statusPill, { backgroundColor: c.status === "LIVE" ? "#EAF4EF" : c.status === "SUSPENDED" ? "#FEEBEB" : colors.surfaceTertiary }]}>
-                  <AppText variant="caption" color={c.status === "LIVE" ? colors.success : c.status === "SUSPENDED" ? colors.error : colors.onSurfaceTertiary}>
-                    {c.status}
-                  </AppText>
-                </View>
-              </View>
-              <View style={styles.actionRow}>
-                <Button 
-                  title="View" 
-                  small 
-                  variant="outline" 
-                  onPress={() => router.push(`/campaign/${c.id}`)} 
-                  style={{ flex: 1 }} 
-                />
-                {c.status === "LIVE" || c.status === "VERIFIED" ? (
-                  <Button 
-                    title="Suspend / Hide" 
-                    small 
-                    variant="outline" 
-                    onPress={() => {
-                      Alert.alert(
-                        "Suspend Campaign",
-                        `Are you sure you want to hide "${c.title}" from production?`,
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          { text: "Hide / Suspend", style: "destructive", onPress: () => act.mutate({ id: c.id, action: "suspend" }) }
-                        ]
-                      );
-                    }} 
-                    style={{ flex: 1, borderColor: colors.error }} 
-                    textStyle={{ color: colors.error }} 
-                  />
-                ) : null}
-              </View>
+              )) : <EmptyState icon="folder" title="No campaigns found" />)}
             </View>
-          )) : <EmptyState icon="folder" title="No campaigns found" />))}
+          )}
 
           {tab === "reports" && (reports.isLoading ? <LoadingView /> : (reports.data?.length ? reports.data.map((r) => (
             <View key={r.id} style={styles.card}>
