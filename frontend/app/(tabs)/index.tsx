@@ -21,6 +21,7 @@ import { useResponsive } from "@/src/lib/responsive";
 import { colors, spacing, radius, font } from "@/src/theme";
 import { useSubscription } from "@/src/lib/revenuecat";
 import { HeroCauseSlider } from "@/src/components/HeroCauseSlider";
+import { formatNaira } from "@/src/format";
 
 type HomeData = {
   featured: Campaign[];
@@ -56,9 +57,7 @@ export default function HomeScreen() {
   const membersDisplay = impact_metrics?.members_count
     ? impact_metrics.members_count.toLocaleString()
     : "0";
-  const givenDisplay = impact_metrics?.given_this_month_kobo
-    ? `$${(impact_metrics.given_this_month_kobo / 10000000).toFixed(1)}M`
-    : "$0";
+  const givenDisplay = formatNaira(impact_metrics?.given_this_month_kobo || 0, { compact: true, currency: "USD" });
   const causesDisplay = impact_metrics?.causes_helped_count
     ? impact_metrics.causes_helped_count.toLocaleString()
     : "0";

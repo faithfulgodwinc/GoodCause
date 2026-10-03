@@ -103,14 +103,16 @@ async def home(user: Optional[dict] = Depends(get_current_user_optional)):
     almost.sort(key=lambda x: -x[0])
     almost_funded = [await serialize_campaign(d) for _, d in almost[:8]]
 
-    # Live Community Impact Metrics
+    # Live Community Impact Metrics from actual platform database
     members_count = await db.users.count_documents({})
     causes_helped_count = await db.campaigns.count_documents({"status": {"$in": ["LIVE", "VERIFIED", "COMPLETED"]}})
     
-    raised_row = await supabase_db.query_one(
-        "SELECT COALESCE(SUM(raised_kobo), 0) AS total FROM campaigns WHERE status IN ('LIVE', 'VERIFIED', 'COMPLETED')"
-    )
-    given_kobo = int(raised_row["total"]) if raised_row else 0
+    pipeline = [
+        {"$match": {"status": {"$in": ["LIVE", "VERIFIED", "COMPLETED"]}}},
+        {"$group": {"_id": None, "total": {"$sum": "$raised_kobo"}}}
+    ]
+    agg_res = await db.campaigns.aggregate(pipeline).to_list(1)
+    given_kobo = agg_res[0]["total"] if (agg_res and agg_res[0].get("total")) else 0
 
     cats = await db.categories.find({}, {"_id": 0}).sort("order", 1).to_list(100)
     await track("app_open", user["id"] if user else None)
