@@ -18,6 +18,7 @@ import { MediaUploader, Media } from "@/src/components/MediaUploader";
 import { useResponsive } from "@/src/lib/responsive";
 import { colors, spacing, radius, shadow, CATEGORY_COLORS, font } from "@/src/theme";
 import { formatNaira, daysLeft, timeAgo } from "@/src/format";
+import { CampaignPosterModal } from "@/src/components/CampaignPosterModal";
 
 const REASONS = ["Suspected fraud", "Misleading information", "Impersonation", "Inappropriate content", "Illegal activity", "Harassment"];
 
@@ -29,6 +30,7 @@ export default function CampaignDetail() {
   const { user } = useAuth();
   const { maxContentWidth, isDesktop } = useResponsive();
   const [shareOpen, setShareOpen] = useState(false);
+  const [posterOpen, setPosterOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [reportDone, setReportDone] = useState(false);
@@ -253,6 +255,14 @@ export default function CampaignDetail() {
             onPress={handlePauseToggle}
             style={{ flex: 0.9 }}
             testID="detail-organizer-pause-toggle"
+          />
+          <Button
+            title="Poster"
+            icon="image"
+            variant="outline"
+            onPress={() => setPosterOpen(true)}
+            style={{ flex: 0.9 }}
+            testID="detail-organizer-poster"
           />
           <Button
             title="Share"
@@ -505,8 +515,27 @@ export default function CampaignDetail() {
             <ShareBtn icon="copy" label="Copy link" onPress={async () => { await Clipboard.setStringAsync(shareUrl); track("campaign_shared", { via: "copy" }); }} />
             <ShareBtn icon="grid" label={copied ? "Copied" : "QR code"} onPress={async () => { await Clipboard.setStringAsync(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }} qr={<QRCode value={shareUrl} size={44} backgroundColor="transparent" color={colors.onSurface} />} />
           </View>
+
+          <Button
+            title="🎨 Create Campaign Poster / Flyer"
+            variant="outline"
+            icon="image"
+            onPress={() => {
+              setShareOpen(false);
+              setPosterOpen(true);
+            }}
+            style={{ marginTop: spacing.md }}
+          />
         </View>
       </Modal>
+
+      {/* Campaign Poster Studio Modal */}
+      <CampaignPosterModal
+        visible={posterOpen}
+        onClose={() => setPosterOpen(false)}
+        campaign={c}
+        shareUrl={shareUrl}
+      />
 
       {/* Report modal */}
       <Modal visible={reportOpen} transparent animationType="slide" onRequestClose={() => setReportOpen(false)}>
