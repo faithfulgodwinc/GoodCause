@@ -15,6 +15,7 @@ export type Campaign = {
   cover_image?: string;
   goal_kobo: number;
   raised_kobo: number;
+  currency?: string;
   percent: number;
   supporters_count: number;
   community_backed?: boolean;
@@ -78,9 +79,9 @@ export function FeaturedCard({ c, onPress }: { c: Campaign; onPress: () => void 
             <ProgressBar percent={c.percent} color={colors.brandPrimary} height={5} />
             <View style={styles.statsRow}>
               <AppText variant="label" style={{ fontSize: 13, fontWeight: "700", color: colors.onSurface }}>
-                {formatNaira(c.raised_kobo, { compact: true })}{" "}
+                {formatNaira(c.raised_kobo, { compact: true, currency: c.currency || "USD" })}{" "}
                 <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontWeight: "400" }}>
-                  raised of {formatNaira(c.goal_kobo, { compact: true })}
+                  raised of {formatNaira(c.goal_kobo, { compact: true, currency: c.currency || "USD" })}
                 </AppText>
               </AppText>
               <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontSize: 11.5 }}>
@@ -133,7 +134,7 @@ export function CampaignCard({ c, onPress }: { c: Campaign; onPress: () => void 
           <ProgressBar percent={c.percent} color={colors.brandPrimary} height={4.5} />
           <View style={styles.cardStatsRow}>
             <AppText variant="label" style={{ fontSize: 13, fontWeight: "700", color: colors.onSurface }}>
-              {formatNaira(c.raised_kobo, { compact: true })}{" "}
+              {formatNaira(c.raised_kobo, { compact: true, currency: c.currency || "USD" })}{" "}
               <AppText variant="caption" color={colors.onSurfaceSecondary} style={{ fontWeight: "400", fontSize: 11 }}>
                 raised
               </AppText>

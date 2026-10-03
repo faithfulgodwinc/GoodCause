@@ -164,10 +164,10 @@ export default function CampaignDetail() {
   const renderProgressBox = () => (
     <View style={styles.progressBox}>
       <View style={styles.rowBetween}>
-        <AppText variant="h2" color={colors.brandPrimary}>{formatNaira(c.raised_kobo)}</AppText>
+        <AppText variant="h2" color={colors.brandPrimary}>{formatNaira(c.raised_kobo, { currency: c?.currency || "USD" })}</AppText>
         <AppText variant="label" color={colors.onSurfaceTertiary}>{c.percent}%</AppText>
       </View>
-      <AppText variant="caption" style={{ marginTop: 2 }}>raised of {formatNaira(c.goal_kobo)} goal</AppText>
+      <AppText variant="caption" style={{ marginTop: 2 }}>raised of {formatNaira(c.goal_kobo, { currency: c?.currency || "USD" })} goal</AppText>
       <View style={{ marginTop: spacing.md }}>
         <ProgressBar percent={c.percent} height={10} />
       </View>
@@ -390,7 +390,7 @@ export default function CampaignDetail() {
                 {c.budget.map((b: any, i: number) => (
                   <View key={i} style={[styles.budgetRow, i < c.budget.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
                     <AppText variant="body" style={{ flex: 1 }}>{b.item}</AppText>
-                    <AppText variant="label">{formatNaira(b.amount_kobo)}</AppText>
+                    <AppText variant="label">{formatNaira(b.amount_kobo, { currency: c?.currency || "USD" })}</AppText>
                   </View>
                 ))}
               </Block>
@@ -449,7 +449,7 @@ export default function CampaignDetail() {
                         {s.message ? <AppText variant="caption" numberOfLines={1}>{s.message}</AppText> : null}
                       </View>
                       <View style={{ alignItems: "flex-end", gap: 4 }}>
-                        <AppText variant="label" color={colors.success}>{formatNaira(s.amount_kobo, { compact: true })}</AppText>
+                        <AppText variant="label" color={colors.success}>{formatNaira(s.amount_kobo, { compact: true, currency: c?.currency || "USD" })}</AppText>
                         {isOrganizer && s.can_thank ? (
                           s.thanked ? (
                             <View style={styles.thankedPill}><Feather name="check" size={12} color={colors.success} /><AppText variant="caption" color={colors.success} style={{ marginLeft: 4 }}>Thanked</AppText></View>

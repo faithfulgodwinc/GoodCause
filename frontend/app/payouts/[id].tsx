@@ -18,7 +18,7 @@ import * as Haptics from "expo-haptics";
 import { api } from "@/src/lib/api";
 import { AppText, Button, LoadingView, ErrorView } from "@/src/components/ui";
 import { colors, spacing, radius, shadow, font } from "@/src/theme";
-import { formatNaira, timeAgo } from "@/src/format";
+import { formatNaira, timeAgo, getCurrencySymbol } from "@/src/format";
 
 type Bank = { name: string; code: string };
 
@@ -191,7 +191,7 @@ export default function PayoutDashboard() {
                 Available for withdrawal
               </AppText>
               <AppText variant="display" color="#FFFFFF" style={{ marginTop: 4 }}>
-                {formatNaira(availableKobo)}
+                {formatNaira(availableKobo, { currency: data?.currency || "USD" })}
               </AppText>
             </View>
             <View style={styles.badgeInstant}>
@@ -210,7 +210,7 @@ export default function PayoutDashboard() {
                 Gross Raised
               </AppText>
               <AppText variant="bodyMedium" color="#FFFFFF" style={{ marginTop: 2 }}>
-                {formatNaira(data.gross_raised_kobo)}
+                {formatNaira(data.gross_raised_kobo, { currency: data?.currency || "USD" })}
               </AppText>
             </View>
             <View style={{ flex: 1 }}>
@@ -218,7 +218,7 @@ export default function PayoutDashboard() {
                 Platform Fee
               </AppText>
               <AppText variant="bodyMedium" color="#FFFFFF" style={{ marginTop: 2 }}>
-                ₦0 (0%)
+                {getCurrencySymbol(data?.currency || "USD")}0 (0%)
               </AppText>
             </View>
             <View style={{ flex: 1 }}>
@@ -226,7 +226,7 @@ export default function PayoutDashboard() {
                 Withdrawn
               </AppText>
               <AppText variant="bodyMedium" color="#FFFFFF" style={{ marginTop: 2 }}>
-                {formatNaira(data.withdrawn_kobo)}
+                {formatNaira(data.withdrawn_kobo, { currency: data?.currency || "USD" })}
               </AppText>
             </View>
           </View>
@@ -360,7 +360,7 @@ export default function PayoutDashboard() {
 
           <View style={styles.amountInputWrap}>
             <AppText variant="h1" color={colors.brandPrimary}>
-              ₦
+              {getCurrencySymbol(data?.currency || "USD")}
             </AppText>
             <TextInput
               value={amountStr}
@@ -400,7 +400,7 @@ export default function PayoutDashboard() {
                   style={styles.presetBtn}
                 >
                   <AppText variant="caption" style={{ fontWeight: "600" }}>
-                    {formatNaira(amt, { compact: true })}
+                    {formatNaira(amt, { compact: true, currency: data?.currency || "USD" })}
                   </AppText>
                 </Pressable>
               );
@@ -408,7 +408,7 @@ export default function PayoutDashboard() {
           </View>
 
           <Button
-            title={`Transfer ${parsedAmountNaira > 0 ? `₦${parsedAmountNaira.toLocaleString()}` : "to Bank"}`}
+            title={`Transfer ${parsedAmountNaira > 0 ? `${getCurrencySymbol(data?.currency || "USD")}${parsedAmountNaira.toLocaleString()}` : "to Bank"}`}
             icon="send"
             disabled={!hasBank || !isValidAmount}
             loading={withdrawMut.isPending}
@@ -439,7 +439,7 @@ export default function PayoutDashboard() {
                     <Feather name="arrow-up-right" size={18} color={colors.brandPrimary} />
                   </View>
                   <View style={{ flex: 1, marginLeft: spacing.md }}>
-                    <AppText variant="bodyMedium">{formatNaira(h.amount_kobo)}</AppText>
+                    <AppText variant="bodyMedium">{formatNaira(h.amount_kobo, { currency: data?.currency || "USD" })}</AppText>
                     <AppText variant="caption" color={colors.onSurfaceTertiary} style={{ marginTop: 2 }}>
                       {h.bank_name} (•••• {h.account_number.slice(-4)}) · {timeAgo(h.created_at)}
                     </AppText>

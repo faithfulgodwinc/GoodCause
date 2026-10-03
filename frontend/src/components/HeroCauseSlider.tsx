@@ -161,10 +161,10 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
                   <View style={styles.progressBlock}>
                     <View style={styles.amountRow}>
                       <AppText style={styles.raisedAmount}>
-                        {formatNaira(raised, { compact: true })}
+                        {formatNaira(raised, { compact: true, currency: c.currency || "USD" })}
                       </AppText>
                       <AppText style={styles.goalAmount}>
-                        raised of {formatNaira(goal, { compact: true })} ({percent}%)
+                        raised of {formatNaira(goal, { compact: true, currency: c.currency || "USD" })} ({percent}%)
                       </AppText>
                     </View>
                     <ProgressBar percent={percent} color="#22C55E" height={6} />

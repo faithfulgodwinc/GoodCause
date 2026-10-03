@@ -194,7 +194,7 @@ async def serialize_campaign(doc: dict, viewer: Optional[dict] = None, detail: b
         "cover_image": doc.get("cover_image"),
         "goal_kobo": goal,
         "raised_kobo": raised,
-        "currency": doc.get("currency", "NGN"),
+        "currency": doc.get("currency") or "USD",
         "percent": campaign_percent(raised, goal),
         "supporters_count": doc.get("supporters_count", 0),
         "community_backed": doc.get("supporters_count", 0) >= 3,

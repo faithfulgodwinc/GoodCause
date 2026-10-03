@@ -1,16 +1,30 @@
-// Formatting helpers (NGN money, dates, percent).
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  NGN: "₦",
+  GBP: "£",
+  EUR: "€",
+  CAD: "CA$",
+  AUD: "A$",
+};
+
+export function getCurrencySymbol(code: string = "USD"): string {
+  return CURRENCY_SYMBOLS[(code || "USD").toUpperCase()] || "$";
+}
+
 export function nairaFromKobo(kobo: number): number {
   return Math.round((kobo || 0) / 100);
 }
 
-export function formatNaira(kobo: number, opts: { compact?: boolean } = {}): string {
-  const naira = nairaFromKobo(kobo);
+export function formatNaira(kobo: number, opts: { compact?: boolean; currency?: string } = {}): string {
+  const code = (opts.currency || "USD").toUpperCase();
+  const symbol = getCurrencySymbol(code);
+  const mainUnit = nairaFromKobo(kobo);
   if (opts.compact) {
-    if (naira >= 1_000_000) return `₦${trim(naira / 1_000_000)}M`;
-    if (naira >= 1_000) return `₦${trim(naira / 1_000)}K`;
-    return `₦${naira.toLocaleString("en-US")}`;
+    if (mainUnit >= 1_000_000) return `${symbol}${trim(mainUnit / 1_000_000)}M`;
+    if (mainUnit >= 1_000) return `${symbol}${trim(mainUnit / 1_000)}K`;
+    return `${symbol}${mainUnit.toLocaleString("en-US")}`;
   }
-  return `₦${naira.toLocaleString("en-US")}`;
+  return `${symbol}${mainUnit.toLocaleString("en-US")}`;
 }
 
 export function formatCurrency(amount: number, currencyCode: string = "NGN"): string {

@@ -203,7 +203,7 @@ export function CampaignPosterModal({
                       theme === "dark" && { color: "#FFFFFF" },
                     ]}
                   >
-                    {formatNaira(raised, { compact: true })}
+                    {formatNaira(raised, { compact: true, currency: c.currency || "USD" })}
                   </AppText>
                   <AppText
                     style={[
@@ -211,7 +211,7 @@ export function CampaignPosterModal({
                       theme === "dark" && { color: "rgba(255,255,255,0.7)" },
                     ]}
                   >
-                    raised of {formatNaira(goal, { compact: true })} ({percent}%)
+                    raised of {formatNaira(goal, { compact: true, currency: c.currency || "USD" })} ({percent}%)
                   </AppText>
                 </View>
               </View>

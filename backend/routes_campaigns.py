@@ -31,6 +31,7 @@ class CampaignIn(BaseModel):
     story: str = Field(default="")
     category_id: Optional[str] = None
     goal_kobo: int = Field(gt=0)
+    currency: Optional[str] = "USD"
     cover_image: Optional[str] = None
     gallery: List[str] = []
     hero_video: Optional[str] = None
@@ -46,6 +47,7 @@ class CampaignPatch(BaseModel):
     story: Optional[str] = None
     category_id: Optional[str] = None
     goal_kobo: Optional[int] = None
+    currency: Optional[str] = None
     cover_image: Optional[str] = None
     gallery: Optional[List[str]] = None
     hero_video: Optional[str] = None
@@ -201,7 +203,7 @@ async def create_campaign(body: CampaignIn, user: dict = Depends(get_current_use
         "category_name": cat["name"] if cat else None,
         "goal_kobo": body.goal_kobo,
         "raised_kobo": 0,
-        "currency": "NGN",
+        "currency": (body.currency or "USD").upper(),
         "cover_image": body.cover_image,
         "gallery": body.gallery,
         "hero_video": body.hero_video,

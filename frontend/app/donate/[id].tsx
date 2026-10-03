@@ -11,7 +11,7 @@ import * as WebBrowser from "expo-web-browser";
 import { api, track } from "@/src/lib/api";
 import { AppText, Button, ProgressBar, LoadingView } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { formatNaira, formatAmountInput } from "@/src/format";
+import { formatNaira, formatAmountInput, getCurrencySymbol } from "@/src/format";
 import { DIRECT_DONATION_DISCLOSURE } from "@/src/constants/impact-commitment";
 
 const PRESETS = [100000, 250000, 500000, 1000000, 2500000, 5000000]; // ₦1k / 2.5k / 5k / 10k / 25k / 50k
@@ -70,8 +70,8 @@ export default function Donate() {
 
   const donate = async () => {
     setError("");
-    if (!finalAmount || finalAmount < 10000) {
-      setError("Please enter at least ₦100.");
+    if (!finalAmount || finalAmount < 100) {
+      setError("Please enter a valid donation amount.");
       return;
     }
     setProcessing(true);
@@ -133,7 +133,7 @@ export default function Donate() {
             <Image source={{ uri: c.cover_image }} style={styles.thumb} contentFit="cover" />
             <View style={{ flex: 1, marginLeft: spacing.md }}>
               <AppText variant="label" numberOfLines={2}>{c.title}</AppText>
-              <AppText variant="caption" style={{ marginTop: 4 }}>{c.percent}% · {formatNaira(c.raised_kobo, { compact: true })} raised</AppText>
+              <AppText variant="caption" style={{ marginTop: 4 }}>{c.percent}% · {formatNaira(c.raised_kobo, { compact: true, currency: c?.currency || "USD" })} raised</AppText>
             </View>
           </View>
 
@@ -172,7 +172,7 @@ export default function Donate() {
             You just moved this cause forward.
           </AppText>
           <AppText variant="body" style={{ textAlign: "center", marginTop: spacing.sm }}>
-            You gave {formatNaira(finalAmount)} to “{c.title}”.
+            You gave {formatNaira(finalAmount, { currency: c?.currency || "USD" })} to “{c.title}”.
           </AppText>
 
           <View style={styles.impactCard}>
@@ -240,7 +240,7 @@ export default function Donate() {
           <Image source={{ uri: c.cover_image }} style={styles.thumb} contentFit="cover" />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
             <AppText variant="label" numberOfLines={2}>{c.title}</AppText>
-            <AppText variant="caption" style={{ marginTop: 4 }}>{c.percent}% · {formatNaira(c.raised_kobo, { compact: true })} raised</AppText>
+            <AppText variant="caption" style={{ marginTop: 4 }}>{c.percent}% · {formatNaira(c.raised_kobo, { compact: true, currency: c?.currency || "USD" })} raised</AppText>
           </View>
         </View>
 
@@ -254,14 +254,14 @@ export default function Donate() {
               style={[styles.amount, !custom && amount === p && styles.amountActive]}
             >
               <AppText variant="title" color={!custom && amount === p ? colors.onBrandPrimary : colors.onSurface}>
-                {formatNaira(p, { compact: true })}
+                {formatNaira(p, { compact: true, currency: c?.currency || "USD" })}
               </AppText>
             </Pressable>
           ))}
         </View>
 
         <View style={styles.customBox}>
-          <AppText variant="label" color={colors.muted}>₦</AppText>
+          <AppText variant="label" color={colors.muted}>{getCurrencySymbol(c?.currency || "USD")}</AppText>
           <TextInput
             testID="custom-amount-input"
             value={custom ? formatAmountInput(custom) : ""}
@@ -306,7 +306,7 @@ export default function Donate() {
           {DIRECT_DONATION_DISCLOSURE}
         </AppText>
         <Button
-          title={`Support with ${formatNaira(finalAmount || 0)}`}
+          title={`Support with ${formatNaira(finalAmount || 0, { currency: c?.currency || "USD" })}`}
           onPress={donate}
           loading={processing}
           testID="to-payment-button"

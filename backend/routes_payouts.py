@@ -228,7 +228,7 @@ async def get_campaign_payouts(id: str, user: dict = Depends(get_current_user)):
         "processing_fee_kobo": 0,
         "withdrawn_kobo": withdrawn,
         "available_kobo": available,
-        "currency": camp.get("currency", "NGN"),
+        "currency": camp.get("currency") or "USD",
         "bank_account": bank_info,
         "history": payout_docs,
     }

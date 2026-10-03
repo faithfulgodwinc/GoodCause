@@ -10,7 +10,7 @@ import { api } from "@/src/lib/api";
 import { useSubscription } from "@/src/lib/revenuecat";
 import { AppText, Button, ProgressBar, VerifiedBadge, LoadingView, EmptyState } from "@/src/components/ui";
 import { colors, spacing, radius, font, shadow } from "@/src/theme";
-import { formatNaira, formatAmountInput } from "@/src/format";
+import { formatNaira, formatAmountInput, getCurrencySymbol } from "@/src/format";
 import { CampaignCard } from "@/src/components/CampaignCard";
 import { MediaUploader, Media } from "@/src/components/MediaUploader";
 
@@ -87,7 +87,7 @@ function Builder() {
   const hasFreeCampaignLimit = !isSubscribed && activeCampaigns.length >= 1;
 
   const [form, setForm] = useState<any>({
-    title: "", summary: "", story: "", category_id: null, goal: "",
+    title: "", summary: "", story: "", category_id: null, goal: "", currency: "USD",
     budget: [] as { item: string; amount: string }[],
     beneficiary: { name: "", relationship: "self", type: "individual" },
     cover_image: "", location: { city: "", country: "NG" },
@@ -111,7 +111,7 @@ function Builder() {
     setError("");
     if (step === 0 && (!form.title.trim() || !form.category_id)) { setError("Add a title and pick a category."); return false; }
     if (step === 1 && form.story.trim().length < 20) { setError("Tell your story (at least a couple of sentences)."); return false; }
-    if (step === 2 && (!form.goal || parseFloat(form.goal) < 1000)) { setError("Set a goal of at least ₦1,000."); return false; }
+    if (step === 2 && (!form.goal || parseFloat(form.goal) < 1)) { setError("Set a goal of at least 1."); return false; }
     if (step === 4 && !form.beneficiary.name.trim()) { setError("Who is this campaign for?"); return false; }
     if (step === 5 && (!form.media || form.media.length === 0)) { setError("Please upload at least one photo or video for your campaign."); return false; }
     return true;
@@ -126,6 +126,7 @@ function Builder() {
         story: form.story,
         category_id: form.category_id,
         goal_kobo: Math.round(parseFloat(form.goal) * 100),
+        currency: form.currency || "USD",
         cover_image: form.cover_image,
         gallery: [form.cover_image, ...(form.media || []).map((m: any) => m.url)].filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i),
         hero_video: form.hero_video || null,
@@ -226,9 +227,31 @@ function Builder() {
         )}
 
         {step === 2 && (
-          <StepWrap title="Set your goal" subtitle="How much do you need to raise? You can adjust later.">
+          <StepWrap title="Set your goal" subtitle="Select your campaign currency and goal amount.">
+            <Label text="Currency" />
+            <View style={styles.chipsWrap}>
+              {[
+                { code: "USD", label: "USD ($)" },
+                { code: "NGN", label: "NGN (₦)" },
+                { code: "GBP", label: "GBP (£)" },
+                { code: "EUR", label: "EUR (€)" },
+                { code: "CAD", label: "CAD (CA$)" },
+                { code: "AUD", label: "AUD (A$)" },
+              ].map((c) => (
+                <Pressable
+                  key={c.code}
+                  testID={`currency-${c.code}`}
+                  onPress={() => set("currency", c.code)}
+                  style={[styles.pickChip, (form.currency || "USD") === c.code && styles.pickChipActive]}
+                >
+                  <AppText variant="label" color={(form.currency || "USD") === c.code ? "#fff" : colors.onSurface}>
+                    {c.label}
+                  </AppText>
+                </Pressable>
+              ))}
+            </View>
             <View style={styles.goalBox}>
-              <AppText variant="h1" color={colors.muted}>₦</AppText>
+              <AppText variant="h1" color={colors.muted}>{getCurrencySymbol(form.currency || "USD")}</AppText>
               <TextInput
                 testID="input-goal"
                 value={form.goal ? formatAmountInput(form.goal) : ""}
@@ -262,7 +285,7 @@ function Builder() {
                     nb[i].amount = v.replace(/\D/g, "");
                     set("budget", nb);
                   }}
-                  placeholder="₦ Amount"
+                  placeholder={`${getCurrencySymbol(form.currency || "USD")} Amount`}
                   keyboardType="number-pad"
                   style={{ width: 130, marginLeft: spacing.sm }}
                 />
@@ -317,7 +340,7 @@ function Builder() {
                 <AppText variant="body" style={{ marginTop: 4 }}>{form.summary}</AppText>
                 <View style={{ marginTop: spacing.md }}>
                   <ProgressBar percent={0} />
-                  <AppText variant="caption" style={{ marginTop: 6 }}>₦0 of {formatNaira(Math.round(parseFloat(form.goal || "0") * 100))}</AppText>
+                  <AppText variant="caption" style={{ marginTop: 6 }}>{getCurrencySymbol(form.currency || "USD")}0 of {formatNaira(Math.round(parseFloat(form.goal || "0") * 100), { currency: form.currency || "USD" })}</AppText>
                 </View>
               </View>
             </View>
@@ -329,7 +352,7 @@ function Builder() {
             <View style={styles.verifyCard}>
               <SummaryRow label="Title" value={form.title} />
               <SummaryRow label="Category" value={cats?.find((c) => c.id === form.category_id)?.name || "—"} />
-              <SummaryRow label="Goal" value={formatNaira(Math.round(parseFloat(form.goal || "0") * 100))} />
+              <SummaryRow label="Goal" value={formatNaira(Math.round(parseFloat(form.goal || "0") * 100), { currency: form.currency || "USD" })} />
               <SummaryRow label="Beneficiary" value={form.beneficiary.name} />
               <SummaryRow label="Relationship" value={form.beneficiary.relationship} />
             </View>
