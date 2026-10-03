@@ -38,7 +38,7 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
   // Content width and height for card calculation
   const containerWidth = Math.min(width - (isDesktop ? spacing.lg * 2 : spacing.md * 2), maxContentWidth || 1160);
   const cardWidth = containerWidth;
-  const cardHeight = isDesktop ? 220 : 190;
+  const cardHeight = isDesktop ? 220 : 160;
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
@@ -59,13 +59,15 @@ export function HeroCauseSlider({ causes, onSelectCause, onStartCampaign }: Hero
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
           />
-          <View style={[styles.heroContent, { padding: isDesktop ? spacing.xl : spacing.lg }]}>
-            <AppText variant="h1" style={[styles.heroTitle, !isDesktop && { fontSize: 18, lineHeight: 23 }]}>
+          <View style={[styles.heroContent, { padding: isDesktop ? spacing.xl : spacing.lg, justifyContent: "space-between" }]}>
+            <AppText variant="h1" style={[styles.heroTitle, !isDesktop && { fontSize: 18, lineHeight: 23, marginBottom: 4 }]}>
               Turn kindness into real community impact
             </AppText>
-            <AppText variant="body" style={[styles.heroDesc, !isDesktop && { fontSize: 12.5, lineHeight: 17, marginBottom: spacing.md }]} numberOfLines={2}>
-              Launch a verified campaign today to raise funds for medical bills, education, emergency relief, or community projects.
-            </AppText>
+            {isDesktop ? (
+              <AppText variant="body" style={styles.heroDesc} numberOfLines={2}>
+                Launch a verified campaign today to raise funds for medical bills, education, emergency relief, or community projects.
+              </AppText>
+            ) : null}
             <Pressable
               style={({ pressed }) => [styles.heroCtaBtn, !isDesktop && { paddingHorizontal: spacing.lg, paddingVertical: 8 }, pressed && { opacity: 0.9 }]}
               onPress={() => {
