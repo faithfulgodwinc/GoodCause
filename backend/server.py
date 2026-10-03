@@ -9,6 +9,7 @@ import routes_auth, routes_campaigns, routes_donations, routes_social, routes_ad
 from seed import seed
 from payments import provider_mode
 from storage import init_storage
+from google_oauth_config import google_client_ids
 
 import os
 from urllib.parse import urlparse
@@ -61,6 +62,28 @@ async def config():
     }
 
 
+def _origin_from_url(url: str) -> str:
+    parsed = urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _client_id_label(client_id: str) -> str:
+    if ".apps.googleusercontent.com" not in client_id:
+        return client_id
+    project, rest = client_id.split("-", 1)
+    return f"{project}-{rest[:6]}...{rest[-32:]}"
+
+
+@meta.get("/debug/oauth")
+async def oauth_debug():
+    return {
+        "google_client_ids": [_client_id_label(client_id) for client_id in google_client_ids()],
+        "allowed_origins": allowed_origins,
+    }
+
+
 class TrackIn(BaseModel):
     event: str
     props: Optional[dict] = None
@@ -96,8 +119,10 @@ allowed_origins = [
 ]
 frontend_url = os.environ.get("FRONTEND_RETURN_URL", "")
 if frontend_url.startswith("http"):
-    parsed = urlparse(frontend_url)
-    allowed_origins.append(f"{parsed.scheme}://{parsed.netloc}")
+    origin = _origin_from_url(frontend_url)
+    if origin:
+        allowed_origins.append(origin)
+allowed_origins = list(dict.fromkeys(allowed_origins))
 
 app.add_middleware(
     CORSMiddleware,
