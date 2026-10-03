@@ -16,7 +16,6 @@ import {
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -119,7 +118,6 @@ export default function AuthScreen() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     responseType: "id_token",
     clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || DEFAULT_GOOGLE_WEB_CLIENT_ID,
-    redirectUri: Platform.OS === "web" && typeof window !== "undefined" ? window.location.origin : makeRedirectUri(),
   });
 
   useEffect(() => {
@@ -269,24 +267,17 @@ export default function AuthScreen() {
               }
             },
           });
-          g.accounts.id.prompt(async (notification: any) => {
+          g.accounts.id.prompt((notification: any) => {
             if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
-              if (request) {
-                await promptAsync();
-              } else {
-                setGoogleLoading(false);
-              }
+              setError("Google sign-in could not open. Check that popups are allowed, then try again.");
+              setGoogleLoading(false);
             }
           });
           return;
         }
 
-        if (!request) {
-          setError("Google sign-in is initializing. Please try again in a moment.");
-          setGoogleLoading(false);
-          return;
-        }
-        await promptAsync();
+        setError("Google sign-in is initializing. Please try again in a moment.");
+        setGoogleLoading(false);
         return;
       }
 
