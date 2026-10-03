@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { maxContentWidth } = useResponsive();
+  const { isDesktop, maxContentWidth } = useResponsive();
   const { isSubscribed } = useSubscription();
 
   const { data, isRefetching, refetch } = useQuery({
@@ -90,38 +90,40 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screenContainer}>
-      {/* Apple-style Navigation Header */}
-      <View
-        style={[
-          styles.header,
-          { paddingTop: Platform.OS === "android" ? insets.top + 16 : insets.top + 16 },
-        ]}
-      >
-        <View style={styles.headerLeft}>
-          <Pressable onPress={handleProfilePress} style={styles.avatarPressable}>
-            <Avatar name={user?.name} uri={user?.picture} size={42} />
-          </Pressable>
-          <View style={styles.greetingBox}>
-            <AppText style={styles.timeGreetingText}>
-              {timeGreeting}
-            </AppText>
-            <AppText variant="h2" style={styles.nameText}>
-              {displayName}
-            </AppText>
-          </View>
-        </View>
-
-        <Pressable 
-          hitSlop={12} 
-          style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.6 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push("/(tabs)/activity");
-          }}
+      {/* Mobile-only Navigation Header */}
+      {!isDesktop && (
+        <View
+          style={[
+            styles.header,
+            { paddingTop: Platform.OS === "android" ? insets.top + 16 : insets.top + 16 },
+          ]}
         >
-          <Feather name="bell" size={20} color={colors.onSurface} />
-        </Pressable>
-      </View>
+          <View style={styles.headerLeft}>
+            <Pressable onPress={handleProfilePress} style={styles.avatarPressable}>
+              <Avatar name={user?.name} uri={user?.picture} size={42} />
+            </Pressable>
+            <View style={styles.greetingBox}>
+              <AppText style={styles.timeGreetingText}>
+                {timeGreeting}
+              </AppText>
+              <AppText variant="h2" style={styles.nameText}>
+                {displayName}
+              </AppText>
+            </View>
+          </View>
+
+          <Pressable 
+            hitSlop={12} 
+            style={({ pressed }) => [styles.bellButton, pressed && { opacity: 0.6 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/(tabs)/activity");
+            }}
+          >
+            <Feather name="bell" size={20} color={colors.onSurface} />
+          </Pressable>
+        </View>
+      )}
 
       <ScrollView
         style={styles.container}
